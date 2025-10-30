@@ -21,17 +21,6 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
     using SafeTransferLib for WETH;
 
     // ========================================= STRUCTS =========================================
-    /**
-     * @param allowDeposits bool indicating whether or not deposits are allowed for this asset.
-     * @param allowWithdraws bool indicating whether or not withdraws are allowed for this asset.
-     * @param sharePremium uint16 indicating the premium to apply to the shares minted.
-     *        where 40 represents a 40bps reduction in shares minted using this asset.
-     */
-    struct Asset {
-        bool allowDeposits;
-        bool allowWithdraws;
-        uint16 sharePremium;
-    }
 
     /**
      * @param denyFrom bool indicating whether or not the user is on the deny from list.
@@ -60,29 +49,27 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      */
     uint256 internal constant MAX_SHARE_LOCK_PERIOD = 3 days;
 
-    /**
-     * @notice The maximum possible share premium that can be set using `updateAssetData`.
-     * @dev 1,000 or 10%
-     */
-    uint16 internal constant MAX_SHARE_PREMIUM = 1_000;
-
     // ========================================= STATE =========================================
 
     /**
-     * @notice Mapping ERC20s to their assetData.
+     * @notice The single asset this teller supports
      */
-    mapping(ERC20 => Asset) public assetData;
+    ERC20 public immutable asset;
 
     /**
-     * @notice The deposit nonce used to map to a deposit hash.
+     * @notice Whether deposits are allowed for the asset
      */
-    uint64 public depositNonce;
+    bool public allowDeposits;
+
+    /**
+     * @notice Whether withdrawals are allowed for the asset
+     */
+    bool public allowWithdraws;
 
     /**
      * @notice After deposits, shares are locked to the msg.sender's address
      *         for `shareLockPeriod`.
-     * @dev During this time all trasnfers from msg.sender will revert, and
-     *      deposits are refundable.
+     * @dev During this time all transfers from msg.sender will revert.
      */
     uint64 public shareLockPeriod;
 
@@ -103,11 +90,6 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
     uint112 public depositCap = type(uint112).max;
 
     /**
-     * @dev Maps deposit nonce to keccak256(address receiver, address depositAsset, uint256 depositAmount, uint256 shareAmount, uint256 timestamp, uint256 shareLockPeriod).
-     */
-    mapping(uint256 => bytes32) public publicDepositHistory;
-
-    /**
      * @notice Maps address to BeforeTransferData struct to check if shares are locked and if the address is on any allow or deny list.
      */
     mapping(address => BeforeTransferData) public beforeTransferData;
@@ -116,9 +98,6 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
 
     error TellerWithMultiAssetSupport__ShareLockPeriodTooLong();
     error TellerWithMultiAssetSupport__SharesAreLocked();
-    error TellerWithMultiAssetSupport__SharesAreUnLocked();
-    error TellerWithMultiAssetSupport__BadDepositHash();
-    error TellerWithMultiAssetSupport__AssetNotSupported();
     error TellerWithMultiAssetSupport__ZeroAssets();
     error TellerWithMultiAssetSupport__MinimumMintNotMet();
     error TellerWithMultiAssetSupport__MinimumAssetsNotMet();
@@ -127,15 +106,17 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
     error TellerWithMultiAssetSupport__DualDeposit();
     error TellerWithMultiAssetSupport__Paused();
     error TellerWithMultiAssetSupport__TransferDenied(address from, address to, address operator);
-    error TellerWithMultiAssetSupport__SharePremiumTooLarge();
     error TellerWithMultiAssetSupport__CannotDepositNative();
     error TellerWithMultiAssetSupport__DepositExceedsCap();
+    error TellerWithMultiAssetSupport__DepositsNotAllowed();
+    error TellerWithMultiAssetSupport__WithdrawsNotAllowed();
 
     //============================== EVENTS ===============================
 
     event Paused();
     event Unpaused();
-    event AssetDataUpdated(address indexed asset, bool allowDeposits, bool allowWithdraws, uint16 sharePremium);
+    event DepositsAllowed(bool allowed);
+    event WithdrawsAllowed(bool allowed);
     event Deposit(
         uint256 nonce,
         address indexed receiver,
@@ -149,7 +130,6 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
     event BulkDeposit(address indexed asset, uint256 depositAmount);
     event BulkWithdraw(address indexed asset, uint256 shareAmount);
     event Withdraw(address indexed asset, uint256 shareAmount);
-    event DepositRefunded(uint256 indexed nonce, bytes32 depositHash, address indexed user);
     event DenyFrom(address indexed user);
     event DenyTo(address indexed user);
     event DenyOperator(address indexed user);
@@ -197,13 +177,17 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
         address _owner,
         address _vault,
         address _accountant,
+        address _asset,
         address _weth
     ) Auth(_owner, Authority(address(0))) {
         vault = BoringVault(payable(_vault));
         ONE_SHARE = 10 ** vault.decimals();
         accountant = AccountantWithRateProviders(_accountant);
+        asset = ERC20(_asset);
         nativeWrapper = WETH(payable(_weth));
         permissionedTransfers = false;
+        allowDeposits = true;
+        allowWithdraws = true;
     }
 
     // ========================================= ADMIN FUNCTIONS =========================================
@@ -227,28 +211,26 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
     }
 
     /**
-     * @notice Updates the asset data for a given asset.
-     * @dev The accountant must also support pricing this asset, else the `deposit` call will revert.
+     * @notice Enable or disable deposits for the asset.
      * @dev Callable by OWNER_ROLE.
      */
-    function updateAssetData(
-        ERC20 asset,
-        bool allowDeposits,
-        bool allowWithdraws,
-        uint16 sharePremium
-    ) external requiresAuth {
-        if (sharePremium > MAX_SHARE_PREMIUM) revert TellerWithMultiAssetSupport__SharePremiumTooLarge();
-        assetData[asset] = Asset(allowDeposits, allowWithdraws, sharePremium);
-        emit AssetDataUpdated(address(asset), allowDeposits, allowWithdraws, sharePremium);
+    function setAllowDeposits(bool _allowDeposits) external requiresAuth {
+        allowDeposits = _allowDeposits;
+        emit DepositsAllowed(_allowDeposits);
+    }
+
+    /**
+     * @notice Enable or disable withdrawals for the asset.
+     * @dev Callable by OWNER_ROLE.
+     */
+    function setAllowWithdraws(bool _allowWithdraws) external requiresAuth {
+        allowWithdraws = _allowWithdraws;
+        emit WithdrawsAllowed(_allowWithdraws);
     }
 
     /**
      * @notice Sets the share lock period.
-     * @dev This not only locks shares to the user address, but also serves as the pending deposit period, where deposits can be reverted.
-     * @dev If a new shorter share lock period is set, users with pending share locks could make a new deposit to receive 1 wei shares,
-     *      and have their shares unlock sooner than their original deposit allows. This state would allow for the user deposit to be refunded,
-     *      but only if they have not transferred their shares out of there wallet. This is an accepted limitation, and should be known when decreasing
-     *      the share lock period.
+     * @dev This locks shares to the user address for the specified period.
      * @dev Callable by OWNER_ROLE.
      */
     function setShareLockPeriod(uint64 _shareLockPeriod) external requiresAuth {
@@ -421,55 +403,6 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
         }
     }
 
-    // ========================================= REVERT DEPOSIT FUNCTIONS =========================================
-
-    /**
-     * @notice Allows DEPOSIT_REFUNDER_ROLE to revert a pending deposit.
-     * @dev Once a deposit share lock period has passed, it can no longer be reverted.
-     * @dev It is possible the admin does not setup the BoringVault to call the transfer hook,
-     *      but this contract can still be saving share lock state. In the event this happens
-     *      deposits are still refundable if the user has not transferred their shares.
-     *      But there is no guarantee that the user has not transferred their shares.
-     * @dev Callable by STRATEGIST_MULTISIG_ROLE.
-     */
-    function refundDeposit(
-        uint256 nonce,
-        address receiver,
-        address depositAsset,
-        uint256 depositAmount,
-        uint256 shareAmount,
-        uint256 depositTimestamp,
-        uint256 shareLockUpPeriodAtTimeOfDeposit,
-        address referralAddress
-    ) external requiresAuth {
-        if ((block.timestamp - depositTimestamp) >= shareLockUpPeriodAtTimeOfDeposit) {
-            // Shares are already unlocked, so we can not revert deposit.
-            revert TellerWithMultiAssetSupport__SharesAreUnLocked();
-        }
-        bytes32 depositHash = keccak256(
-            abi.encode(
-                receiver,
-                depositAsset,
-                depositAmount,
-                shareAmount,
-                depositTimestamp,
-                shareLockUpPeriodAtTimeOfDeposit,
-                referralAddress
-            )
-        );
-        if (publicDepositHistory[nonce] != depositHash) revert TellerWithMultiAssetSupport__BadDepositHash();
-
-        // Delete hash to prevent refund gas.
-        delete publicDepositHistory[nonce];
-
-        // If deposit used native asset, send user back wrapped native asset.
-        depositAsset = depositAsset == NATIVE ? address(nativeWrapper) : depositAsset;
-        // Burn shares and refund assets to receiver.
-        vault.exit(receiver, ERC20(depositAsset), depositAmount, receiver, shareAmount);
-
-        emit DepositRefunded(nonce, depositHash, receiver);
-    }
-
     // ========================================= USER FUNCTIONS =========================================
 
     /**
@@ -477,22 +410,20 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @dev Publicly callable.
      */
     function deposit(
-        ERC20 depositAsset,
         uint256 depositAmount,
         uint256 minimumMint,
         address referralAddress
     ) external payable virtual requiresAuth nonReentrant returns (uint256 shares) {
-        Asset memory asset = _beforeDeposit(depositAsset);
+        _beforeDeposit();
 
+        ERC20 depositAsset = asset;
         address from;
-        if (address(depositAsset) == NATIVE) {
+        if (address(asset) == address(nativeWrapper) && msg.value > 0) {
             if (msg.value == 0) revert TellerWithMultiAssetSupport__ZeroAssets();
             nativeWrapper.deposit{value: msg.value}();
             // Set depositAmount to msg.value.
             depositAmount = msg.value;
             nativeWrapper.safeApprove(address(vault), depositAmount);
-            // Update depositAsset to nativeWrapper.
-            depositAsset = nativeWrapper;
             // Set from to this address since user transferred value.
             from = address(this);
         } else {
@@ -500,7 +431,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
             from = msg.sender;
         }
 
-        shares = _erc20Deposit(depositAsset, depositAmount, minimumMint, from, msg.sender, asset);
+        shares = _erc20Deposit(depositAsset, depositAmount, minimumMint, from, msg.sender);
         _afterPublicDeposit(msg.sender, depositAsset, depositAmount, shares, shareLockPeriod, referralAddress);
     }
 
@@ -509,7 +440,6 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @dev Publicly callable.
      */
     function depositWithPermit(
-        ERC20 depositAsset,
         uint256 depositAmount,
         uint256 minimumMint,
         uint256 deadline,
@@ -517,13 +447,13 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
         bytes32 r,
         bytes32 s,
         address referralAddress
-    ) external virtual requiresAuth nonReentrant revertOnNativeDeposit(address(depositAsset)) returns (uint256 shares) {
-        Asset memory asset = _beforeDeposit(depositAsset);
+    ) external virtual requiresAuth nonReentrant returns (uint256 shares) {
+        _beforeDeposit();
 
-        _handlePermit(depositAsset, depositAmount, deadline, v, r, s);
+        _handlePermit(asset, depositAmount, deadline, v, r, s);
 
-        shares = _erc20Deposit(depositAsset, depositAmount, minimumMint, msg.sender, msg.sender, asset);
-        _afterPublicDeposit(msg.sender, depositAsset, depositAmount, shares, shareLockPeriod, referralAddress);
+        shares = _erc20Deposit(asset, depositAmount, minimumMint, msg.sender, msg.sender);
+        _afterPublicDeposit(msg.sender, asset, depositAmount, shares, shareLockPeriod, referralAddress);
     }
 
     /**
@@ -532,15 +462,14 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @dev Callable by SOLVER_ROLE.
      */
     function bulkDeposit(
-        ERC20 depositAsset,
         uint256 depositAmount,
         uint256 minimumMint,
         address to
     ) external virtual requiresAuth nonReentrant returns (uint256 shares) {
-        Asset memory asset = _beforeDeposit(depositAsset);
+        _beforeDeposit();
 
-        shares = _erc20Deposit(depositAsset, depositAmount, minimumMint, msg.sender, to, asset);
-        emit BulkDeposit(address(depositAsset), depositAmount);
+        shares = _erc20Deposit(asset, depositAmount, minimumMint, msg.sender, to);
+        emit BulkDeposit(address(asset), depositAmount);
     }
 
     /**
@@ -548,13 +477,12 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @dev Callable by SOLVER_ROLE.
      */
     function bulkWithdraw(
-        ERC20 withdrawAsset,
         uint256 shareAmount,
         uint256 minimumAssets,
         address to
     ) external virtual requiresAuth nonReentrant returns (uint256 assetsOut) {
-        assetsOut = _withdraw(withdrawAsset, shareAmount, minimumAssets, to);
-        emit BulkWithdraw(address(withdrawAsset), shareAmount);
+        assetsOut = _withdraw(shareAmount, minimumAssets, to);
+        emit BulkWithdraw(address(asset), shareAmount);
     }
 
     /**
@@ -562,14 +490,13 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @dev Either public or disabled depending on configuration.
      */
     function withdraw(
-        ERC20 withdrawAsset,
         uint256 shareAmount,
         uint256 minimumAssets,
         address to
     ) external virtual requiresAuth nonReentrant returns (uint256 assetsOut) {
         beforeTransfer(msg.sender, address(0), msg.sender);
-        assetsOut = _withdraw(withdrawAsset, shareAmount, minimumAssets, to);
-        emit Withdraw(address(withdrawAsset), shareAmount);
+        assetsOut = _withdraw(shareAmount, minimumAssets, to);
+        emit Withdraw(address(asset), shareAmount);
     }
 
     // ========================================= INTERNAL HELPER FUNCTIONS =========================================
@@ -582,49 +509,42 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
         uint256 depositAmount,
         uint256 minimumMint,
         address from,
-        address to,
-        Asset memory asset
+        address to
     ) internal virtual returns (uint256 shares) {
         _handleDenyList(from, to, msg.sender);
         uint112 cap = depositCap;
         if (depositAmount == 0) revert TellerWithMultiAssetSupport__ZeroAssets();
-        shares = depositAmount.mulDivDown(ONE_SHARE, accountant.getRateInQuoteSafe(depositAsset));
-        shares = asset.sharePremium > 0 ? shares.mulDivDown(1e4 - asset.sharePremium, 1e4) : shares;
+        shares = depositAmount.mulDivDown(ONE_SHARE, accountant.getRate());
         if (shares < minimumMint) revert TellerWithMultiAssetSupport__MinimumMintNotMet();
         if (cap != type(uint112).max) {
             if (shares + vault.totalSupply() > cap) revert TellerWithMultiAssetSupport__DepositExceedsCap();
         }
         vault.enter(from, depositAsset, depositAmount, to, shares);
-        _afterDeposit(depositAsset, depositAmount);
     }
 
     /**
      * @notice Implements a common ERC20 withdraw from BoringVault.
      */
     function _withdraw(
-        ERC20 withdrawAsset,
         uint256 shareAmount,
         uint256 minimumAssets,
         address to
     ) internal virtual returns (uint256 assetsOut) {
         if (isPaused) revert TellerWithMultiAssetSupport__Paused();
-        Asset memory asset = assetData[withdrawAsset];
-        if (!asset.allowWithdraws) revert TellerWithMultiAssetSupport__AssetNotSupported();
+        if (!allowWithdraws) revert TellerWithMultiAssetSupport__WithdrawsNotAllowed();
 
         if (shareAmount == 0) revert TellerWithMultiAssetSupport__ZeroShares();
-        assetsOut = shareAmount.mulDivDown(accountant.getRateInQuoteSafe(withdrawAsset), ONE_SHARE);
+        assetsOut = shareAmount.mulDivDown(accountant.getRate(), ONE_SHARE);
         if (assetsOut < minimumAssets) revert TellerWithMultiAssetSupport__MinimumAssetsNotMet();
-        _beforeWithdraw(withdrawAsset, assetsOut);
-        vault.exit(to, withdrawAsset, assetsOut, msg.sender, shareAmount);
+        vault.exit(to, asset, assetsOut, msg.sender, shareAmount);
     }
 
     /**
      * @notice Handle pre-deposit checks.
      */
-    function _beforeDeposit(ERC20 depositAsset) internal view returns (Asset memory asset) {
+    function _beforeDeposit() internal view {
         if (isPaused) revert TellerWithMultiAssetSupport__Paused();
-        asset = assetData[depositAsset];
-        if (!asset.allowDeposits) revert TellerWithMultiAssetSupport__AssetNotSupported();
+        if (!allowDeposits) revert TellerWithMultiAssetSupport__DepositsNotAllowed();
     }
 
     /**
@@ -638,25 +558,12 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
         uint256 currentShareLockPeriod,
         address referralAddress
     ) internal {
-        // Increment then assign as its slightly more gas efficient.
-        uint256 nonce = ++depositNonce;
-        // Only set share unlock time and history if share lock period is greater than 0.
+        // Only set share unlock time if share lock period is greater than 0.
         if (currentShareLockPeriod > 0) {
             beforeTransferData[user].shareUnlockTime = block.timestamp + currentShareLockPeriod;
-            publicDepositHistory[nonce] = keccak256(
-                abi.encode(
-                    user,
-                    depositAsset,
-                    depositAmount,
-                    shares,
-                    block.timestamp,
-                    currentShareLockPeriod,
-                    referralAddress
-                )
-            );
         }
         emit Deposit(
-            nonce,
+            0, // nonce no longer used
             user,
             address(depositAsset),
             depositAmount,
@@ -688,18 +595,16 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
     /**
      * @notice Hook that is called after a deposit operation.
      * @dev Can be overridden by child contracts to implement custom post-deposit logic.
-     * @param depositAsset The ERC20 token that was deposited.
      * @param assetAmount The amount of the asset that was deposited.
      */
-    function _afterDeposit(ERC20 depositAsset, uint256 assetAmount) internal virtual {}
+    function _afterDeposit(uint256 assetAmount) internal virtual {}
 
     /**
      * @notice Hook that is called before a withdrawal operation.
      * @dev Can be overridden by child contracts to implement custom pre-withdrawal logic.
-     * @param withdrawAsset The ERC20 token that will be withdrawn.
      * @param assetAmount The amount of the asset that will be withdrawn.
      */
-    function _beforeWithdraw(ERC20 withdrawAsset, uint256 assetAmount) internal virtual {}
+    function _beforeWithdraw(uint256 assetAmount) internal virtual {}
 
     // ========================================= VIEW FUNCTIONS =========================================
 
