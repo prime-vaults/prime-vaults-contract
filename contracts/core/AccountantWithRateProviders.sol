@@ -1,7 +1,4 @@
-// SPDX-License-Identifier: SEL-1.0
-// Copyright © 2025 PrimeVaults Labs
-// Derived from Boring Vault Software © 2025 PrimeVaults Labs (TEST ONLY – NO COMMERCIAL USE)
-// Licensed under Software Evaluation License, Version 1.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
@@ -310,7 +307,7 @@ contract AccountantWithRateProviders is Auth, IRateProvider, IPausable {
         updateWillPause = shouldPause;
         totalFeesOwedInBase = state.feesOwedInBase;
         if (!shouldPause) {
-            (uint256 platformFeesOwedInBase, uint256 shareSupplyToUse) = _calculatePlatformFee(
+            uint256 platformFeesOwedInBase = _calculatePlatformFee(
                 state.totalSharesLastUpdate,
                 state.lastUpdateTimestamp,
                 state.platformFee,
@@ -385,8 +382,8 @@ contract AccountantWithRateProviders is Auth, IRateProvider, IPausable {
         uint256 currentExchangeRate,
         uint256 currentTotalShares,
         uint64 currentTime
-    ) internal view returns (uint256 platformFeesOwedInBase, uint256 shareSupplyToUse) {
-        shareSupplyToUse = currentTotalShares;
+    ) internal view returns (uint256 platformFeesOwedInBase) {
+        uint256 shareSupplyToUse = currentTotalShares;
         // Use the minimum between current total supply and total supply for last update.
         if (totalSharesLastUpdate < shareSupplyToUse) {
             shareSupplyToUse = totalSharesLastUpdate;
@@ -432,7 +429,7 @@ contract AccountantWithRateProviders is Auth, IRateProvider, IPausable {
     ) internal virtual {
         // Only update fees if we are not paused.
         // Update fee accounting.
-        (uint256 newFeesOwedInBase, ) = _calculatePlatformFee(
+        uint256 newFeesOwedInBase = _calculatePlatformFee(
             state.totalSharesLastUpdate,
             state.lastUpdateTimestamp,
             state.platformFee,

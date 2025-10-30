@@ -15,15 +15,15 @@ contract TellerWithYieldStreaming is TellerWithBuffer {
         address _owner,
         address _vault,
         address _accountant,
+        address _asset,
         address _weth
-    ) TellerWithBuffer(_owner, _vault, _accountant, _weth) {}
+    ) TellerWithBuffer(_owner, _vault, _accountant, _asset, _weth) {}
 
     /**
      * @notice Allows off ramp role to withdraw from this contract.
      * @dev Publicly callable.
      */
     function withdraw(
-        ERC20 withdrawAsset,
         uint256 shareAmount,
         uint256 minimumAssets,
         address to
@@ -31,9 +31,9 @@ contract TellerWithYieldStreaming is TellerWithBuffer {
         //update vested yield before withdraw
         _getAccountant().updateExchangeRate();
         beforeTransfer(msg.sender, address(0), msg.sender);
-        assetsOut = _withdraw(withdrawAsset, shareAmount, minimumAssets, to);
+        assetsOut = _withdraw(shareAmount, minimumAssets, to);
 
-        emit Withdraw(address(withdrawAsset), shareAmount);
+        emit Withdraw(address(asset), shareAmount);
     }
 
     function _erc20Deposit(
@@ -41,15 +41,14 @@ contract TellerWithYieldStreaming is TellerWithBuffer {
         uint256 depositAmount,
         uint256 minimumMint,
         address from,
-        address to,
-        Asset memory asset
+        address to
     ) internal override returns (uint256 shares) {
         //update vested yield before deposit
         _getAccountant().updateExchangeRate();
         if (vault.totalSupply() == 0) {
             _getAccountant().setFirstDepositTimestamp();
         }
-        shares = super._erc20Deposit(depositAsset, depositAmount, minimumMint, from, to, asset);
+        shares = super._erc20Deposit(depositAsset, depositAmount, minimumMint, from, to);
     }
 
     /**
@@ -57,14 +56,13 @@ contract TellerWithYieldStreaming is TellerWithBuffer {
      * @dev Callable by SOLVER_ROLE.
      */
     function bulkWithdraw(
-        ERC20 withdrawAsset,
         uint256 shareAmount,
         uint256 minimumAssets,
         address to
     ) external override requiresAuth nonReentrant returns (uint256 assetsOut) {
         _getAccountant().updateExchangeRate();
-        assetsOut = _withdraw(withdrawAsset, shareAmount, minimumAssets, to);
-        emit BulkWithdraw(address(withdrawAsset), shareAmount);
+        assetsOut = _withdraw(shareAmount, minimumAssets, to);
+        emit BulkWithdraw(address(asset), shareAmount);
     }
 
     /**

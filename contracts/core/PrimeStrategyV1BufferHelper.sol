@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {IBufferHelper} from "../interfaces/IBufferHelper.sol";
-import {ERC20} from "@solmate/tokens/ERC20.sol";
+import {ERC20} from "solmate/src/tokens/ERC20.sol";
 
 /**
  * @title PrimeStrategyV1BufferHelper
