@@ -1,7 +1,4 @@
-// SPDX-License-Identifier: SEL-1.0
-// Copyright © 2025 PrimeVaults
-// Derived from Boring Vault Software © 2025 PrimeVaults (TEST ONLY – NO COMMERCIAL USE)
-// Licensed under Software Evaluation License, Version 1.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
 import {IBufferHelper} from "../interfaces/IBufferHelper.sol";

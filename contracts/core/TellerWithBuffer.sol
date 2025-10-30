@@ -1,7 +1,4 @@
-// SPDX-License-Identifier: SEL-1.0
-// Copyright © 2025 Veda Tech Labs
-// Derived from Boring Vault Software © 2025 Veda Tech Labs (TEST ONLY – NO COMMERCIAL USE)
-// Licensed under Software Evaluation License, Version 1.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
 import {TellerWithMultiAssetSupport, ERC20} from "./TellerWithMultiAssetSupport.sol";
@@ -9,7 +6,7 @@ import {IBufferHelper} from "../interfaces/IBufferHelper.sol";
 
 /**
  * @title TellerWithBuffer
- * @author Veda Tech Labs
+ * @author PrimeVaults Labs
  * @notice A teller contract that integrates with buffer helpers to manage deposits and withdrawals
  * @dev Extends TellerWithMultiAssetSupport to add automatic yield and withdrawal buffer capabilities.
  * The buffer helpers can trigger additional vault management calls during these operations.
