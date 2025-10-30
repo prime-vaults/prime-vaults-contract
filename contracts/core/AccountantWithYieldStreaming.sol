@@ -18,7 +18,7 @@ contract AccountantWithYieldStreaming is AccountantWithRateProviders {
     /**
      * @notice Stores the state variables related to yield vesting and share price tracking
      * @dev lastSharePrice The most recent share price
-     * @dev vestingGainst The total amount of yield being streamed for this period
+     * @dev vestingGains The total amount of yield being streamed for this period
      * @dev lastVestingUpdate The last time a yield update was posted
      * @dev startVestingTime The start time for the yield streaming period
      * @dev endVestingTime The end time for the yield streaming period
@@ -68,14 +68,8 @@ contract AccountantWithYieldStreaming is AccountantWithRateProviders {
     uint32 public maxDeviationYield = 500;
 
     /**
-     * @notice The maximum amount a loss can be before the contract is paused
-     * @dev recorded in bps (maxDeviationLoss / 10_000)
-     */
-    uint32 public maxDeviationLoss = 100;
-
-    /**
      * @notice The last time any vesting function was called
-     * @dev applies to vestYield and postLoss
+     * @dev applies to vestYield
      */
     uint64 public lastStrategistUpdateTimestamp;
 
@@ -91,12 +85,10 @@ contract AccountantWithYieldStreaming is AccountantWithRateProviders {
     //============================== EVENTS ===============================
 
     event YieldRecorded(uint256 amountAdded, uint64 endVestingTime);
-    event LossRecorded(uint256 lossAmount);
     event ExchangeRateUpdated(uint256 newExchangeRate);
     event MaximumVestDurationUpdated(uint64 newMaximum);
     event MinimumVestDurationUpdated(uint64 newMinimum);
     event MaximumDeviationYieldUpdated(uint64 newMaximum);
-    event MaximumDeviationLossUpdated(uint64 newMaximum);
 
     constructor(
         address _owner,
@@ -192,60 +184,6 @@ contract AccountantWithYieldStreaming is AccountantWithRateProviders {
     }
 
     /**
-     * @param lossAmount The amount lost by the vault during n period
-     * @notice callable by the STRATEGIST role
-     * @dev `lossAmount` should be denominated in the BASE ASSET
-     */
-    function postLoss(uint256 lossAmount) external requiresAuth {
-        if (accountantState.isPaused) revert AccountantWithRateProviders__Paused();
-
-        if (block.timestamp < lastStrategistUpdateTimestamp + accountantState.minimumUpdateDelayInSeconds) {
-            revert AccountantWithYieldStreaming__NotEnoughTimePassed();
-        }
-
-        //ensure most up to date data
-        _updateExchangeRate(); //vested gains are moved to totalAssets, only unvested remains in `vestingState.vestingGains`
-
-        if (vestingState.vestingGains >= lossAmount) {
-            //remaining unvested gains absorb the loss
-            vestingState.vestingGains -= uint128(lossAmount);
-        } else {
-            uint256 principalLoss = lossAmount - vestingState.vestingGains;
-
-            //wipe out remaining vesting
-            vestingState.vestingGains = 0;
-
-            //reduce share price to reflect principal loss
-            uint256 currentShares = vault.totalSupply();
-            if (currentShares > 0) {
-                uint128 cachedSharePrice = vestingState.lastSharePrice;
-                vestingState.lastSharePrice = uint128(
-                    (totalAssets() - principalLoss).mulDivDown(ONE_SHARE, currentShares)
-                );
-
-                uint256 lossBps = uint256(cachedSharePrice - vestingState.lastSharePrice).mulDivDown(
-                    10_000,
-                    cachedSharePrice
-                );
-
-                //verify the loss isn't too large
-                if (lossBps > maxDeviationLoss) {
-                    accountantState.isPaused = true;
-                    emit Paused();
-                }
-            }
-        }
-
-        AccountantState storage state = accountantState;
-        state.exchangeRate = uint96(vestingState.lastSharePrice);
-
-        //update state timestamp
-        lastStrategistUpdateTimestamp = uint64(block.timestamp);
-
-        emit LossRecorded(lossAmount);
-    }
-
-    /**
      * @dev calling this moves any vested gains to be calculated into the current share price
      */
     function updateExchangeRate() external requiresAuth {
@@ -296,43 +234,7 @@ contract AccountantWithYieldStreaming is AccountantWithRateProviders {
         emit MaximumDeviationYieldUpdated(newMaximum);
     }
 
-    /**
-     * @notice Update the maximum deviation loss
-     * @dev Callable by OWNER_ROLE.
-     */
-    function updateMaximumDeviationLoss(uint32 newMaximum) external requiresAuth {
-        maxDeviationLoss = newMaximum;
-        emit MaximumDeviationLossUpdated(newMaximum);
-    }
-
     // ========================================= VIEW FUNCTIONS =========================================
-
-    function getRateInQuote(ERC20 quote) public view override returns (uint256 rateInQuote) {
-        if (address(quote) == address(base)) {
-            rateInQuote = getRate();
-        } else {
-            RateProviderData memory data = rateProviderData[quote];
-            uint8 quoteDecimals = ERC20(quote).decimals();
-            uint256 exchangeRateInQuoteDecimals = _changeDecimals(getRate(), decimals, quoteDecimals);
-            if (data.isPeggedToBase) {
-                rateInQuote = exchangeRateInQuoteDecimals;
-            } else {
-                uint256 quoteRate = data.rateProvider.getRate();
-                uint256 oneQuote = 10 ** quoteDecimals;
-                rateInQuote = oneQuote.mulDivDown(exchangeRateInQuoteDecimals, quoteRate);
-            }
-        }
-    }
-
-    /**
-     * @notice Get this BoringVault's current rate in the provided quote.
-     * @dev `quote` must have its RateProviderData set, else this will revert.
-     * @dev Revert if paused.
-     */
-    function getRateInQuoteSafe(ERC20 quote) external view override returns (uint256 rateInQuote) {
-        if (accountantState.isPaused) revert AccountantWithRateProviders__Paused();
-        rateInQuote = getRateInQuote(quote);
-    }
 
     /**
      * @notice Returns the rate for one share at current block based on amount of gains that are vested and have vested
