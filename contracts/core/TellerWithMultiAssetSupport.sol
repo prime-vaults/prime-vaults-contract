@@ -23,6 +23,23 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
     // ========================================= STRUCTS =========================================
 
     /**
+     * @param isPaused whether or not this contract is paused
+     * @param allowDeposits whether deposits are allowed for the asset
+     * @param allowWithdraws whether withdrawals are allowed for the asset
+     * @param permissionedTransfers if true, only permissioned operators can transfer shares
+     * @param shareLockPeriod after deposits, shares are locked to the msg.sender's address for this period
+     * @param depositCap the global deposit cap of the vault
+     */
+    struct TellerState {
+        bool isPaused;
+        bool allowDeposits;
+        bool allowWithdraws;
+        bool permissionedTransfers;
+        uint64 shareLockPeriod;
+        uint112 depositCap;
+    }
+
+    /**
      * @param denyFrom bool indicating whether or not the user is on the deny from list.
      * @param denyTo bool indicating whether or not the user is on the deny to list.
      * @param denyOperator bool indicating whether or not the user is on the deny operator list.
@@ -57,37 +74,9 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
     ERC20 public immutable asset;
 
     /**
-     * @notice Whether deposits are allowed for the asset
+     * @notice Store the teller state in a packed slot.
      */
-    bool public allowDeposits;
-
-    /**
-     * @notice Whether withdrawals are allowed for the asset
-     */
-    bool public allowWithdraws;
-
-    /**
-     * @notice After deposits, shares are locked to the msg.sender's address
-     *         for `shareLockPeriod`.
-     * @dev During this time all transfers from msg.sender will revert.
-     */
-    uint64 public shareLockPeriod;
-
-    /**
-     * @notice Used to pause calls to `deposit` and `depositWithPermit`.
-     */
-    bool public isPaused;
-
-    /**
-     * @notice If true, only permissioned operators can transfer shares.
-     */
-    bool public permissionedTransfers;
-
-    /**
-     * @notice The global deposit cap of the vault.
-     * @dev If the cap is reached, no new deposits are accepted. No partial fills.
-     */
-    uint112 public depositCap = type(uint112).max;
+    TellerState public tellerState;
 
     /**
      * @notice Maps address to BeforeTransferData struct to check if shares are locked and if the address is on any allow or deny list.
@@ -185,9 +174,14 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
         accountant = AccountantWithRateProviders(_accountant);
         asset = ERC20(_asset);
         nativeWrapper = WETH(payable(_weth));
-        permissionedTransfers = false;
-        allowDeposits = true;
-        allowWithdraws = true;
+        tellerState = TellerState({
+            isPaused: false,
+            allowDeposits: true,
+            allowWithdraws: true,
+            permissionedTransfers: false,
+            shareLockPeriod: 0,
+            depositCap: type(uint112).max
+        });
     }
 
     // ========================================= ADMIN FUNCTIONS =========================================
@@ -197,7 +191,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @dev Callable by MULTISIG_ROLE.
      */
     function pause() external requiresAuth {
-        isPaused = true;
+        tellerState.isPaused = true;
         emit Paused();
     }
 
@@ -206,7 +200,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @dev Callable by MULTISIG_ROLE.
      */
     function unpause() external requiresAuth {
-        isPaused = false;
+        tellerState.isPaused = false;
         emit Unpaused();
     }
 
@@ -215,7 +209,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @dev Callable by OWNER_ROLE.
      */
     function setAllowDeposits(bool _allowDeposits) external requiresAuth {
-        allowDeposits = _allowDeposits;
+        tellerState.allowDeposits = _allowDeposits;
         emit DepositsAllowed(_allowDeposits);
     }
 
@@ -224,7 +218,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @dev Callable by OWNER_ROLE.
      */
     function setAllowWithdraws(bool _allowWithdraws) external requiresAuth {
-        allowWithdraws = _allowWithdraws;
+        tellerState.allowWithdraws = _allowWithdraws;
         emit WithdrawsAllowed(_allowWithdraws);
     }
 
@@ -235,7 +229,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      */
     function setShareLockPeriod(uint64 _shareLockPeriod) external requiresAuth {
         if (_shareLockPeriod > MAX_SHARE_LOCK_PERIOD) revert TellerWithMultiAssetSupport__ShareLockPeriodTooLong();
-        shareLockPeriod = _shareLockPeriod;
+        tellerState.shareLockPeriod = _shareLockPeriod;
     }
 
     /**
@@ -323,7 +317,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @dev Callable by OWNER_ROLE.
      */
     function setPermissionedTransfers(bool _permissionedTransfers) external requiresAuth {
-        permissionedTransfers = _permissionedTransfers;
+        tellerState.permissionedTransfers = _permissionedTransfers;
         emit PermissionedTransfersSet(_permissionedTransfers);
     }
 
@@ -350,7 +344,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @dev Callable by OWNER_ROLE
      */
     function setDepositCap(uint112 cap) external requiresAuth {
-        depositCap = cap;
+        tellerState.depositCap = cap;
         emit DepositCapSet(cap);
     }
 
@@ -365,7 +359,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
     function beforeTransfer(address from, address to, address operator) public view virtual {
         _handleDenyList(from, to, operator);
 
-        if (permissionedTransfers && !beforeTransferData[operator].permissionedOperator) {
+        if (tellerState.permissionedTransfers && !beforeTransferData[operator].permissionedOperator) {
             revert TellerWithMultiAssetSupport__TransferDenied(from, to, operator);
         }
 
@@ -432,7 +426,14 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
         }
 
         shares = _erc20Deposit(depositAsset, depositAmount, minimumMint, from, msg.sender);
-        _afterPublicDeposit(msg.sender, depositAsset, depositAmount, shares, shareLockPeriod, referralAddress);
+        _afterPublicDeposit(
+            msg.sender,
+            depositAsset,
+            depositAmount,
+            shares,
+            tellerState.shareLockPeriod,
+            referralAddress
+        );
     }
 
     /**
@@ -453,7 +454,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
         _handlePermit(asset, depositAmount, deadline, v, r, s);
 
         shares = _erc20Deposit(asset, depositAmount, minimumMint, msg.sender, msg.sender);
-        _afterPublicDeposit(msg.sender, asset, depositAmount, shares, shareLockPeriod, referralAddress);
+        _afterPublicDeposit(msg.sender, asset, depositAmount, shares, tellerState.shareLockPeriod, referralAddress);
     }
 
     /**
@@ -512,12 +513,13 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
         address to
     ) internal virtual returns (uint256 shares) {
         _handleDenyList(from, to, msg.sender);
-        uint112 cap = depositCap;
+        TellerState storage state = tellerState;
         if (depositAmount == 0) revert TellerWithMultiAssetSupport__ZeroAssets();
         shares = depositAmount.mulDivDown(ONE_SHARE, accountant.getRate());
         if (shares < minimumMint) revert TellerWithMultiAssetSupport__MinimumMintNotMet();
-        if (cap != type(uint112).max) {
-            if (shares + vault.totalSupply() > cap) revert TellerWithMultiAssetSupport__DepositExceedsCap();
+        if (state.depositCap != type(uint112).max) {
+            if (shares + vault.totalSupply() > state.depositCap)
+                revert TellerWithMultiAssetSupport__DepositExceedsCap();
         }
         vault.enter(from, depositAsset, depositAmount, to, shares);
     }
@@ -530,8 +532,9 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
         uint256 minimumAssets,
         address to
     ) internal virtual returns (uint256 assetsOut) {
-        if (isPaused) revert TellerWithMultiAssetSupport__Paused();
-        if (!allowWithdraws) revert TellerWithMultiAssetSupport__WithdrawsNotAllowed();
+        TellerState storage state = tellerState;
+        if (state.isPaused) revert TellerWithMultiAssetSupport__Paused();
+        if (!state.allowWithdraws) revert TellerWithMultiAssetSupport__WithdrawsNotAllowed();
 
         if (shareAmount == 0) revert TellerWithMultiAssetSupport__ZeroShares();
         assetsOut = shareAmount.mulDivDown(accountant.getRate(), ONE_SHARE);
@@ -543,8 +546,9 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
      * @notice Handle pre-deposit checks.
      */
     function _beforeDeposit() internal view {
-        if (isPaused) revert TellerWithMultiAssetSupport__Paused();
-        if (!allowDeposits) revert TellerWithMultiAssetSupport__DepositsNotAllowed();
+        TellerState storage state = tellerState;
+        if (state.isPaused) revert TellerWithMultiAssetSupport__Paused();
+        if (!state.allowDeposits) revert TellerWithMultiAssetSupport__DepositsNotAllowed();
     }
 
     /**
