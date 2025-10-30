@@ -2,15 +2,15 @@
 // Copyright © 2025 Veda Tech Labs
 // Derived from Boring Vault Software © 2025 Veda Tech Labs (TEST ONLY – NO COMMERCIAL USE)
 // Licensed under Software Evaluation License, Version 1.0
-pragma solidity 0.8.21;
+pragma solidity ^0.8.30;
 
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
-import {IRateProvider} from "src/interfaces/IRateProvider.sol";
+import {IRateProvider} from "../interfaces/IRateProvider.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
-import {BoringVault} from "src/base/BoringVault.sol";
+import {BoringVault} from "./BoringVault.sol";
 import {Auth, Authority} from "solmate/src/auth/Auth.sol";
-import {IPausable} from "src/interfaces/IPausable.sol";
+import {IPausable} from "../interfaces/IPausable.sol";
 
 contract AccountantWithRateProviders is Auth, IRateProvider, IPausable {
     using FixedPointMathLib for uint256;

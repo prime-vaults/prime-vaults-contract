@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.30;
 
-import {IAccessControl} from "openzeppelin-contracts/contracts/access/IAccessControl.sol";
-
 /// @title IPrimeRBAC
 /// @dev Interface for PrimeRBAC
 /// @author Prime Labs.
-interface IPrimeRBAC is IAccessControl {
+interface IPrimeRBAC {
     //////////////////////////////////////////////////////////////
     //                           STRUCTS                         //
     //////////////////////////////////////////////////////////////

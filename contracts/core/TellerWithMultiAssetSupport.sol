@@ -2,18 +2,18 @@
 // Copyright © 2025 Veda Tech Labs
 // Derived from Boring Vault Software © 2025 Veda Tech Labs (TEST ONLY – NO COMMERCIAL USE)
 // Licensed under Software Evaluation License, Version 1.0
-pragma solidity 0.8.21;
+pragma solidity ^0.8.30;
 
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {WETH} from "solmate/src/tokens/WETH.sol";
-import {BoringVault} from "src/base/BoringVault.sol";
-import {AccountantWithRateProviders} from "src/base/Roles/AccountantWithRateProviders.sol";
+import {BoringVault} from "./BoringVault.sol";
+import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
-import {BeforeTransferHook} from "src/interfaces/BeforeTransferHook.sol";
+import {BeforeTransferHook} from "../interfaces/hooks/BeforeTransferHook.sol";
 import {Auth, Authority} from "solmate/src/auth/Auth.sol";
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
-import {IPausable} from "src/interfaces/IPausable.sol";
+import {IPausable} from "../interfaces/IPausable.sol";
 
 contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuard, IPausable {
     using FixedPointMathLib for uint256;

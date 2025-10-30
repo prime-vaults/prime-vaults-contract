@@ -2,12 +2,12 @@
 // Copyright © 2025 Veda Tech Labs
 // Derived from Boring Vault Software © 2025 Veda Tech Labs (TEST ONLY – NO COMMERCIAL USE)
 // Licensed under Software Evaluation License, Version 1.0
-pragma solidity 0.8.21;
+pragma solidity ^0.8.30;
 
-import {TellerWithBuffer, ERC20} from "src/base/Roles/TellerWithBuffer.sol";
+import {TellerWithBuffer, ERC20} from "./TellerWithBuffer.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
-import {AccountantWithYieldStreaming} from "src/base/Roles/AccountantWithYieldStreaming.sol";
+import {AccountantWithYieldStreaming} from "./AccountantWithYieldStreaming.sol";
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 
 contract TellerWithYieldStreaming is TellerWithBuffer {

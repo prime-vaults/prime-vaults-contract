@@ -2,10 +2,10 @@
 // Copyright © 2025 Veda Tech Labs
 // Derived from Boring Vault Software © 2025 Veda Tech Labs (TEST ONLY – NO COMMERCIAL USE)
 // Licensed under Software Evaluation License, Version 1.0
-pragma solidity 0.8.21;
+pragma solidity ^0.8.30;
 
 import {TellerWithMultiAssetSupport, ERC20} from "./TellerWithMultiAssetSupport.sol";
-import {IBufferHelper} from "src/interfaces/IBufferHelper.sol";
+import {IBufferHelper} from "../interfaces/IBufferHelper.sol";
 
 /**
  * @title TellerWithBuffer
