@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      solmate:
+        specifier: ^6.8.0
+        version: 6.8.0
     devDependencies:
       '@nomicfoundation/hardhat-ignition':
         specifier: ^3.0.3
@@ -1578,6 +1582,9 @@ packages:
   solhint@6.0.1:
     resolution: {integrity: sha512-Lew5nhmkXqHPybzBzkMzvvWkpOJSSLTkfTZwRriWvfR2naS4YW2PsjVGaoX9tZFmHh7SuS+e2GEGo5FPYYmJ8g==}
     hasBin: true
+
+  solmate@6.8.0:
+    resolution: {integrity: sha512-/oI8kgEvSxGG1mrFv3FmCEZd0F8Z9VzRmoYMIhzmmzt6mjtPwfdCm3oh8yOL7bMHJBSfXJuMpnMPrM0uyaKsKg==}
 
   split2@3.2.2:
     resolution: {integrity: sha512-9NThjpgZnifTkJpzTZ7Eue85S49QwpNhZTq6GRJwObb6jnLFNGB7Qm73V5HewTROPyxD0C29xqmaI68bQtV+hg==}
@@ -3355,6 +3362,8 @@ snapshots:
       prettier: 2.8.8
     transitivePeerDependencies:
       - typescript
+
+  solmate@6.8.0: {}
 
   split2@3.2.2:
     dependencies:

@@ -58,10 +58,10 @@ const config: HardhatUserConfig = {
     },
     profiles: {
       default: {
-        version: "0.8.28",
+        version: "0.8.30",
       },
       production: {
-        version: "0.8.28",
+        version: "0.8.30",
       },
     },
   },
