@@ -324,19 +324,6 @@ contract AccountantWithRateProviders is Auth, IRateProvider, IPausable {
 
     // ========================================= INTERNAL HELPER FUNCTIONS =========================================
     /**
-     * @notice Used to change the decimals of precision used for an amount.
-     */
-    function _changeDecimals(uint256 amount, uint8 fromDecimals, uint8 toDecimals) internal pure returns (uint256) {
-        if (fromDecimals == toDecimals) {
-            return amount;
-        } else if (fromDecimals < toDecimals) {
-            return amount * 10 ** (toDecimals - fromDecimals);
-        } else {
-            return amount / 10 ** (fromDecimals - toDecimals);
-        }
-    }
-
-    /**
      * @notice Check if the new exchange rate is outside of the allowed bounds or if not enough time has passed.
      */
     function _beforeUpdateExchangeRate(
