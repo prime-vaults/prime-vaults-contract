@@ -25,16 +25,21 @@ const main = defineCommand({
       description: "Network to deploy to",
       required: true,
     },
+    f: {
+      type: "string",
+      description: "Specific files to run (comma-separated)",
+      required: false,
+    },
   },
   async run({ args }) {
-    const { dir, network } = args;
+    const { dir, network, f } = args;
 
     console.log(`🚀 Starting script to network: ${network}\n`);
 
     // Read all scripts from the <dir> directory
     const deployDir = path.join(__dirname, "../", dir);
     const files = readdirSync(deployDir)
-      .filter((file) => file.endsWith(".ts"))
+      .filter((file) => file.endsWith(".ts") && (f ? file.includes(f) : true))
       .sort(); // Sort to ensure correct order (00_, 01_, etc.)
 
     console.log(`📁 Found ${files.length} script(s):\n`);

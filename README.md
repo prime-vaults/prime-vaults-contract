@@ -1,4 +1,4 @@
-# Hardhat Template with Viem ⚡
+read# Hardhat Template with Viem ⚡
 
 [![Hardhat][hardhat-badge]][hardhat] [![License: MIT][license-badge]][license]
 
