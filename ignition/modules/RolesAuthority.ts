@@ -1,6 +1,12 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
+import PrimeVaultFactory from "./PrimeVaultFactory.js";
+
 export default buildModule("RolesAuthorityModule", (m) => {
-  const rolesAuthority = m.contract("RolesAuthority", [m.getParameter("adminAddress")]);
-  return { rolesAuthority };
+  const { primeVaultFactory } = m.useModule(PrimeVaultFactory);
+  const rolesAuthority = m.contract("RolesAuthority", [primeVaultFactory], {
+    after: [primeVaultFactory],
+  });
+
+  return { rolesAuthority, primeVaultFactory };
 });

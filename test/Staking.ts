@@ -1,79 +1,77 @@
 import { network } from "hardhat";
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
-import { getAddress, parseEther } from "viem";
+
+import MockERc20Module from "../ignition/modules/MockERC20.js";
+import RolesAuthorityModule from "../ignition/modules/RolesAuthority.js";
+import TellerModule from "../ignition/modules/Teller.js";
+
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 void describe("Staking", function () {
-  let viem: any;
-  let _deployer: any; // unused on purpose
-  let user: any;
+  let mockERC20Address: `0x${string}`;
+  let deployerAddress: `0x${string}`;
+
+  const params = {
+    $global: {
+      adminAddress: ZERO_ADDRESS,
+      wrapNative: ZERO_ADDRESS,
+      tokenAddress: ZERO_ADDRESS,
+    },
+    VaultModule: {
+      name: "Prime USD",
+      symbol: "pUSD",
+      decimals: "18",
+    },
+    AccountantModule: {
+      startingExchangeRate: "1000000000000000000",
+      allowedExchangeRateChangeUpper: 10010,
+      allowedExchangeRateChangeLower: 9990,
+      minimumUpdateDelayInSeconds: 1,
+      platformFee: 200,
+      performanceFee: 0,
+    },
+  };
 
   before(async () => {
-    ({ viem } = await network.connect());
-    [_deployer, user] = await viem.getWalletClients();
+    const { viem } = await network.connect();
+    const [_deployer] = await viem.getWalletClients();
+    deployerAddress = _deployer.account.address;
+    params.$global.adminAddress = deployerAddress;
+
+    // Deploy MockERC20 once
   });
 
   void it("Should deploy MockERC20 token", async function () {
-    const token = await viem.deployContract("MockERC20", ["Test Token", "TEST", 18]);
+    const { ignition } = await network.connect();
 
-    const name = await token.read.name();
-    const symbol = await token.read.symbol();
-    const decimals = await token.read.decimals();
+    const { mockERC20 } = await ignition.deploy(MockERc20Module);
+    mockERC20Address = mockERC20.address;
+    params.$global.tokenAddress = mockERC20Address;
 
-    assert.equal(name, "Test Token");
-    assert.equal(symbol, "TEST");
-    assert.equal(decimals, 18);
+    await mockERC20.write.mint([deployerAddress, 10n ** 18n]);
+    assert.ok(mockERC20Address, "MockERC20 should be deployed");
   });
 
-  void it("Should stake tokens successfully", async function () {
-    // Deploy token
-    const token = await viem.deployContract("MockERC20", ["Test Token", "TEST", 18]);
+  void it("Should stake", async function () {
+    const { ignition } = await network.connect();
+    const { teller, accountant, vault } = await ignition.deploy(TellerModule, { parameters: params, displayUi: true });
+    const { rolesAuthority, primeVaultFactory } = await ignition.deploy(RolesAuthorityModule, {
+      parameters: params,
+      displayUi: true,
+    });
 
-    // Deploy staking contract
-    const staking = await viem.deployContract("Staking", [token.address]);
+    await teller.write.setAuthority([rolesAuthority.address]);
+    await accountant.write.setAuthority([rolesAuthority.address]);
+    await vault.write.setAuthority([rolesAuthority.address]);
+    await primeVaultFactory.write.setup([rolesAuthority.address, vault.address, accountant.address, teller.address]);
 
-    // Mint tokens to user
-    const mintAmount = parseEther("100");
-    await token.write.mint([user.account.address, mintAmount]);
+    const { mockERC20 } = await ignition.deploy(MockERc20Module);
+    await mockERC20.write.approve([vault.address, 10n ** 18n]);
 
-    // Check user balance
-    const userBalance = await token.read.balanceOf([user.account.address]);
-    assert.equal(userBalance, mintAmount);
+    const stakeTx = await teller.write.deposit([10n ** 18n, 0n, ZERO_ADDRESS]);
 
-    // Approve staking contract
-    const stakeAmount = parseEther("50");
-    await token.write.approve([staking.address, stakeAmount], { account: user.account });
-
-    // Stake tokens
-    await staking.write.stake([stakeAmount], { account: user.account });
-
-    // Verify stake
-    const stakedAmount = await staking.read.stakes([user.account.address]);
-    assert.equal(stakedAmount, stakeAmount);
-
-    // Verify token was transferred
-    const stakingBalance = await token.read.balanceOf([staking.address]);
-    assert.equal(stakingBalance, stakeAmount);
-  });
-
-  void it("Should emit Staked event when staking", async function () {
-    // Deploy token
-    const token = await viem.deployContract("MockERC20", ["Test Token", "TEST", 18]);
-
-    // Deploy staking contract
-    const staking = await viem.deployContract("Staking", [token.address]);
-
-    // Mint and approve tokens
-    const stakeAmount = parseEther("50");
-    await token.write.mint([user.account.address, stakeAmount]);
-    await token.write.approve([staking.address, stakeAmount], { account: user.account });
-
-    // Check Staked event
-    await viem.assertions.emitWithArgs(
-      staking.write.stake([stakeAmount], { account: user.account }),
-      staking,
-      "Staked",
-      [getAddress(user.account.address), stakeAmount],
-    );
+    const balance = await vault.read.balanceOf([deployerAddress]);
+    console.log("Staked balance:", balance);
   });
 });

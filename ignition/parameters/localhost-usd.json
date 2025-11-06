@@ -7,7 +7,7 @@
   "VaultModule": {
     "name": "Prime USD",
     "symbol": "pUSD",
-    "decimals": "6"
+    "decimals": 18
   },
   "AccountantModule": {
     "startingExchangeRate": "1000000000000000000",

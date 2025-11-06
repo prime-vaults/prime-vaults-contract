@@ -1,10 +1,8 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-import RolesAuthorityModule from "./RolesAuthority.js";
 import VaultModule from "./Vault.js";
 
 export default buildModule("AccountantModule", (m) => {
-  const { rolesAuthority } = m.useModule(RolesAuthorityModule);
   const { vault } = m.useModule(VaultModule);
 
   const accountant = m.contract(
@@ -22,10 +20,8 @@ export default buildModule("AccountantModule", (m) => {
       m.getParameter("performanceFee"),
     ],
     {
-      after: [rolesAuthority, vault],
+      after: [vault],
     },
   );
-  m.call(accountant, "setAuthority", [rolesAuthority]);
-
-  return { accountant, vault, rolesAuthority };
+  return { accountant, vault };
 });
