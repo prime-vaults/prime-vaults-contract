@@ -17,7 +17,6 @@ export default buildModule("WithdrawerModule", (m) => {
   m.call(withdrawer, "setupWithdrawAsset", [
     m.getParameter("tokenAddress"),
     m.getParameter("withdrawDelayInSeconds"),
-    m.getParameter("completionWindowInSeconds"),
     m.getParameter("withdrawFee"),
   ]);
 

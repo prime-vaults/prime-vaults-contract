@@ -7,7 +7,6 @@
   },
   "WithdrawerModule": {
     "withdrawDelayInSeconds": 86400,
-    "completionWindowInSeconds": 86400,
     "withdrawFee": 0
   },
   "VaultModule": {

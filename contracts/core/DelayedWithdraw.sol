@@ -22,14 +22,12 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
     /**
      * @param allowWithdraws Whether or not withdrawals are allowed for this asset.
      * @param withdrawDelay The delay in seconds before a requested withdrawal can be completed.
-     * @param completionWindow The window in seconds that a withdrawal can be completed after the maturity.
      * @param outstandingShares The total number of shares that are currently outstanding for an asset.
      * @param withdrawFee The fee that is charged when a withdrawal is completed.
      */
     struct WithdrawAsset {
         bool allowWithdraws;
         uint32 withdrawDelay;
-        uint32 completionWindow;
         uint128 outstandingShares;
         uint16 withdrawFee;
     }
@@ -53,11 +51,6 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
      * @notice The largest withdraw fee that can be set.
      */
     uint16 internal constant MAX_WITHDRAW_FEE = 0.2e4;
-
-    /**
-     * @notice The default completion window for a withdrawal asset.
-     */
-    uint32 internal constant DEFAULT_COMPLETION_WINDOW = 7 days;
 
     // ========================================= STATE =========================================
 
@@ -96,7 +89,6 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
     error DelayedWithdraw__NoSharesToWithdraw();
     error DelayedWithdraw__BadAddress();
     error DelayedWithdraw__ThirdPartyCompletionNotAllowed();
-    error DelayedWithdraw__RequestPastCompletionWindow();
     error DelayedWithdraw__Paused();
     error DelayedWithdraw__CallerNotBoringVault();
     error DelayedWithdraw__CannotWithdrawBoringToken();
@@ -109,7 +101,6 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
     event FeeAddressSet(address newFeeAddress);
     event SetupWithdrawalsInAsset(address indexed asset, uint64 withdrawDelay, uint16 withdrawFee);
     event WithdrawDelayUpdated(address indexed asset, uint32 newWithdrawDelay);
-    event CompletionWindowUpdated(address indexed asset, uint32 newCompletionWindow);
     event WithdrawFeeUpdated(address indexed asset, uint16 newWithdrawFee);
     event WithdrawalsStopped(address indexed asset);
     event ThirdPartyCompletionChanged(address indexed account, ERC20 indexed asset, bool allowed);
@@ -184,12 +175,7 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
      * @notice Sets up the withdrawal settings for a specific asset.
      * @dev Callable by OWNER_ROLE.
      */
-    function setupWithdrawAsset(
-        ERC20 asset,
-        uint32 withdrawDelay,
-        uint32 completionWindow,
-        uint16 withdrawFee
-    ) external requiresAuth {
+    function setupWithdrawAsset(ERC20 asset, uint32 withdrawDelay, uint16 withdrawFee) external requiresAuth {
         WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
 
         if (withdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__WithdrawFeeTooHigh();
@@ -197,7 +183,6 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
         if (withdrawAsset.allowWithdraws) revert DelayedWithdraw__AlreadySetup();
         withdrawAsset.allowWithdraws = true;
         withdrawAsset.withdrawDelay = withdrawDelay;
-        withdrawAsset.completionWindow = completionWindow;
         withdrawAsset.withdrawFee = withdrawFee;
 
         emit SetupWithdrawalsInAsset(address(asset), withdrawDelay, withdrawFee);
@@ -214,19 +199,6 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
         withdrawAsset.withdrawDelay = withdrawDelay;
 
         emit WithdrawDelayUpdated(address(asset), withdrawDelay);
-    }
-
-    /**
-     * @notice Changes the completion window for a specific asset.
-     * @dev Callable by MULTISIG_ROLE.
-     */
-    function changeCompletionWindow(ERC20 asset, uint32 completionWindow) external requiresAuth {
-        WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
-        if (!withdrawAsset.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
-
-        withdrawAsset.completionWindow = completionWindow;
-
-        emit CompletionWindowUpdated(address(asset), completionWindow);
     }
 
     /**
@@ -353,7 +325,7 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
 
     /**
      * @notice Completes a user's withdrawal request.
-     * @dev Publicly callable.
+     * @dev Publicly callable. No time limit after maturity.
      */
     function completeWithdraw(
         ERC20 asset,
@@ -362,11 +334,7 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
         if (isPaused) revert DelayedWithdraw__Paused();
         WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
         WithdrawRequest storage req = withdrawRequests[account][asset];
-        uint32 completionWindow = withdrawAsset.completionWindow > 0
-            ? withdrawAsset.completionWindow
-            : DEFAULT_COMPLETION_WINDOW;
 
-        if (block.timestamp > (req.maturity + completionWindow)) revert DelayedWithdraw__RequestPastCompletionWindow();
         if (msg.sender != account && !req.allowThirdPartyToComplete) {
             revert DelayedWithdraw__ThirdPartyCompletionNotAllowed();
         }

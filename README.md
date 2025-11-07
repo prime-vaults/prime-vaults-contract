@@ -297,7 +297,6 @@ _Secure delayed withdrawal system_
 struct WithdrawAsset {
   bool allowWithdraws; // Toggle withdrawals
   uint32 withdrawDelay; // Delay before completion (e.g., 7 days)
-  uint32 completionWindow; // Window to complete after maturity
   uint128 outstandingShares; // Total pending withdrawal shares
   uint16 withdrawFee; // Fee in basis points
 }
@@ -314,7 +313,7 @@ struct WithdrawRequest {
 
 1. **Request**: User calls `requestWithdraw()` → Shares transferred to contract, exchange rate locked
 2. **Wait Period**: Must wait for `withdrawDelay` seconds (e.g., 7 days)
-3. **Complete**: User calls `completeWithdraw()` within completion window → Receives assets at locked rate (minus fees)
+3. **Complete**: User calls `completeWithdraw()` anytime after maturity → Receives assets at locked rate (minus fees)
 4. **Cancel**: User can cancel anytime before completion to get shares back
 
 **Key Functions**:
