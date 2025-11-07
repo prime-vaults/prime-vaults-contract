@@ -12,9 +12,9 @@
     "lint": "$npm_execpath run lint:ts && $npm_execpath run lint:sol",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
     "lint:ts": "eslint --ignore-path ./.eslintignore --ext .js,.ts .",
-    "lint:fix": "eslint --fix '**/*.{js,ts,json}' && prettier --write . && solhint 'contracts/**/*.sol' --fix --noPrompt",
-    "test": "hardhat test",
-    "test-local": "pnpm clean && pnpm compile &&  hardhat test --network localhost",
+    "lint:fix": "eslint --fix '**/*.{pajs,ts,json}' && prettier --write . && solhint 'contracts/**/*.sol' --fix --noPrompt",
+    "test": "pnpm run compile && hardhat test",
+    "test-local": "hardhat test --network localhost",
     "tasks": "tsx scripts/plugins/run.ts --dir tasks",
     "deploy": "tsx scripts/plugins/run.ts --dir deploy",
     "contract-size": "tsx scripts/plugins/contract-size.ts"
@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^3.0.3",
-    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
+    "@nomicfoundatipackon/hardhat-toolbox-viem": "^5.0.0",
     "@openzeppelin/contracts": "^5.4.0",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/node": "^22.8.5",

@@ -1,19 +1,16 @@
-// SPDX-License-Identifier: SEL-1.0
-// Copyright © 2025 Veda Tech Labs
-// Derived from Boring Vault Software © 2025 Veda Tech Labs (TEST ONLY – NO COMMERCIAL USE)
-// Licensed under Software Evaluation License, Version 1.0
-pragma solidity 0.8.21;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
 
-import {ERC20} from "@solmate/tokens/ERC20.sol";
-import {WETH} from "@solmate/tokens/WETH.sol";
-import {BoringVault} from "src/base/BoringVault.sol";
-import {AccountantWithRateProviders} from "src/base/Roles/AccountantWithRateProviders.sol";
-import {FixedPointMathLib} from "@solmate/utils/FixedPointMathLib.sol";
-import {SafeTransferLib} from "@solmate/utils/SafeTransferLib.sol";
-import {BeforeTransferHook} from "src/interfaces/BeforeTransferHook.sol";
-import {Auth, Authority} from "@solmate/auth/Auth.sol";
-import {ReentrancyGuard} from "@solmate/utils/ReentrancyGuard.sol";
-import {IPausable} from "src/interfaces/IPausable.sol";
+import {ERC20} from "solmate/src/tokens/ERC20.sol";
+import {WETH} from "solmate/src/tokens/WETH.sol";
+import {BoringVault} from "./BoringVault.sol";
+import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
+import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
+import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
+import {BeforeTransferHook} from "../interfaces/hooks/BeforeTransferHook.sol";
+import {Auth, Authority} from "solmate/src/auth/Auth.sol";
+import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
+import {IPausable} from "../interfaces/IPausable.sol";
 
 contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
     using SafeTransferLib for BoringVault;
@@ -340,7 +337,7 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
         req.shares += shares;
         uint40 maturity = uint40(block.timestamp + withdrawAsset.withdrawDelay);
         req.maturity = maturity;
-        req.exchangeRateAtTimeOfRequest = uint96(accountant.getRateInQuoteSafe(asset));
+        req.exchangeRateAtTimeOfRequest = uint96(accountant.getRateSafe());
         req.allowThirdPartyToComplete = allowThirdPartyToComplete;
 
         emit WithdrawRequested(msg.sender, asset, shares, maturity);
@@ -381,7 +378,7 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
      * @notice Helper function to view the outstanding withdraw debt for a specific asset.
      */
     function viewOutstandingDebt(ERC20 asset) public view returns (uint256 debt) {
-        uint256 rate = accountant.getRateInQuoteSafe(asset);
+        uint256 rate = accountant.getRateSafe();
 
         debt = rate.mulDivDown(withdrawAssets[asset].outstandingShares, ONE_SHARE);
     }

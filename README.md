@@ -277,7 +277,61 @@ uint8 constant SOLVER_ROLE = 9; // Bulk operations
 
 ---
 
-### 8. **PrimeVaultFactory**
+### 8. **DelayedWithdraw**
+
+_Secure delayed withdrawal system_
+
+- **Purpose**: Implements delayed withdrawal mechanism with configurable waiting periods
+- **Size**: TBD
+- **Key Features**:
+  - Delayed withdrawal requests (configurable delay period)
+  - Completion window to prevent indefinite pending requests
+  - Withdrawal fees support
+  - Third-party completion option
+  - Exchange rate locked at request time (no rewards after request)
+  - Admin controls for emergency situations
+
+**State Management**:
+
+```solidity
+struct WithdrawAsset {
+  bool allowWithdraws; // Toggle withdrawals
+  uint32 withdrawDelay; // Delay before completion (e.g., 7 days)
+  uint32 completionWindow; // Window to complete after maturity
+  uint128 outstandingShares; // Total pending withdrawal shares
+  uint16 withdrawFee; // Fee in basis points
+}
+
+struct WithdrawRequest {
+  bool allowThirdPartyToComplete; // Allow others to complete
+  uint40 maturity; // When withdrawal can be completed
+  uint96 shares; // Shares to withdraw
+  uint96 exchangeRateAtTimeOfRequest; // Locked exchange rate
+}
+```
+
+**Withdrawal Flow**:
+
+1. **Request**: User calls `requestWithdraw()` → Shares transferred to contract, exchange rate locked
+2. **Wait Period**: Must wait for `withdrawDelay` seconds (e.g., 7 days)
+3. **Complete**: User calls `completeWithdraw()` within completion window → Receives assets at locked rate (minus fees)
+4. **Cancel**: User can cancel anytime before completion to get shares back
+
+**Key Functions**:
+
+- `requestWithdraw()`: Initiate withdrawal request
+- `completeWithdraw()`: Complete matured withdrawal
+- `cancelWithdraw()`: Cancel pending withdrawal
+- `setupWithdrawAsset()`: Admin setup for supported asset
+- `cancelUserWithdraw()`: Admin emergency cancel
+- `completeUserWithdraw()`: Admin force complete
+
+**Important**: Once withdrawal is requested, shares are locked and **no longer earn yield**. The exchange rate is frozen
+at the time of request.
+
+---
+
+### 9. **PrimeVaultFactory**
 
 _Deployment configuration helper_
 
@@ -419,6 +473,7 @@ contracts/
 │   ├── TellerWithYieldStreaming.sol       # Yield-optimized teller (~21 KB)
 │   ├── AccountantWithRateProviders.sol    # Exchange rate manager (~12 KB)
 │   ├── AccountantWithYieldStreaming.sol   # Yield streaming (~18 KB)
+│   ├── DelayedWithdraw.sol                # Delayed withdrawal system
 │   └── PrimeVaultFactory.sol              # Setup helper (~6 KB)
 │
 ├── auth/

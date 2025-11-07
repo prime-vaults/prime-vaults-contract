@@ -11,7 +11,7 @@ export default buildModule("TellerModule", (m) => {
     "TellerWithYieldStreaming",
     [m.getParameter("adminAddress"), vault, accountant, m.getParameter("tokenAddress"), m.getParameter("wrapNative")],
     {
-      after: [accountant],
+      after: [accountant, vault],
     },
   );
 
