@@ -1,7 +1,7 @@
 plugins:
   - "@trivago/prettier-plugin-sort-imports"
   - "prettier-plugin-solidity"
-printWidth: 120
+printWidth: 140
 proseWrap: "always"
 trailingComma: "all"
 

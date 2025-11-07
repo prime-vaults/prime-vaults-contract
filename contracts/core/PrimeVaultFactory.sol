@@ -41,84 +41,25 @@ contract PrimeVaultFactory is Ownable {
             AccountantWithYieldStreaming.setFirstDepositTimestamp.selector,
             true
         );
-        rolesAuthority.setRoleCapability(
-            ADMIN_ROLE,
-            address(accountant),
-            AccountantWithRateProviders.pause.selector,
-            true
-        );
-        rolesAuthority.setRoleCapability(
-            ADMIN_ROLE,
-            address(accountant),
-            AccountantWithRateProviders.unpause.selector,
-            true
-        );
-        rolesAuthority.setRoleCapability(
-            ADMIN_ROLE,
-            address(accountant),
-            AccountantWithRateProviders.updateDelay.selector,
-            true
-        );
-        rolesAuthority.setRoleCapability(
-            ADMIN_ROLE,
-            address(accountant),
-            AccountantWithRateProviders.updateUpper.selector,
-            true
-        );
-        rolesAuthority.setRoleCapability(
-            ADMIN_ROLE,
-            address(accountant),
-            AccountantWithRateProviders.updateLower.selector,
-            true
-        );
-        rolesAuthority.setRoleCapability(
-            ADMIN_ROLE,
-            address(accountant),
-            AccountantWithRateProviders.updatePlatformFee.selector,
-            true
-        );
-        rolesAuthority.setRoleCapability(
-            ADMIN_ROLE,
-            address(accountant),
-            AccountantWithRateProviders.updatePayoutAddress.selector,
-            true
-        );
+        rolesAuthority.setRoleCapability(ADMIN_ROLE, address(accountant), AccountantWithRateProviders.pause.selector, true);
+        rolesAuthority.setRoleCapability(ADMIN_ROLE, address(accountant), AccountantWithRateProviders.unpause.selector, true);
+        rolesAuthority.setRoleCapability(ADMIN_ROLE, address(accountant), AccountantWithRateProviders.updateDelay.selector, true);
+        rolesAuthority.setRoleCapability(ADMIN_ROLE, address(accountant), AccountantWithRateProviders.updateUpper.selector, true);
+        rolesAuthority.setRoleCapability(ADMIN_ROLE, address(accountant), AccountantWithRateProviders.updateLower.selector, true);
+        rolesAuthority.setRoleCapability(ADMIN_ROLE, address(accountant), AccountantWithRateProviders.updatePlatformFee.selector, true);
+        rolesAuthority.setRoleCapability(ADMIN_ROLE, address(accountant), AccountantWithRateProviders.updatePayoutAddress.selector, true);
         rolesAuthority.setRoleCapability(
             UPDATE_EXCHANGE_RATE_ROLE,
             address(accountant),
             AccountantWithRateProviders.updateExchangeRate.selector,
             true
         );
-        rolesAuthority.setRoleCapability(
-            BORING_VAULT_ROLE,
-            address(accountant),
-            AccountantWithRateProviders.claimFees.selector,
-            true
-        );
-        rolesAuthority.setRoleCapability(
-            STRATEGIST_ROLE,
-            address(accountant),
-            AccountantWithYieldStreaming.vestYield.selector,
-            true
-        );
-        rolesAuthority.setRoleCapability(
-            STRATEGIST_ROLE,
-            address(accountant),
-            bytes4(keccak256("updateExchangeRate()")),
-            true
-        );
-        rolesAuthority.setRoleCapability(
-            MINTER_ROLE,
-            address(accountant),
-            bytes4(keccak256("updateCumulative()")),
-            true
-        );
+        rolesAuthority.setRoleCapability(BORING_VAULT_ROLE, address(accountant), AccountantWithRateProviders.claimFees.selector, true);
+        rolesAuthority.setRoleCapability(STRATEGIST_ROLE, address(accountant), AccountantWithYieldStreaming.vestYield.selector, true);
+        rolesAuthority.setRoleCapability(STRATEGIST_ROLE, address(accountant), bytes4(keccak256("updateExchangeRate()")), true);
+        rolesAuthority.setRoleCapability(MINTER_ROLE, address(accountant), bytes4(keccak256("updateCumulative()")), true);
         rolesAuthority.setPublicCapability(address(teller), TellerWithMultiAssetSupport.deposit.selector, true);
-        rolesAuthority.setPublicCapability(
-            address(teller),
-            TellerWithMultiAssetSupport.depositWithPermit.selector,
-            true
-        );
+        rolesAuthority.setPublicCapability(address(teller), TellerWithMultiAssetSupport.depositWithPermit.selector, true);
         rolesAuthority.setPublicCapability(address(teller), TellerWithYieldStreaming.withdraw.selector, true);
 
         // Allow the boring vault to receive ETH.
@@ -128,11 +69,7 @@ contract PrimeVaultFactory is Ownable {
         rolesAuthority.setPublicCapability(address(withdrawer), DelayedWithdraw.cancelWithdraw.selector, true);
         rolesAuthority.setPublicCapability(address(withdrawer), DelayedWithdraw.requestWithdraw.selector, true);
         rolesAuthority.setPublicCapability(address(withdrawer), DelayedWithdraw.completeWithdraw.selector, true);
-        rolesAuthority.setPublicCapability(
-            address(withdrawer),
-            DelayedWithdraw.setAllowThirdPartyToComplete.selector,
-            true
-        );
+        rolesAuthority.setPublicCapability(address(withdrawer), DelayedWithdraw.setAllowThirdPartyToComplete.selector, true);
 
         rolesAuthority.setUserRole(address(accountant), MINTER_ROLE, true);
         rolesAuthority.setUserRole(address(accountant), ADMIN_ROLE, true);
