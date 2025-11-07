@@ -76,4 +76,11 @@ const main = defineCommand({
   },
 });
 
-runMain(main);
+(async () => {
+  try {
+    await runMain(main);
+  } catch (error) {
+    console.error("Error running command:", error);
+    process.exit(1);
+  }
+})();

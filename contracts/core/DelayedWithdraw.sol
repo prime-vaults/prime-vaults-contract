@@ -365,6 +365,7 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
         uint32 completionWindow = withdrawAsset.completionWindow > 0
             ? withdrawAsset.completionWindow
             : DEFAULT_COMPLETION_WINDOW;
+
         if (block.timestamp > (req.maturity + completionWindow)) revert DelayedWithdraw__RequestPastCompletionWindow();
         if (msg.sender != account && !req.allowThirdPartyToComplete) {
             revert DelayedWithdraw__ThirdPartyCompletionNotAllowed();

@@ -15,6 +15,6 @@ export default buildModule("TellerModule", (m) => {
     },
   );
 
-  m.call(vault, "setBeforeTransferHook", [vault]);
+  m.call(vault, "setBeforeTransferHook", [teller]);
   return { teller, accountant, vault };
 });

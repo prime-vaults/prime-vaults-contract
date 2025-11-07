@@ -10,6 +10,7 @@ import "./AccountantWithYieldStreaming.sol";
 import "./AccountantWithRateProviders.sol";
 import "./TellerWithYieldStreaming.sol";
 import "./TellerWithMultiAssetSupport.sol";
+import "./DelayedWithdraw.sol";
 
 contract PrimeVaultFactory is Ownable {
     uint8 public constant MINTER_ROLE = 1;
@@ -28,7 +29,8 @@ contract PrimeVaultFactory is Ownable {
         RolesAuthority rolesAuthority,
         BoringVault boringVault,
         AccountantWithYieldStreaming accountant,
-        TellerWithYieldStreaming teller
+        TellerWithYieldStreaming teller,
+        DelayedWithdraw withdrawer
     ) external onlyOwner {
         // Setup roles authority.
         rolesAuthority.setRoleCapability(MINTER_ROLE, address(boringVault), BoringVault.enter.selector, true);
@@ -122,6 +124,16 @@ contract PrimeVaultFactory is Ownable {
         // Allow the boring vault to receive ETH.
         rolesAuthority.setPublicCapability(address(boringVault), bytes4(0), true);
 
+        // Allow withdrawer functions.
+        rolesAuthority.setPublicCapability(address(withdrawer), DelayedWithdraw.cancelWithdraw.selector, true);
+        rolesAuthority.setPublicCapability(address(withdrawer), DelayedWithdraw.requestWithdraw.selector, true);
+        rolesAuthority.setPublicCapability(address(withdrawer), DelayedWithdraw.completeWithdraw.selector, true);
+        rolesAuthority.setPublicCapability(
+            address(withdrawer),
+            DelayedWithdraw.setAllowThirdPartyToComplete.selector,
+            true
+        );
+
         rolesAuthority.setUserRole(address(accountant), MINTER_ROLE, true);
         rolesAuthority.setUserRole(address(accountant), ADMIN_ROLE, true);
         rolesAuthority.setUserRole(address(accountant), UPDATE_EXCHANGE_RATE_ROLE, true);
@@ -132,5 +144,6 @@ contract PrimeVaultFactory is Ownable {
         rolesAuthority.setUserRole(address(accountant), STRATEGIST_ROLE, true);
         rolesAuthority.setUserRole(address(accountant), STRATEGIST_ROLE, true);
         rolesAuthority.setUserRole(address(teller), STRATEGIST_ROLE, true);
+        rolesAuthority.setUserRole(address(withdrawer), BURNER_ROLE, true);
     }
 }

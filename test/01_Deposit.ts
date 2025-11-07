@@ -13,7 +13,6 @@ void describe("Deposit", function () {
     const [_deployer] = await viem.getWalletClients();
 
     const { mockERC20 } = await ignition.deploy(MockERc20Module, { parameters });
-
     const { teller, vault } = await ignition.deploy(PrimeVaultsFactoryModule, { parameters });
 
     await mockERC20.write.approve([vault.address, 10n ** 18n]);
