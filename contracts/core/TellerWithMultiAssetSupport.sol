@@ -8,11 +8,12 @@ import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {BeforeTransferHook} from "../interfaces/hooks/BeforeTransferHook.sol";
-import {Auth, Authority} from "solmate/src/auth/Auth.sol";
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {IPausable} from "../interfaces/IPausable.sol";
 
-contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuard, IPausable {
+import "../auth/PrimeAuth.sol";
+
+contract TellerWithMultiAssetSupport is PrimeAuth, BeforeTransferHook, ReentrancyGuard, IPausable {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
     using SafeTransferLib for WETH;
@@ -160,12 +161,12 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
     WETH public immutable nativeWrapper;
 
     constructor(
-        address _owner,
+        address _primeRegistry,
         address _vault,
         address _accountant,
         address _asset,
         address _weth
-    ) Auth(_owner, Authority(address(0))) {
+    ) PrimeAuth(_primeRegistry) {
         vault = BoringVault(payable(_vault));
         ONE_SHARE = 10 ** vault.decimals();
         accountant = AccountantWithRateProviders(_accountant);
@@ -519,6 +520,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
                 revert TellerWithMultiAssetSupport__DepositExceedsCap();
         }
         vault.enter(from, depositAsset, depositAmount, to, shares);
+        _afterDeposit(depositAmount);
     }
 
     /**
@@ -536,6 +538,7 @@ contract TellerWithMultiAssetSupport is Auth, BeforeTransferHook, ReentrancyGuar
         if (shareAmount == 0) revert TellerWithMultiAssetSupport__ZeroShares();
         assetsOut = shareAmount.mulDivDown(accountant.getRate(), ONE_SHARE);
         if (assetsOut < minimumAssets) revert TellerWithMultiAssetSupport__MinimumAssetsNotMet();
+        _beforeWithdraw(assetsOut);
         vault.exit(to, asset, assetsOut, msg.sender, shareAmount);
     }
 
