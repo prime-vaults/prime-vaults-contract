@@ -24,12 +24,6 @@ interface IPrimeRBAC {
     /// @dev returns the id of the emergency admin role
     function EMERGENCY_ADMIN_ROLE() external view returns (bytes32);
 
-    /// @dev returns the id of the protocol minter role
-    function MINTER_ROLE() external view returns (bytes32);
-
-    /// @dev returns the id of the protocol burner role
-    function BURNER_ROLE() external view returns (bytes32);
-
     /// @dev returns whether the given address has the protocol admin role
     /// @param admin_ the address to check
     function hasProtocolAdminRole(address admin_) external view returns (bool);
