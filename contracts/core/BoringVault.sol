@@ -8,9 +8,10 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {BeforeTransferHook} from "../interfaces/hooks/BeforeTransferHook.sol";
-import {Auth, Authority} from "solmate/src/auth/Auth.sol";
 
-contract BoringVault is ERC20, Auth, ERC721Holder, ERC1155Holder {
+import {PrimeAuth} from "../auth/PrimeAuth.sol";
+
+contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
     using Address for address;
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
@@ -30,11 +31,11 @@ contract BoringVault is ERC20, Auth, ERC721Holder, ERC1155Holder {
     //============================== CONSTRUCTOR ===============================
 
     constructor(
-        address _owner,
+        address _primeRegistry,
         string memory _name,
         string memory _symbol,
         uint8 _decimals
-    ) ERC20(_name, _symbol, _decimals) Auth(_owner, Authority(address(0))) {}
+    ) ERC20(_name, _symbol, _decimals) PrimeAuth(_primeRegistry) {}
 
     //============================== MANAGE ===============================
 
@@ -118,7 +119,7 @@ contract BoringVault is ERC20, Auth, ERC721Holder, ERC1155Holder {
      * @notice If set to zero address, the share locker logic is disabled.
      * @dev Callable by OWNER_ROLE.
      */
-    function setBeforeTransferHook(address _hook) external requiresAuth {
+    function setBeforeTransferHook(address _hook) external onlyProtocolAdmin {
         hook = BeforeTransferHook(_hook);
     }
 

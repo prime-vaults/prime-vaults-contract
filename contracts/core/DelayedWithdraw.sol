@@ -5,14 +5,17 @@ import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {WETH} from "solmate/src/tokens/WETH.sol";
 import {BoringVault} from "./BoringVault.sol";
 import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
+import {TellerWithMultiAssetSupport} from "./TellerWithMultiAssetSupport.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {BeforeTransferHook} from "../interfaces/hooks/BeforeTransferHook.sol";
-import {Auth, Authority} from "solmate/src/auth/Auth.sol";
+
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {IPausable} from "../interfaces/IPausable.sol";
 
-contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
+import "../auth/PrimeAuth.sol";
+
+contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     using SafeTransferLib for BoringVault;
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
@@ -116,6 +119,11 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
     AccountantWithRateProviders internal immutable accountant;
 
     /**
+     * @notice The teller contract that users are depositing to.
+     */
+    TellerWithMultiAssetSupport internal immutable teller;
+
+    /**
      * @notice The BoringVault contract that users are withdrawing from.
      */
     BoringVault internal immutable boringVault;
@@ -126,12 +134,14 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
     uint256 internal immutable ONE_SHARE;
 
     constructor(
-        address _owner,
+        address _primeRegistry,
         address _boringVault,
         address _accountant,
+        address _teller,
         address _feeAddress
-    ) Auth(_owner, Authority(address(0))) {
+    ) PrimeAuth(_primeRegistry) {
         accountant = AccountantWithRateProviders(_accountant);
+        teller = TellerWithMultiAssetSupport(_teller);
         boringVault = BoringVault(payable(_boringVault));
         ONE_SHARE = 10 ** boringVault.decimals();
         if (_feeAddress == address(0)) revert DelayedWithdraw__BadAddress();
@@ -175,7 +185,7 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
      * @notice Sets up the withdrawal settings for a specific asset.
      * @dev Callable by OWNER_ROLE.
      */
-    function setupWithdrawAsset(ERC20 asset, uint32 withdrawDelay, uint16 withdrawFee) external requiresAuth {
+    function setupWithdrawAsset(ERC20 asset, uint32 withdrawDelay, uint16 withdrawFee) external onlyProtocolAdmin {
         WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
 
         if (withdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__WithdrawFeeTooHigh();
@@ -250,7 +260,7 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
      * @notice Changes the global setting for whether or not to pull funds from the vault when completing a withdrawal.
      * @dev Callable by OWNER_ROLE.
      */
-    function setPullFundsFromVault(bool _pullFundsFromVault) external requiresAuth {
+    function setPullFundsFromVault(bool _pullFundsFromVault) external onlyProtocolAdmin {
         pullFundsFromVault = _pullFundsFromVault;
 
         emit PullFundsFromVaultUpdated(_pullFundsFromVault);
@@ -414,15 +424,16 @@ contract DelayedWithdraw is Auth, ReentrancyGuard, IPausable {
 
         req.shares = 0;
 
-        if (pullFundsFromVault) {
-            // Burn shares and transfer assets to user.
-            boringVault.exit(account, asset, assetsOut, address(this), shares);
-        } else {
-            // Burn shares.
-            boringVault.exit(account, asset, 0, address(this), shares);
-            // Transfer assets to user.
-            asset.safeTransfer(account, assetsOut);
-        }
+        // if (pullFundsFromVault) {
+        //     // Burn shares and transfer assets to user.
+        //     boringVault.exit(account, asset, assetsOut, address(this), shares);
+        // } else {
+        //     // Burn shares.
+        //     boringVault.exit(account, asset, 0, address(this), shares);
+        //     // Transfer assets to user.
+        //     asset.safeTransfer(account, assetsOut);
+        // }
+        teller.withdraw(shares, 0, account);
 
         emit WithdrawCompleted(account, asset, shares, assetsOut);
     }
