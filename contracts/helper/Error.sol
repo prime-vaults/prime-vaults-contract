@@ -20,4 +20,7 @@ library Error {
 
     /// @dev thrown if msg.sender is not protocol admin
     error NOT_PROTOCOL_ADMIN();
+
+    /// @dev thrown if msg.sender is not emergency admin
+    error NOT_EMERGENCY_ADMIN();
 }

@@ -47,4 +47,11 @@ abstract contract PrimeAuth is Auth {
         }
         _;
     }
+
+    modifier onlyEmergencyAdmin() {
+        if (!IPrimeRBAC(primeRegistry.primeRBAC()).hasEmergencyAdminRole(msg.sender)) {
+            revert Error.NOT_EMERGENCY_ADMIN();
+        }
+        _;
+    }
 }

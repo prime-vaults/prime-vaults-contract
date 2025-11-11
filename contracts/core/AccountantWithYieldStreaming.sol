@@ -7,6 +7,7 @@ import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {Auth, Authority} from "solmate/src/auth/Auth.sol";
 import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
+
 contract AccountantWithYieldStreaming is AccountantWithRateProviders {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;

@@ -135,7 +135,7 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
      *         calls will revert.
      * @dev Callable by MULTISIG_ROLE.
      */
-    function pause() external requiresAuth {
+    function pause() external onlyEmergencyAdmin {
         accountantState.isPaused = true;
         emit Paused();
     }
@@ -145,7 +145,7 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
      *         calls will stop reverting.
      * @dev Callable by MULTISIG_ROLE.
      */
-    function unpause() external requiresAuth {
+    function unpause() external onlyEmergencyAdmin {
         accountantState.isPaused = false;
         emit Unpaused();
     }
@@ -156,7 +156,7 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
      *      the exchange rate updated as frequently as needed.
      * @dev Callable by OWNER_ROLE.
      */
-    function updateDelay(uint24 minimumUpdateDelayInSeconds) external requiresAuth {
+    function updateDelay(uint24 minimumUpdateDelayInSeconds) external onlyProtocolAdmin {
         if (minimumUpdateDelayInSeconds > 14 days) revert AccountantWithRateProviders__UpdateDelayTooLarge();
         uint24 oldDelay = accountantState.minimumUpdateDelayInSeconds;
         accountantState.minimumUpdateDelayInSeconds = minimumUpdateDelayInSeconds;
@@ -167,7 +167,7 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
      * @notice Update the allowed upper bound change of exchange rate between `updateExchangeRateCalls`.
      * @dev Callable by OWNER_ROLE.
      */
-    function updateUpper(uint16 allowedExchangeRateChangeUpper) external requiresAuth {
+    function updateUpper(uint16 allowedExchangeRateChangeUpper) external onlyProtocolAdmin {
         if (allowedExchangeRateChangeUpper < 1e4) revert AccountantWithRateProviders__UpperBoundTooSmall();
         uint16 oldBound = accountantState.allowedExchangeRateChangeUpper;
         accountantState.allowedExchangeRateChangeUpper = allowedExchangeRateChangeUpper;
@@ -178,7 +178,7 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
      * @notice Update the allowed lower bound change of exchange rate between `updateExchangeRateCalls`.
      * @dev Callable by OWNER_ROLE.
      */
-    function updateLower(uint16 allowedExchangeRateChangeLower) external requiresAuth {
+    function updateLower(uint16 allowedExchangeRateChangeLower) external onlyProtocolAdmin {
         if (allowedExchangeRateChangeLower > 1e4) revert AccountantWithRateProviders__LowerBoundTooLarge();
         uint16 oldBound = accountantState.allowedExchangeRateChangeLower;
         accountantState.allowedExchangeRateChangeLower = allowedExchangeRateChangeLower;
@@ -189,7 +189,7 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
      * @notice Update the platform fee to a new value.
      * @dev Callable by OWNER_ROLE.
      */
-    function updatePlatformFee(uint16 platformFee) external requiresAuth {
+    function updatePlatformFee(uint16 platformFee) external onlyProtocolAdmin {
         if (platformFee > 0.2e4) revert AccountantWithRateProviders__PlatformFeeTooLarge();
         uint16 oldFee = accountantState.platformFee;
         accountantState.platformFee = platformFee;
@@ -211,7 +211,7 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
      * @notice Update the payout address fees are sent to.
      * @dev Callable by OWNER_ROLE.
      */
-    function updatePayoutAddress(address payoutAddress) external requiresAuth {
+    function updatePayoutAddress(address payoutAddress) external onlyProtocolAdmin {
         address oldPayout = accountantState.payoutAddress;
         accountantState.payoutAddress = payoutAddress;
         emit PayoutAddressUpdated(oldPayout, payoutAddress);

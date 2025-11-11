@@ -9,7 +9,6 @@ export default buildModule("PrimeFactoryModule", (m) => {
   const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
   const MINTER_ROLE = m.getParameter("MINTER_ROLE");
   const BORING_VAULT_ROLE = m.getParameter("BORING_VAULT_ROLE");
-  const UPDATE_EXCHANGE_RATE_ROLE = m.getParameter("UPDATE_EXCHANGE_RATE_ROLE");
   const STRATEGIST_ROLE = m.getParameter("STRATEGIST_ROLE");
   const BURNER_ROLE = m.getParameter("BURNER_ROLE");
 
@@ -20,10 +19,6 @@ export default buildModule("PrimeFactoryModule", (m) => {
 
   m.call(rolesAuthority, "setUserRole", [accountant, ADMIN_ROLE, true], {
     id: "setUserRole_accountant_admin",
-  });
-
-  m.call(rolesAuthority, "setUserRole", [accountant, UPDATE_EXCHANGE_RATE_ROLE, true], {
-    id: "setUserRole_accountant_updateExchangeRate",
   });
 
   m.call(rolesAuthority, "setUserRole", [accountant, STRATEGIST_ROLE, true], {
