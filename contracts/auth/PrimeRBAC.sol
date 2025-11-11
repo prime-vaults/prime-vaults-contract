@@ -25,7 +25,15 @@ contract PrimeRBAC is AccessControlEnumerable {
         return hasRole(PROTOCOL_ADMIN_ROLE, admin_);
     }
 
+    function grantProtocolAdminRole(address admin_) external {
+        grantRole(PROTOCOL_ADMIN_ROLE, admin_);
+    }
+
     function hasEmergencyAdminRole(address emergencyAdmin_) external view returns (bool) {
         return hasRole(EMERGENCY_ADMIN_ROLE, emergencyAdmin_);
+    }
+
+    function grantEmergencyAdminRole(address emergencyAdmin_) external {
+        grantRole(EMERGENCY_ADMIN_ROLE, emergencyAdmin_);
     }
 }
