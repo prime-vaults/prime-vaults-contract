@@ -6,11 +6,11 @@ import VaultModule from "./Vault.js";
 export default buildModule("AccountantModule", (m) => {
   const { vault, primeRegistry, rolesAuthority } = m.useModule(VaultModule);
 
-  const MINTER_ROLE = 3;
-  const ADMIN_ROLE = 1;
-  const UPDATE_EXCHANGE_RATE_ROLE = 3;
-  const BORING_VAULT_ROLE = 4;
-  const STRATEGIST_ROLE = 7;
+  const MINTER_ROLE = m.getParameter("MINTER_ROLE");
+  const ADMIN_ROLE = m.getParameter("ADMIN_ROLE");
+  const UPDATE_EXCHANGE_RATE_ROLE = m.getParameter("UPDATE_EXCHANGE_RATE_ROLE");
+  const BORING_VAULT_ROLE = m.getParameter("BORING_VAULT_ROLE");
+  const STRATEGIST_ROLE = m.getParameter("STRATEGIST_ROLE");
 
   const accountant = m.contract(
     "AccountantWithYieldStreaming",

@@ -6,9 +6,9 @@ import PrimeRegistry from "./PrimeRegistry.js";
 export default buildModule("VaultModule", (m) => {
   const { primeRegistry } = m.useModule(PrimeRegistry);
 
-  const MANAGER_ROLE = 2;
-  const MINTER_ROLE = 3;
-  const BURNER_ROLE = 8;
+  const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
+  const MINTER_ROLE = m.getParameter("MINTER_ROLE");
+  const BURNER_ROLE = m.getParameter("BURNER_ROLE");
 
   const rolesAuthority = m.contract("RolesAuthority", [m.getParameter("adminAddress")], {
     after: [],

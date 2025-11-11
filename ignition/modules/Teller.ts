@@ -6,9 +6,9 @@ import AccountantModule from "./Accountant.js";
 export default buildModule("TellerModule", (m) => {
   const { vault, accountant, ...rest } = m.useModule(AccountantModule);
 
-  const MINTER_ROLE = 3;
-  const BURNER_ROLE = 8;
-  const MANAGER_ROLE = 2;
+  const MINTER_ROLE = m.getParameter("MINTER_ROLE");
+  const BURNER_ROLE = m.getParameter("BURNER_ROLE");
+  const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
 
   const teller = m.contract(
     "TellerWithYieldStreaming",

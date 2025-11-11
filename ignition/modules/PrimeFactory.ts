@@ -5,13 +5,13 @@ import WithdrawerModule from "./Withdrawer.js";
 export default buildModule("PrimeFactoryModule", (m) => {
   const { accountant, primeRegistry, rolesAuthority, teller, vault, withdrawer } = m.useModule(WithdrawerModule);
 
-  const ADMIN_ROLE = 1;
-  const MANAGER_ROLE = 2;
-  const MINTER_ROLE = 3;
-  const BORING_VAULT_ROLE = 4;
-  const UPDATE_EXCHANGE_RATE_ROLE = 3;
-  const STRATEGIST_ROLE = 7;
-  const BURNER_ROLE = 8;
+  const ADMIN_ROLE = m.getParameter("ADMIN_ROLE");
+  const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
+  const MINTER_ROLE = m.getParameter("MINTER_ROLE");
+  const BORING_VAULT_ROLE = m.getParameter("BORING_VAULT_ROLE");
+  const UPDATE_EXCHANGE_RATE_ROLE = m.getParameter("UPDATE_EXCHANGE_RATE_ROLE");
+  const STRATEGIST_ROLE = m.getParameter("STRATEGIST_ROLE");
+  const BURNER_ROLE = m.getParameter("BURNER_ROLE");
 
   // Set user roles for accountant
   m.call(rolesAuthority, "setUserRole", [accountant, MINTER_ROLE, true], {
