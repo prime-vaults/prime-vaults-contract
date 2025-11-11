@@ -6,10 +6,11 @@ import {IRateProvider} from "../interfaces/IRateProvider.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {BoringVault} from "./BoringVault.sol";
-import {Auth, Authority} from "solmate/src/auth/Auth.sol";
 import {IPausable} from "../interfaces/IPausable.sol";
 
-contract AccountantWithRateProviders is Auth, IRateProvider, IPausable {
+import {PrimeAuth} from "../auth/PrimeAuth.sol";
+
+contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
@@ -98,7 +99,7 @@ contract AccountantWithRateProviders is Auth, IRateProvider, IPausable {
     uint256 internal immutable ONE_SHARE;
 
     constructor(
-        address _owner,
+        address _primeRegistry,
         address _vault,
         address payoutAddress,
         uint96 startingExchangeRate,
@@ -108,7 +109,7 @@ contract AccountantWithRateProviders is Auth, IRateProvider, IPausable {
         uint24 minimumUpdateDelayInSeconds,
         uint16 platformFee,
         uint16 performanceFee
-    ) Auth(_owner, Authority(address(0))) {
+    ) PrimeAuth(_primeRegistry) {
         base = ERC20(_base);
         decimals = ERC20(_base).decimals();
         vault = BoringVault(payable(_vault));
