@@ -28,7 +28,7 @@ abstract contract PrimeAuth is Auth {
      * @param _primeRegistry The address of the PrimeRegistry contract
      * @dev Sets the owner to _primeRegistry and validates it's not the zero address
      */
-    constructor(address _primeRegistry) Auth(_primeRegistry, Authority(address(0))) {
+    constructor(address _primeRegistry) Auth(msg.sender, Authority(address(0))) {
         if (_primeRegistry == address(0)) {
             revert Error.ZERO_ADDRESS();
         }
