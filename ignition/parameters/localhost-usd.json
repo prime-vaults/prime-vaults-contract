@@ -3,7 +3,9 @@
     "id": "localhost-usd",
     "adminAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     "wrapNative": "0x0000000000000000000000000000000000000000",
-    "tokenAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+    "tokenAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "primeStrategist": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    "MANAGER_ROLE": 1
   },
   "WithdrawerModule": {
     "withdrawDelayInSeconds": 86400,

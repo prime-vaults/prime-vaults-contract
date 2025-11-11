@@ -86,7 +86,7 @@ contract TellerWithBuffer is TellerWithMultiAssetSupport {
      * @dev Only callable by authorized accounts. This allows for dynamic updates
      * to the deposit management strategy without requiring contract redeployment.
      */
-    function setDepositBufferHelper(IBufferHelper _depositBufferHelper) external requiresAuth {
+    function setDepositBufferHelper(IBufferHelper _depositBufferHelper) external onlyProtocolAdmin {
         if (allowedBufferHelpers[_depositBufferHelper] || _depositBufferHelper == IBufferHelper(address(0))) {
             bufferHelpers.depositBufferHelper = _depositBufferHelper;
             emit DepositBufferHelperSet(_depositBufferHelper);
@@ -101,7 +101,7 @@ contract TellerWithBuffer is TellerWithMultiAssetSupport {
      * @dev Only callable by authorized accounts. This allows for dynamic updates
      * to the withdrawal management strategy without requiring contract redeployment.
      */
-    function setWithdrawBufferHelper(IBufferHelper _withdrawBufferHelper) external requiresAuth {
+    function setWithdrawBufferHelper(IBufferHelper _withdrawBufferHelper) external onlyProtocolAdmin {
         if (allowedBufferHelpers[_withdrawBufferHelper] || _withdrawBufferHelper == IBufferHelper(address(0))) {
             bufferHelpers.withdrawBufferHelper = _withdrawBufferHelper;
             emit WithdrawBufferHelperSet(_withdrawBufferHelper);
@@ -115,7 +115,7 @@ contract TellerWithBuffer is TellerWithMultiAssetSupport {
      * @param _bufferHelper The buffer helper contract address to allow
      * @dev Only callable by admin to allowlist buffer helpers
      */
-    function allowBufferHelper(IBufferHelper _bufferHelper) external requiresAuth {
+    function allowBufferHelper(IBufferHelper _bufferHelper) external onlyProtocolAdmin {
         allowedBufferHelpers[_bufferHelper] = true;
         emit BufferHelperAllowed(_bufferHelper);
     }

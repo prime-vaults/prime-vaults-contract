@@ -10,6 +10,9 @@ library Error {
     /// @dev thrown if address input is address 0
     error ZERO_ADDRESS();
 
+    /// @dev thrown if an initialization function is called more than once
+    error ALREADY_INITIALIZED();
+
     //////////////////////////////////////////////////////////////
     //                  AUTHORIZATION ERRORS                    //
     //////////////////////////////////////////////////////////////
