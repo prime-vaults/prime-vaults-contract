@@ -1,128 +1,70 @@
-import fs from "fs";
 import { network } from "hardhat";
 import { describe, it } from "node:test";
-import path from "path";
 import { encodeFunctionData } from "viem";
 
-import MockERC20Module from "../ignition/modules/MockERC20.js";
-import PrimeFactoryModule from "../ignition/modules/PrimeFactory.js";
-import { findLeaf, generateMerkleTree, getProof } from "../scripts/createMerkleTree.js";
+import { readParams } from "../ignition/parameters/utils.js";
+import { readLeaf } from "../scripts/createMerkleTree.js";
+import deployMocks from "../scripts/deploy/00_mock.js";
+import deployPrimeVault from "../scripts/deploy/01_primeVault.js";
 
 void describe("03_ClaimFees - Manager with Merkle Verification", function () {
-  const parameters = path.resolve(import.meta.dirname, `../ignition/parameters/localhost-usd.json`);
+  const PARAMETERS_ID = "localhost-usd";
 
   async function initialize() {
-    const { ignition, viem, ...rest } = await network.connect();
-    const [deployer] = await viem.getWalletClients();
+    const connection = await network.connect();
+    const [deployer] = await connection.viem.getWalletClients();
 
-    // Read params file to get Merkle root and leaves
-    const paramsFile = fs.readFileSync(parameters, "utf-8");
-    const params = JSON.parse(paramsFile);
-    const managerModule = params.ManagerModule;
-
-    // Deploy MockERC20
-    const { mockERC20 } = await ignition.deploy(MockERC20Module, { parameters });
+    // Deploy mocks
+    const mocks = await deployMocks(connection, PARAMETERS_ID);
 
     // Mint tokens to deployer
-    await mockERC20.write.mint([deployer.account.address, 10000n * 10n ** 18n]);
+    await mocks.mockERC20.write.mint([deployer.account.address, 10000n * 10n ** 18n]);
 
     // Deploy full system (vault + accountant + teller + manager)
-    const primeModules = await ignition.deploy(PrimeFactoryModule, { parameters, displayUi: true });
+    const primeModules = await deployPrimeVault(connection, PARAMETERS_ID, {
+      stakingToken: mocks.mockERC20.address,
+      primeStrategistAddress: mocks.mockStrategist.address,
+    });
+
+    // Read updated params with Merkle configuration
+    const params = readParams(PARAMETERS_ID);
 
     return {
-      viem,
       deployer,
-      mockERC20,
-      params, // Return full params for findLeaf
-      managerModule,
+      networkHelpers: connection.networkHelpers,
+      params,
+      ...mocks,
       ...primeModules,
-      ...rest,
     };
   }
 
   void describe("Claim Fees", function () {
-    void it("Should execute claimFees through Manager with Merkle verification", async function () {
-      const {
-        manager,
-        rawDataDecoder,
-        deployer,
-        accountant,
-        mockERC20,
-        vault,
-        teller,
-        networkHelpers,
-        params,
-        managerModule,
-      } = await initialize();
+    void it("Should execute approve and claimFees through Manager with Merkle verification", async function () {
+      const { manager, deployer, accountant, mockERC20, teller, networkHelpers, vault } = await initialize();
 
       // Deposit tokens to generate vault activity
+      console.log("\n=== Depositing tokens to vault ===");
       const depositAmount = 1000n * 10n ** 18n;
       await mockERC20.write.approve([vault.address, depositAmount]);
       await teller.write.deposit([depositAmount, 0n, deployer.account.address]);
+      console.log("✅ Deposited:", depositAmount.toString());
 
-      // Read Merkle root and leaves from params
-      const merkleRoot = managerModule.ManageRoot as `0x${string}`;
-      const leaves = managerModule.leafs;
+      // Read leaves with proofs using readLeaf
+      const approveData = readLeaf(PARAMETERS_ID, { FunctionSignature: "approve(address,uint256)" });
+      const claimFeesData = readLeaf(PARAMETERS_ID, { FunctionSignature: "claimFees()" });
 
-      console.log("\n=== Merkle Configuration from JSON ===");
-      console.log("Root:", merkleRoot);
-      console.log("Total leaves:", leaves.length);
-      leaves.forEach((leaf: any, idx: number) => {
-        console.log(`\nLeaf ${idx}: ${leaf.Description}`);
-        console.log(`  Digest: ${leaf.LeafDigest}`);
-      });
-
-      // Find leaves using findLeaf function
-      const claimFeesResult = findLeaf(params, "claimFees()");
-      const approveResult = findLeaf(params, "approve(address,uint256)");
-
-      if (!claimFeesResult || !approveResult) {
-        throw new Error("Required leaves not found in params. Run: npx tsx scripts/createMerkleTree.ts localhost-usd");
+      if (!approveData || !claimFeesData) {
+        throw new Error("Required leaves not found in params");
       }
 
-      const { leaf: claimFeesLeaf, index: claimFeesIndex } = claimFeesResult;
-      const { leaf: approveLeaf, index: approveIndex } = approveResult;
+      // Generate some fees by updating exchange rate
+      await accountant.write.updateExchangeRate(); // Slight increase
+      await networkHelpers.time.increase(2 * 24 * 60 * 60); // 2 days
+      await accountant.write.updateExchangeRate(); // Another increase
 
-      console.log("\n=== Found Leaves ===");
-      console.log(`ClaimFees: index ${claimFeesIndex}, target ${claimFeesLeaf.TargetAddress}`);
-      console.log(`Approve: index ${approveIndex}, target ${approveLeaf.TargetAddress}`);
+      // Step 1: Approve accountant to spend base asset (staking token)
+      console.log("\n=== Step 1: Approving Accountant to spend base asset ===");
 
-      // Build tree to get proofs
-      const leafDigests = leaves.map((l: any) => l.LeafDigest as `0x${string}`);
-      const tree = generateMerkleTree(leafDigests);
-
-      // Get proofs using indices from findLeaf
-      const claimFeesProof = getProof(claimFeesIndex, tree);
-      const approveProof = getProof(approveIndex, tree);
-
-      console.log("\n=== Merkle Proofs ===");
-      console.log(`Approve proof (${approveProof.length} nodes):`, approveProof);
-      console.log(`ClaimFees proof (${claimFeesProof.length} nodes):`, claimFeesProof);
-
-      // Set Merkle root for strategist
-      await manager.write.setManageRoot([deployer.account.address, merkleRoot]);
-
-      // Prepare claimFees calldata
-      const claimFeesCalldata = encodeFunctionData({
-        abi: [
-          {
-            name: "claimFees",
-            type: "function",
-            stateMutability: "nonpayable",
-            inputs: [],
-            outputs: [],
-          },
-        ],
-        functionName: "claimFees",
-        args: [],
-      });
-
-      // Execute through Manager with proper proof
-      await accountant.write.updateExchangeRate();
-      await networkHelpers.time.increase(1 * 24 * 60 * 60); // Increase time by 1 day
-      await accountant.write.updateExchangeRate();
-
-      // Step 1: Approve accountant to spend vault shares
       const approveCalldata = encodeFunctionData({
         abi: [
           {
@@ -140,32 +82,43 @@ void describe("03_ClaimFees - Manager with Merkle Verification", function () {
         args: [accountant.address, 2n ** 256n - 1n], // Max approval
       });
 
-      console.log("\nStep 1: Vault approving accountant to spend base asset...");
-
-      // Use target from JSON config
-      const approveTarget = approveLeaf.TargetAddress as `0x${string}`;
-
+      // Execute approve through Manager with Merkle proof
       await manager.write.manageVaultWithMerkleVerification([
-        [approveProof],
-        [rawDataDecoder.address],
-        [approveTarget], // Use target from JSON (should be vault for vault shares approval)
+        [approveData.proof],
+        [approveData.leaf.DecoderAndSanitizerAddress],
+        [approveData.leaf.TargetAddress as `0x${string}`], // staking token address
         [approveCalldata],
         [0n],
       ]);
-
-      console.log("✅ Approved accountant");
+      console.log("✅ Approved Accountant to spend base asset");
 
       // Step 2: Claim fees
-      console.log("\nStep 2: Claiming fees...");
+      console.log("\n=== Step 2: Claiming fees ===");
+
+      const claimFeesCalldata = encodeFunctionData({
+        abi: [
+          {
+            name: "claimFees",
+            type: "function",
+            stateMutability: "nonpayable",
+            inputs: [],
+            outputs: [],
+          },
+        ],
+        functionName: "claimFees",
+        args: [],
+      });
+
+      // Execute claimFees through Manager with Merkle proof
       await manager.write.manageVaultWithMerkleVerification([
-        [claimFeesProof], // Real Merkle proof from multi-leaf tree
-        [rawDataDecoder.address],
-        [accountant.address],
+        [claimFeesData.proof],
+        [approveData.leaf.DecoderAndSanitizerAddress],
+        [claimFeesData.leaf.TargetAddress as `0x${string}`], // accountant address
         [claimFeesCalldata],
         [0n],
       ]);
 
-      console.log("✅ Successfully claimed fees through Manager!");
+      console.log("✅ Successfully claimed fees through Manager with Merkle verification!");
     });
   });
 });

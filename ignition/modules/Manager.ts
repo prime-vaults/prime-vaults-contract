@@ -11,12 +11,8 @@ const ManagerModule = buildModule("ManagerModule", (m) => {
 
   // Get parameters
   const adminAddress = m.getParameter("adminAddress");
-  const ADMIN_ROLE = m.getParameter("ADMIN_ROLE");
   const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
   const STRATEGIST_ROLE = m.getParameter("STRATEGIST_ROLE");
-
-  // Deploy FullDecoderAndSanitizer
-  const rawDataDecoder = m.contract("FullDecoderAndSanitizer", []);
 
   // Deploy ManagerWithMerkleVerification
   const manager = m.contract("ManagerWithMerkleVerification", [vault.primeRegistry, boringVault]);
@@ -50,7 +46,7 @@ const ManagerModule = buildModule("ManagerModule", (m) => {
     id: "grant_strategist_role_to_admin",
   });
 
-  return { manager, rawDataDecoder, boringVault, rolesAuthority };
+  return { manager, boringVault, rolesAuthority };
 });
 
 export default ManagerModule;

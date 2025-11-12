@@ -1,27 +1,28 @@
-import fs from "fs";
-import path from "path";
 import { concat, keccak256, toFunctionSelector } from "viem";
 
-interface LeafConfig {
-  Description: string;
-  FunctionSignature: string;
-  FunctionSelector: string;
-  DecoderAndSanitizerAddress: string;
-  TargetAddress: string;
-  CanSendValue: boolean;
-  AddressArguments: string[];
-  PackedArgumentAddresses: string;
-  LeafDigest: string;
-}
+import { type LeafConfig, type ParamsJson, readParams, writeParams } from "../ignition/parameters/utils.js";
 
-interface ManagerModule {
-  ManageRoot: string;
-  leafs: LeafConfig[];
-}
+/**
+ * Generate leaf digest from leaf configuration
+ */
+function generateLeafDigest(leaf: LeafConfig): `0x${string}` {
+  const selector = toFunctionSelector(leaf.FunctionSignature);
+  const valueNonZero = leaf.CanSendValue ? "0x01" : "0x00";
 
-interface ParamsJson {
-  ManagerModule: ManagerModule;
-  [key: string]: any;
+  // Pack addresses (20 bytes each, not padded)
+  const packedAddresses = leaf.AddressArguments.map((addr) => addr.replace(/0x/gi, "").toLowerCase()).join("");
+
+  const leafDigest = keccak256(
+    concat([
+      leaf.DecoderAndSanitizerAddress as `0x${string}`,
+      leaf.TargetAddress as `0x${string}`,
+      valueNonZero as `0x${string}`,
+      selector,
+      `0x${packedAddresses}` as `0x${string}`,
+    ]),
+  );
+
+  return leafDigest;
 }
 
 /**
@@ -93,7 +94,7 @@ export function getProof(leafIndex: number, tree: `0x${string}`[][]): `0x${strin
  *
  * @example
  * ```typescript
- * const params = JSON.parse(fs.readFileSync("ignition/parameters/localhost-usd.json", "utf-8"));
+ * const params = readParams("localhost-usd");
  *
  * // Find by function signature only
  * const result = findLeaf(params, "claimFees()");
@@ -112,7 +113,8 @@ export function findLeaf(
   functionSignature: string,
   target?: string,
 ): { leaf: LeafConfig; index: number } | undefined {
-  const leaves = params.ManagerModule?.leafs;
+  // Read from $metadata (new location) or fallback to ManagerModule (backward compatibility)
+  const leaves = params.$metadata?.leafs || params.ManagerModule?.leafs;
   if (!leaves) return undefined;
 
   const index = leaves.findIndex((l) => {
@@ -133,97 +135,141 @@ export function findLeaf(
 }
 
 /**
- * Generate leaf digest from leaf configuration
+ * Read leaf with proof from params file
+ * Returns leaf configuration, index, proof, and tree for Merkle verification
+ *
+ * @param paramsId - Params file ID (e.g., "localhost-usd")
+ * @param filters - Filters to find the leaf
+ * @returns Leaf data with proof and tree, or undefined if not found
+ *
+ * @example
+ * ```typescript
+ * // Find by function signature
+ * const approveData = readLeaf("localhost-usd", { FunctionSignature: "approve(address,uint256)" });
+ * if (approveData) {
+ *   console.log("Leaf:", approveData.leaf);
+ *   console.log("Index:", approveData.index);
+ *   console.log("Proof:", approveData.proof);
+ * }
+ *
+ * // Find by description
+ * const claimFeesData = readLeaf("localhost-usd", { Description: "Claim platform fees from Accountant" });
+ * ```
  */
-function generateLeafDigest(leaf: LeafConfig): `0x${string}` {
-  const selector = toFunctionSelector(leaf.FunctionSignature);
-  const valueNonZero = leaf.CanSendValue ? "0x01" : "0x00";
+export function readLeaf(
+  paramsId: string,
+  filters: { FunctionSignature?: string; Description?: string },
+): { leaf: LeafConfig; index: number; proof: `0x${string}`[]; tree: `0x${string}`[][] } | undefined {
+  const params = readParams(paramsId);
 
-  // Pack addresses (20 bytes each, not padded)
-  const packedAddresses = leaf.AddressArguments.join("").replace(/0x/g, "");
+  // Read from $metadata (new location) or fallback to ManagerModule (backward compatibility)
+  const leaves = params.$metadata?.leafs || params.ManagerModule?.leafs;
 
-  const leafDigest = keccak256(
-    concat([
-      leaf.DecoderAndSanitizerAddress as `0x${string}`,
-      leaf.TargetAddress as `0x${string}`,
-      valueNonZero as `0x${string}`,
-      selector,
-      `0x${packedAddresses}` as `0x${string}`,
-    ]),
-  );
+  if (!leaves) return undefined;
 
-  return leafDigest;
+  // Find leaf by filters
+  const index = leaves.findIndex((l) => {
+    if (filters.FunctionSignature && l.FunctionSignature !== filters.FunctionSignature) {
+      return false;
+    }
+    if (filters.Description && l.Description !== filters.Description) {
+      return false;
+    }
+    return true;
+  });
+
+  if (index === -1) return undefined;
+
+  const leaf = leaves[index];
+
+  // Build tree and get proof
+  const leafDigests = leaves.map((l: any) => l.LeafDigest as `0x${string}`);
+  const tree = generateMerkleTree(leafDigests);
+  const proof = getProof(index, tree);
+
+  return {
+    leaf,
+    index,
+    proof,
+    tree,
+  };
 }
 
 /**
  * Create Merkle tree from params file
- * @param paramsPath - Path to JSON params file (e.g., "localhost-usd")
+ * Auto-generates approve and claimFees leaves based on $metadata addresses
+ *
+ * @param paramsId - Params file ID (e.g., "localhost-usd")
  */
-export function createMerkleTree(paramsPath: string): void {
-  // Resolve params file path
-  const paramsFile = path.resolve(process.cwd(), `ignition/parameters/${paramsPath.replace(".json", "")}.json`);
+export function createMerkleTree(paramsId: string) {
+  console.log(`\n📄 Reading params from: ${paramsId}`);
 
-  if (!fs.existsSync(paramsFile)) {
-    throw new Error(`Params file not found: ${paramsFile}`);
+  // Read params using utility
+  const params = readParams(paramsId);
+
+  if (!params.$metadata) {
+    throw new Error("$metadata not found in params file - need deployed contract addresses");
   }
 
-  console.log(`\n📄 Reading params from: ${paramsFile}`);
+  const { AccountantAddress } = params.$metadata;
+  const { DecoderAndSanitizerAddress, stakingToken, PrimeStrategistAddress } = params.$global;
 
-  // Read and parse JSON
-  const params: ParamsJson = JSON.parse(fs.readFileSync(paramsFile, "utf-8"));
+  // Create leaves array automatically
+  const leaves: LeafConfig[] = [];
 
-  if (!params.ManagerModule || !params.ManagerModule.leafs) {
-    throw new Error("ManagerModule or leafs not found in params file");
-  }
+  // Leaf 0: approve(address,uint256) - Approve Accountant
+  leaves.push({
+    Description: "Approve Accountant to spend base asset (staking token)",
+    FunctionSignature: "approve(address,uint256)",
+    FunctionSelector: toFunctionSelector("approve(address,uint256)"),
+    DecoderAndSanitizerAddress,
+    TargetAddress: stakingToken,
+    CanSendValue: false,
+    AddressArguments: [AccountantAddress],
+    PackedArgumentAddresses: "0x",
+    LeafDigest: "0x",
+  });
 
-  // Add claimFees leaf if not exists
-  const hasClaimFeesLeaf = params.ManagerModule.leafs.some(
-    (leaf) => leaf.FunctionSignature === "claimFees()" || leaf.Description.toLowerCase().includes("claim fee"),
-  );
+  // Leaf 1: approve(address,uint256) - Approve PrimeStrategist
+  leaves.push({
+    Description: "Approve PrimeStrategist to spend base asset (staking token)",
+    FunctionSignature: "approve(address,uint256)",
+    FunctionSelector: toFunctionSelector("approve(address,uint256)"),
+    DecoderAndSanitizerAddress,
+    TargetAddress: stakingToken,
+    CanSendValue: false,
+    AddressArguments: [PrimeStrategistAddress],
+    PackedArgumentAddresses: "0x",
+    LeafDigest: "0x",
+  });
 
-  if (!hasClaimFeesLeaf && params.$global?.AccountantAddress) {
-    console.log("\n➕ Adding claimFees() leaf...");
-    params.ManagerModule.leafs.push({
-      Description: "Claim platform fees from Accountant",
-      FunctionSignature: "claimFees()",
-      FunctionSelector: "",
-      DecoderAndSanitizerAddress: params.$global.DecoderAndSanitizerAddress || "",
-      TargetAddress: params.$global.AccountantAddress,
-      CanSendValue: false,
-      AddressArguments: [],
-      PackedArgumentAddresses: "",
-      LeafDigest: "",
-    });
-  }
+  // Leaf 2: claimFees() - Claim platform fees from Accountant
+  leaves.push({
+    Description: "Claim platform fees from Accountant",
+    FunctionSignature: "claimFees()",
+    FunctionSelector: toFunctionSelector("claimFees()"),
+    DecoderAndSanitizerAddress,
+    TargetAddress: AccountantAddress,
+    CanSendValue: false,
+    AddressArguments: [],
+    PackedArgumentAddresses: "0x",
+    LeafDigest: "0x",
+  });
 
-  console.log(`\n🌳 Building Merkle tree with ${params.ManagerModule.leafs.length} leaves...\n`);
+  console.log(`\n🌳 Building Merkle tree with ${leaves.length} leaves...\n`);
 
   // Process each leaf and generate digest
   const leafDigests: `0x${string}`[] = [];
 
-  params.ManagerModule.leafs.forEach((leaf, index) => {
-    // Generate function selector
-    const selector = toFunctionSelector(leaf.FunctionSignature);
-    leaf.FunctionSelector = selector;
-
-    // Pack addresses
+  leaves.forEach((leaf) => {
+    // Pack addresses for display and hashing
     const packedAddresses = leaf.AddressArguments.map((addr) => addr.replace(/0x/gi, "").toLowerCase()).join("");
-    leaf.PackedArgumentAddresses = packedAddresses ? `0x${packedAddresses}` : "";
+    leaf.PackedArgumentAddresses = packedAddresses;
 
     // Generate leaf digest
     const digest = generateLeafDigest(leaf);
     leaf.LeafDigest = digest;
     leafDigests.push(digest);
-
-    console.log(`Leaf ${index}: ${leaf.Description}`);
-    console.log(`  Function: ${leaf.FunctionSignature}`);
-    console.log(`  Selector: ${selector}`);
-    console.log(`  Target: ${leaf.TargetAddress}`);
-    console.log(`  Decoder: ${leaf.DecoderAndSanitizerAddress}`);
-    console.log(`  Can Send Value: ${leaf.CanSendValue}`);
-    console.log(`  Address Args: [${leaf.AddressArguments.join(", ")}]`);
-    console.log(`  Packed Addresses: ${leaf.PackedArgumentAddresses || "(none)"}`);
-    console.log(`  Leaf Digest: ${digest}\n`);
   });
 
   // Build Merkle tree
@@ -233,40 +279,18 @@ export function createMerkleTree(paramsPath: string): void {
   console.log(`\n✅ Merkle Root: ${root}`);
   console.log(`   Tree Levels: ${tree.length}`);
 
-  // Update ManageRoot in params
-  params.ManagerModule.ManageRoot = root;
+  // Update params - store in $metadata instead of ManagerModule
+  params.$metadata.ManageRoot = root;
+  params.$metadata.leafs = leaves;
 
-  // Write updated params back to file
-  fs.writeFileSync(paramsFile, JSON.stringify(params, null, 2) + "\n");
+  // Write updated params back to file using utility
+  writeParams(paramsId, params);
 
-  console.log(`\n💾 Updated params file: ${paramsFile}`);
+  console.log(`\n💾 Updated params file: ${paramsId}`);
   console.log(`   - ManageRoot: ${root}`);
-  console.log(`   - Updated ${params.ManagerModule.leafs.length} leaf configurations`);
+  console.log(`   - Generated ${leaves.length} leaf configurations`);
 
-  // Display Merkle tree structure
-  console.log("\n🌲 Merkle Tree Structure:");
-  tree.forEach((level, idx) => {
-    console.log(`   Level ${idx}: ${level.length} node(s)`);
-    if (idx === 0) {
-      level.forEach((node, nodeIdx) => {
-        console.log(`      [${nodeIdx}] ${node} - ${params.ManagerModule.leafs[nodeIdx]?.Description || "Unknown"}`);
-      });
-    }
-  });
-
-  // Display proofs for each leaf
-  console.log("\n📋 Merkle Proofs:");
-  params.ManagerModule.leafs.forEach((leaf, idx) => {
-    const proof = getProof(idx, tree);
-    console.log(`\n   Leaf ${idx}: ${leaf.Description}`);
-    console.log(`   Digest: ${leaf.LeafDigest}`);
-    console.log(`   Proof (${proof.length} nodes):`);
-    proof.forEach((p, pIdx) => {
-      console.log(`      [${pIdx}] ${p}`);
-    });
-  });
-
-  console.log("\n✨ Done!\n");
+  return { ManageRoot: root, leafs: leaves };
 }
 
 // CLI execution
