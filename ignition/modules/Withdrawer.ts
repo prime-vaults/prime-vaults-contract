@@ -45,7 +45,7 @@ export default buildModule("WithdrawerModule", (m) => {
   // Setup withdrawer
   m.call(withdrawer, "setPullFundsFromVault", [true]);
   m.call(withdrawer, "setupWithdrawAsset", [
-    m.getParameter("tokenAddress"),
+    m.getParameter("stakingToken"),
     m.getParameter("withdrawDelayInSeconds"),
     m.getParameter("withdrawFee"),
   ]);

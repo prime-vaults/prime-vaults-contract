@@ -16,7 +16,7 @@ export default buildModule("AccountantModule", (m) => {
       vault,
       m.getParameter("adminAddress"),
       m.getParameter("startingExchangeRate"),
-      m.getParameter("tokenAddress"),
+      m.getParameter("stakingToken"),
       m.getParameter("allowedExchangeRateChangeUpper"),
       m.getParameter("allowedExchangeRateChangeLower"),
       m.getParameter("minimumUpdateDelayInSeconds"),
@@ -30,7 +30,7 @@ export default buildModule("AccountantModule", (m) => {
 
   m.call(accountant, "setAuthority", [rolesAuthority]);
 
-  // Set role capabilities for AccountantWithYieldStreaming functions
+  // Set role capabilities for AccountantWithYieldStreaming funaccouctions
   m.call(
     rolesAuthority,
     "setRoleCapability",

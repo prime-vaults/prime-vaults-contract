@@ -12,7 +12,7 @@ export default buildModule("TellerModule", (m) => {
 
   const teller = m.contract(
     "TellerWithYieldStreaming",
-    [rest.primeRegistry, vault, accountant, m.getParameter("tokenAddress"), m.getParameter("wrapNative")],
+    [rest.primeRegistry, vault, accountant, m.getParameter("stakingToken"), m.getParameter("wrapNative")],
     {
       after: [accountant],
     },
@@ -70,7 +70,7 @@ export default buildModule("TellerModule", (m) => {
     { id: "setRoleCapability_allowBufferHelper" },
   );
 
-  // const primeBufferHelper = m.contract("PrimeBufferHelper", [m.getParameter("primeStrategist"), vault], {
+  // const primeBufferHelper = m.contract("PrimeBufferHelper", [m.getParameter("PrimeStrategistAddress"), vault], {
   //   after: [teller],
   // });
   // m.call(vault, "setBeforeTransferHook", [teller]);

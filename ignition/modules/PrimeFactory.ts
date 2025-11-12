@@ -1,9 +1,11 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
+import Manager from "./Manager.js";
 import WithdrawerModule from "./Withdrawer.js";
 
 export default buildModule("PrimeFactoryModule", (m) => {
   const { accountant, primeRegistry, rolesAuthority, teller, vault, withdrawer } = m.useModule(WithdrawerModule);
+  const { manager, rawDataDecoder } = m.useModule(Manager);
 
   const ADMIN_ROLE = m.getParameter("ADMIN_ROLE");
   const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
@@ -52,5 +54,5 @@ export default buildModule("PrimeFactoryModule", (m) => {
     id: "setUserRole_withdrawer_burner",
   });
 
-  return { primeRegistry, vault, accountant, teller, withdrawer, rolesAuthority };
+  return { primeRegistry, vault, accountant, teller, withdrawer, rolesAuthority, manager, rawDataDecoder };
 });

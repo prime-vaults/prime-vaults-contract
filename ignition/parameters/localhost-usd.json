@@ -3,8 +3,12 @@
     "id": "localhost-usd",
     "adminAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
     "wrapNative": "0x0000000000000000000000000000000000000000",
-    "tokenAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-    "primeStrategist": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    "stakingToken": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "PrimeStrategistAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    "DecoderAndSanitizerAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+    "BoringVaultAddress": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+    "AccountantAddress": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+    "ManagerAddress": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
     "ADMIN_ROLE": 1,
     "MANAGER_ROLE": 2,
     "MINTER_ROLE": 3,
@@ -26,10 +30,39 @@
   },
   "AccountantModule": {
     "startingExchangeRate": "1000000000000000000",
-    "allowedExchangeRateChangeUpper": 1.001e4,
-    "allowedExchangeRateChangeLower": 0.999e4,
+    "allowedExchangeRateChangeUpper": 10010,
+    "allowedExchangeRateChangeLower": 9990,
     "minimumUpdateDelayInSeconds": 1,
-    "platformFee": 0.02e4,
-    "performanceFee": 0.0e4
+    "platformFee": 200,
+    "performanceFee": 0
+  },
+  "ManagerModule": {
+    "ManageRoot": "0xe64da9182f4a9d7d570ed16533eb8852ececeac7dfe7aa1aff7b5dd16dc5fd87",
+    "leafs": [
+      {
+        "AddressArguments": [
+          "0x9A676e781A523b5d0C0e43731313A708CB607508"
+        ],
+        "CanSendValue": false,
+        "DecoderAndSanitizerAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+        "Description": "Approve Accountant to spend base asset (MockERC20/USDC)",
+        "FunctionSelector": "0x095ea7b3",
+        "FunctionSignature": "approve(address,uint256)",
+        "LeafDigest": "0x4a4a638e4eaecf76932f2e8b6ae59a655d5030b5cf5e3171586f940562bb7155",
+        "PackedArgumentAddresses": "0x9a676e781a523b5d0c0e43731313a708cb607508",
+        "TargetAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+      },
+      {
+        "Description": "Claim platform fees from Accountant",
+        "FunctionSignature": "claimFees()",
+        "FunctionSelector": "0xd294f093",
+        "DecoderAndSanitizerAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+        "TargetAddress": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+        "CanSendValue": false,
+        "AddressArguments": [],
+        "PackedArgumentAddresses": "",
+        "LeafDigest": "0x3eaeb220a2c33bdd5d1f4d9b783919eec50f1d7ed480e078b3dd59d43f5e84be"
+      }
+    ]
   }
 }
