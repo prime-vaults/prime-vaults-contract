@@ -14,6 +14,7 @@ contract MockStrategist {
         console.log("MockStrategist: deposit called");
         console.log("  asset:", asset);
         console.log("  amount:", amount);
+        console.log("  balance:", ERC20(asset).balanceOf(address(this)));
         ERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
     }
 
@@ -22,6 +23,7 @@ contract MockStrategist {
         console.log("  asset:", asset);
         console.log("  amount:", amount);
         console.log("  to:", to);
+        console.log("  balance:", ERC20(asset).balanceOf(address(this)));
         ERC20(asset).safeTransfer(to, amount);
     }
 }

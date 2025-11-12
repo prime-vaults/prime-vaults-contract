@@ -83,17 +83,30 @@ contract PrimeBufferHelper is IBufferHelper {
      * @return targets Array of contract addresses to call
      * @return data Array of encoded function calls
      * @return values Array of ETH values to send with each call (all 0 for ERC20 operations)
-     * @dev Withdraws the specified amount of the asset from Prime Strategist and returns it to the vault.
+     * @dev Only withdraws from Prime Strategist if vault doesn't have enough balance.
+     * If vault already has sufficient balance, returns empty arrays (no operation needed).
      */
     function getWithdrawManageCall(
         address asset,
         uint256 amount
     ) public view returns (address[] memory targets, bytes[] memory data, uint256[] memory values) {
-        targets = new address[](1);
-        targets[0] = primeStrategist;
-        data = new bytes[](1);
-        data[0] = abi.encodeWithSignature("withdraw(address,uint256,address)", asset, amount, vault);
-        values = new uint256[](1);
+        uint256 vaultBalance = ERC20(asset).balanceOf(vault);
+
+        // If vault has enough balance, no need to withdraw
+        if (vaultBalance >= amount) {
+            targets = new address[](0);
+            data = new bytes[](0);
+            values = new uint256[](0);
+        } else {
+            // Vault doesn't have enough, withdraw from Prime Strategist
+            targets = new address[](1);
+            targets[0] = primeStrategist;
+            data = new bytes[](1);
+            data[0] = abi.encodeWithSignature("withdraw(address,uint256,address)", asset, amount - vaultBalance, vault);
+            values = new uint256[](1);
+            values[0] = 0;
+        }
+
         return (targets, data, values);
     }
 }

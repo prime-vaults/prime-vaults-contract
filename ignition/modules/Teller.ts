@@ -75,5 +75,12 @@ export default buildModule("TellerModule", (m) => {
     { id: "setRoleCapability_allowBufferHelper" },
   );
 
+  const primeBufferHelper = m.contract("PrimeBufferHelper", [m.getParameter("PrimeStrategistAddress"), vault], {
+    after: [teller],
+  });
+  m.call(teller, "allowBufferHelper", [primeBufferHelper]);
+  m.call(teller, "setWithdrawBufferHelper", [primeBufferHelper]);
+  // m.call(vault, "setBeforeTransferHook", [teller]);
+
   return { teller, accountant, vault, primeRegistry, rolesAuthority };
 });

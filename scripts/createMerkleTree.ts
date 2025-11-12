@@ -243,7 +243,20 @@ export function createMerkleTree(paramsId: string) {
     LeafDigest: "0x",
   });
 
-  // Leaf 2: claimFees() - Claim platform fees from Accountant
+  // Leaf 2: withdraw(address,uint256,address) - Withdraw from PrimeStrategist to vault
+  leaves.push({
+    Description: "Withdraw from PrimeStrategist back to vault",
+    FunctionSignature: "withdraw(address,uint256,address)",
+    FunctionSelector: toFunctionSelector("withdraw(address,uint256,address)"),
+    DecoderAndSanitizerAddress,
+    TargetAddress: PrimeStrategistAddress,
+    CanSendValue: false,
+    AddressArguments: [stakingToken, params.$metadata.BoringVaultAddress],
+    PackedArgumentAddresses: "0x",
+    LeafDigest: "0x",
+  });
+
+  // Leaf 3: claimFees() - Claim platform fees from Accountant
   leaves.push({
     Description: "Claim platform fees from Accountant",
     FunctionSignature: "claimFees()",
