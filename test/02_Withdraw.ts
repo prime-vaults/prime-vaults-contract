@@ -6,15 +6,22 @@ import { readLeaf } from "../scripts/createMerkleTree.js";
 import deployMocks from "../scripts/deploy/00_mock.js";
 import deployPrimeVault from "../scripts/deploy/01_primeVault.js";
 
-void describe("02_Withdraw", function () {
+void describe("02_Withdraw - Full Flow with PrimeStrategist", function () {
   const PARAMETERS_ID = "localhost-usd";
+  let CONTEXT: Awaited<ReturnType<typeof initialize>>;
+
+  // Shared state across test cases
+  let userShares: bigint;
+  let depositToPrimeAmount: bigint;
+  let initialUserBalance: bigint;
+  const depositAmount = 1n * 10n ** 18n; // 1 token
 
   async function initialize() {
     const connection = await network.connect();
     const [deployer] = await connection.viem.getWalletClients();
 
     const mocks = await deployMocks(connection, PARAMETERS_ID);
-    await mocks.mockERC20.write.mint([deployer.account.address, 10000n * 10n ** 18n]);
+    await mocks.mockERC20.write.mint([deployer.account.address, 1n * 10n ** 18n]); // Mint 1 token
 
     const primeModules = await deployPrimeVault(connection, PARAMETERS_ID, {
       stakingToken: mocks.mockERC20.address,
@@ -29,20 +36,36 @@ void describe("02_Withdraw", function () {
     };
   }
 
-  void it("Should deposit to vault, move to PrimeStrategist, then withdraw", async function () {
-    const { mockERC20, teller, vault, deployer, withdrawer, networkHelpers, manager, mockStrategist } =
-      await initialize();
+  void it("Setup: Deploy contracts", async function () {
+    CONTEXT = await initialize();
+  });
 
-    console.log("\n=== Step 1: User deposits tokens ===");
-    const depositAmount = 1000n * 10n ** 18n;
+  void it("Step 1: User deposits tokens to vault", async function () {
+    const { mockERC20, teller, vault, deployer } = CONTEXT;
+
+    initialUserBalance = await mockERC20.read.balanceOf([deployer.account.address]);
+
     await mockERC20.write.approve([vault.address, depositAmount]);
     await teller.write.deposit([depositAmount, 0n, deployer.account.address]);
 
-    const shares = await vault.read.balanceOf([deployer.account.address]);
-    console.log("✅ Deposited:", depositAmount.toString());
-    console.log("✅ Received shares:", shares.toString());
+    userShares = await vault.read.balanceOf([deployer.account.address]);
+    const balanceAfterDeposit = await mockERC20.read.balanceOf([deployer.account.address]);
 
-    console.log("\n=== Step 2: Approve PrimeStrategist via Merkle ===");
+    console.table({
+      "Initial Balance": initialUserBalance.toString(),
+      Deposited: depositAmount.toString(),
+      "Balance After": balanceAfterDeposit.toString(),
+      "Shares Received": userShares.toString(),
+    });
+
+    if (userShares !== depositAmount) {
+      throw new Error("Shares mismatch");
+    }
+  });
+
+  void it("Step 2: Approve PrimeStrategist via Merkle verification", async function () {
+    const { manager, mockStrategist } = CONTEXT;
+
     const approveLeafData = readLeaf(PARAMETERS_ID, {
       FunctionSignature: "approve(address,uint256)",
       Description: "Approve PrimeStrategist to spend base asset (staking token)",
@@ -76,10 +99,13 @@ void describe("02_Withdraw", function () {
       [approveCalldata],
       [0n],
     ]);
-    console.log("✅ Approved PrimeStrategist");
+  });
 
-    console.log("\n=== Step 3: Deposit to PrimeStrategist ===");
-    const depositToPrimeAmount = 500n * 10n ** 18n;
+  void it("Step 3: Manager deposits assets to PrimeStrategist", async function () {
+    const { mockERC20, vault, mockStrategist } = CONTEXT;
+
+    depositToPrimeAmount = 1n * 10n ** 18n; // Deposit all 1 token to strategist
+
     const depositCalldata = encodeFunctionData({
       abi: [
         {
@@ -98,21 +124,93 @@ void describe("02_Withdraw", function () {
     });
 
     await vault.write.manage([mockStrategist.address, depositCalldata, 0n]);
-    console.log("✅ Deposited:", depositToPrimeAmount.toString());
 
-    console.log("\n=== Step 4: Request withdrawal ===");
-    await vault.write.approve([withdrawer.address, shares]);
-    await withdrawer.write.requestWithdraw([mockERC20.address, shares, false]);
-    console.log("✅ Withdrawal requested");
+    const strategistBalance = await mockERC20.read.balanceOf([mockStrategist.address]);
+    const vaultBalance = await mockERC20.read.balanceOf([vault.address]);
 
-    console.log("\n=== Step 5: Wait delay ===");
+    console.table({
+      "Vault Balance": vaultBalance.toString(),
+      "Strategist Balance": strategistBalance.toString(),
+      "Total Assets": (vaultBalance + strategistBalance).toString(),
+    });
+
+    if (strategistBalance !== depositToPrimeAmount) {
+      throw new Error("Strategist balance mismatch");
+    }
+  });
+
+  void it("Step 4: User requests withdrawal", async function () {
+    const { vault, withdrawer, deployer, mockERC20 } = CONTEXT;
+
+    await vault.write.approve([withdrawer.address, userShares]);
+    await withdrawer.write.requestWithdraw([mockERC20.address, userShares, false]);
+
+    const withdrawerShares = await vault.read.balanceOf([withdrawer.address]);
+    const userSharesAfter = await vault.read.balanceOf([deployer.account.address]);
+
+    console.table({
+      "Shares Requested": userShares.toString(),
+      "Withdrawer Holds": withdrawerShares.toString(),
+      "User Remaining": userSharesAfter.toString(),
+    });
+
+    if (withdrawerShares !== userShares) {
+      throw new Error("Withdrawer shares mismatch");
+    }
+
+    if (userSharesAfter !== 0n) {
+      throw new Error("User should have 0 shares after request");
+    }
+  });
+
+  void it("Step 5: Wait for withdrawal delay period", async function () {
+    const { networkHelpers } = CONTEXT;
+
     await networkHelpers.time.increase(1 * 24 * 60 * 60);
-    console.log("✅ Delay passed");
+  });
 
-    console.log("\n=== Step 6: Complete withdrawal (PrimeBufferHelper auto-withdraws from strategist) ===");
+  void it("Step 6: Complete withdrawal with automatic PrimeBufferHelper", async function () {
+    const { withdrawer, mockERC20, deployer, mockStrategist, vault } = CONTEXT;
+
+    const userBalanceBefore = await mockERC20.read.balanceOf([deployer.account.address]);
+    const vaultBalanceBefore = await mockERC20.read.balanceOf([vault.address]);
+    const strategistBalanceBefore = await mockERC20.read.balanceOf([mockStrategist.address]);
+
     await withdrawer.write.completeWithdraw([mockERC20.address, deployer.account.address]);
 
-    const finalBalance = await mockERC20.read.balanceOf([deployer.account.address]);
-    console.log("✅ Final balance:", finalBalance.toString());
+    const userBalanceAfter = await mockERC20.read.balanceOf([deployer.account.address]);
+    const vaultBalanceAfter = await mockERC20.read.balanceOf([vault.address]);
+    const strategistBalanceAfter = await mockERC20.read.balanceOf([mockStrategist.address]);
+
+    console.table({
+      "": ["Before", "After", "Δ Change"],
+      User: [
+        userBalanceBefore.toString(),
+        userBalanceAfter.toString(),
+        `+${(userBalanceAfter - userBalanceBefore).toString()}`,
+      ],
+      Vault: [
+        vaultBalanceBefore.toString(),
+        vaultBalanceAfter.toString(),
+        (vaultBalanceAfter - vaultBalanceBefore).toString(),
+      ],
+      Strategist: [
+        strategistBalanceBefore.toString(),
+        strategistBalanceAfter.toString(),
+        (strategistBalanceAfter - strategistBalanceBefore).toString(),
+      ],
+    });
+
+    // User should get back initial balance (deposited amount returned)
+    const expectedFinalBalance = initialUserBalance;
+    if (userBalanceAfter !== expectedFinalBalance) {
+      throw new Error(
+        `Balance mismatch! Expected: ${expectedFinalBalance}, Got: ${userBalanceAfter}, Diff: ${userBalanceAfter - expectedFinalBalance}`,
+      );
+    }
+
+    if (strategistBalanceAfter >= strategistBalanceBefore) {
+      throw new Error("Strategist balance should have decreased (auto-withdrawal didn't work)");
+    }
   });
 });
