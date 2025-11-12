@@ -270,6 +270,7 @@ export function createMerkleTree(paramsPath: string): void {
 }
 
 // CLI execution
+// npx tsx scripts/createMerkleTree.ts localhost-usd
 if (import.meta.url === `file://${process.argv[1]}`) {
   const paramsPath = process.argv[2];
   if (!paramsPath) throw new Error("Please provide the params file path as an argument");

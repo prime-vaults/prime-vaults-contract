@@ -1,8 +1,0 @@
-{
-  "MockERC20Module": {
-    "name": "Mock Token",
-    "symbol": "MCK",
-    "decimals": "18",
-    "initialSupply": "1000000000000000000000000000n"
-  }
-}
