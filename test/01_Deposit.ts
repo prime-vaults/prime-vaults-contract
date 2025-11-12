@@ -1,33 +1,47 @@
 import { network } from "hardhat";
 import { describe, it } from "node:test";
-import path from "path";
 
-import MockERc20Module from "../ignition/modules/MockERC20.js";
-import MockStrategistModule from "../ignition/modules/MockStrategist.js";
-import PrimeFactoryModule from "../ignition/modules/PrimeFactory.js";
+import deployMocks from "../scripts/deploy/00_mock.js";
+import deployPrimeVault from "../scripts/deploy/01_primeVault.js";
 
-void describe("Deposit", function () {
-  const parameters = path.resolve(import.meta.dirname, `../ignition/parameters/localhost-usd.json`);
+void describe("01_Deposit", function () {
+  const PARAMETERS_ID = "localhost-usd";
 
   async function initialize() {
-    const { ignition, viem } = await network.connect();
-    const [_deployer] = await viem.getWalletClients();
-    const { mockERC20 } = await ignition.deploy(MockERc20Module, { parameters, displayUi: true });
+    const connection = await network.connect();
+    const [deployer] = await connection.viem.getWalletClients();
 
-    const { mockStrategist } = await ignition.deploy(MockStrategistModule, { parameters, displayUi: true });
+    // Deploy mocks
+    const mocks = await deployMocks(connection, PARAMETERS_ID);
 
-    const modules = await ignition.deploy(PrimeFactoryModule, { parameters, displayUi: true });
+    // Mint tokens to deployer
+    await mocks.mockERC20.write.mint([deployer.account.address, 10000n * 10n ** 18n]);
 
-    return { ignition, viem, mockERC20, mockStrategist, _deployer, ...modules };
+    // Deploy full system (vault + accountant + teller + manager)
+    const primeModules = await deployPrimeVault(connection, PARAMETERS_ID, {
+      stakingToken: mocks.mockERC20.address,
+      primeStrategistAddress: mocks.mockStrategist.address,
+    });
+
+    return {
+      deployer,
+      networkHelpers: connection.networkHelpers,
+      ...mocks,
+      ...primeModules,
+    };
   }
 
-  void it("Should stake", async function () {
-    const { mockERC20, vault, teller, _deployer } = await initialize();
+  void it("Should deposit and receive shares", async function () {
+    const { mockERC20, vault, teller, deployer } = await initialize();
 
-    await mockERC20.write.approve([vault.address, 10n ** 18n]);
-    await teller.write.deposit([10n ** 18n, 0n, vault.address]);
+    console.log("\n=== Depositing tokens to vault ===");
+    const depositAmount = 10n ** 18n;
 
-    const shares = await vault.read.balanceOf([_deployer.account.address]);
-    console.log("Staked shares:", shares);
+    await mockERC20.write.approve([vault.address, depositAmount]);
+    await teller.write.deposit([depositAmount, 0n, deployer.account.address]);
+
+    const shares = await vault.read.balanceOf([deployer.account.address]);
+    console.log("✅ Deposited:", depositAmount.toString());
+    console.log("✅ Received shares:", shares.toString());
   });
 });
