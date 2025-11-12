@@ -1,12 +1,18 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-import Manager from "./Manager.js";
+import ManagerModule from "./Manager.js";
 import WithdrawerModule from "./Withdrawer.js";
 
-export default buildModule("PrimeFactoryModule", (m) => {
-  const { accountant, primeRegistry, rolesAuthority, teller, vault, withdrawer } = m.useModule(WithdrawerModule);
-  const { manager } = m.useModule(Manager);
+/**
+ * Prime Vault Factory Module
+ * Main deployment module that combines all components and sets up roles
+ */
+export default buildModule("PrimeVaultModule", (m) => {
+  // Import all sub-modules
+  const { withdrawer, vault, accountant, teller, primeRegistry, rolesAuthority } = m.useModule(WithdrawerModule);
+  const { manager } = m.useModule(ManagerModule);
 
+  // Get role constants
   const ADMIN_ROLE = m.getParameter("ADMIN_ROLE");
   const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
   const MINTER_ROLE = m.getParameter("MINTER_ROLE");
@@ -14,7 +20,7 @@ export default buildModule("PrimeFactoryModule", (m) => {
   const STRATEGIST_ROLE = m.getParameter("STRATEGIST_ROLE");
   const BURNER_ROLE = m.getParameter("BURNER_ROLE");
 
-  // Set user roles for accountant
+  // Assign roles to Accountant
   m.call(rolesAuthority, "setUserRole", [accountant, MINTER_ROLE, true], {
     id: "setUserRole_accountant_minter",
   });
@@ -27,12 +33,12 @@ export default buildModule("PrimeFactoryModule", (m) => {
     id: "setUserRole_accountant_strategist",
   });
 
-  // Set user role for vault
+  // Assign role to Vault
   m.call(rolesAuthority, "setUserRole", [vault, BORING_VAULT_ROLE, true], {
     id: "setUserRole_vault_boringVault",
   });
 
-  // Set user roles for teller
+  // Assign roles to Teller
   m.call(rolesAuthority, "setUserRole", [teller, MINTER_ROLE, true], {
     id: "setUserRole_teller_minter",
   });
@@ -49,10 +55,18 @@ export default buildModule("PrimeFactoryModule", (m) => {
     id: "setUserRole_teller_strategist",
   });
 
-  // Set user role for withdrawer
+  // Assign role to Withdrawer
   m.call(rolesAuthority, "setUserRole", [withdrawer, BURNER_ROLE, true], {
     id: "setUserRole_withdrawer_burner",
   });
 
-  return { primeRegistry, vault, accountant, teller, withdrawer, rolesAuthority, manager };
+  return {
+    vault,
+    accountant,
+    teller,
+    withdrawer,
+    manager,
+    primeRegistry,
+    rolesAuthority,
+  };
 });

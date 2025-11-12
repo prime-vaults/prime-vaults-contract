@@ -3,20 +3,24 @@ import { toFunctionSelector } from "viem";
 
 import TellerModule from "./Teller.js";
 
+/**
+ * Withdrawer Module
+ * Deploys DelayedWithdraw for time-delayed withdrawal functionality
+ */
 export default buildModule("WithdrawerModule", (m) => {
-  // Get parameters
-  const owner = m.getParameter("adminAddress");
   const { vault, accountant, teller, primeRegistry, rolesAuthority } = m.useModule(TellerModule);
 
   // Deploy DelayedWithdraw
-  const withdrawer = m.contract("DelayedWithdraw", [primeRegistry, vault, accountant, teller, owner], {
-    after: [teller],
-  });
+  const withdrawer = m.contract(
+    "DelayedWithdraw",
+    [primeRegistry, vault, accountant, teller, m.getParameter("adminAddress")],
+    { after: [teller] },
+  );
 
-  m.call(withdrawer, "setAuthority", [rolesAuthority]);
+  // Link withdrawer to authority
+  m.call(withdrawer, "setAuthority", [rolesAuthority], { id: "withdrawer_setAuthority" });
 
-  // Set public capabilities for withdrawer functions
-  // These functions have requiresAuth modifier, so we set them as public capabilities
+  // Set public capabilities for withdrawer user functions
   m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("cancelWithdraw(address)"), true], {
     id: "setPublicCapability_cancelWithdraw",
   });
@@ -42,13 +46,15 @@ export default buildModule("WithdrawerModule", (m) => {
     { id: "setPublicCapability_setAllowThirdPartyToComplete" },
   );
 
-  // Setup withdrawer
-  m.call(withdrawer, "setPullFundsFromVault", [true]);
-  m.call(withdrawer, "setupWithdrawAsset", [
-    m.getParameter("stakingToken"),
-    m.getParameter("withdrawDelayInSeconds"),
-    m.getParameter("withdrawFee"),
-  ]);
+  // Configure withdrawer
+  m.call(withdrawer, "setPullFundsFromVault", [true], { id: "withdrawer_setPullFundsFromVault" });
+
+  m.call(
+    withdrawer,
+    "setupWithdrawAsset",
+    [m.getParameter("stakingToken"), m.getParameter("withdrawDelayInSeconds"), m.getParameter("withdrawFee")],
+    { id: "withdrawer_setupWithdrawAsset" },
+  );
 
   return { withdrawer, vault, accountant, teller, primeRegistry, rolesAuthority };
 });

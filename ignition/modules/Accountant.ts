@@ -3,12 +3,18 @@ import { toFunctionSelector } from "viem";
 
 import VaultModule from "./Vault.js";
 
+/**
+ * Accountant Module
+ * Deploys AccountantWithYieldStreaming for exchange rate and fee management
+ */
 export default buildModule("AccountantModule", (m) => {
   const { vault, primeRegistry, rolesAuthority } = m.useModule(VaultModule);
 
+  // Get role constants
   const MINTER_ROLE = m.getParameter("MINTER_ROLE");
   const STRATEGIST_ROLE = m.getParameter("STRATEGIST_ROLE");
 
+  // Deploy Accountant
   const accountant = m.contract(
     "AccountantWithYieldStreaming",
     [
@@ -23,14 +29,13 @@ export default buildModule("AccountantModule", (m) => {
       m.getParameter("platformFee"),
       m.getParameter("performanceFee"),
     ],
-    {
-      after: [vault],
-    },
+    { after: [vault] },
   );
 
-  m.call(accountant, "setAuthority", [rolesAuthority]);
+  // Link accountant to authority
+  m.call(accountant, "setAuthority", [rolesAuthority], { id: "accountant_setAuthority" });
 
-  // Set role capabilities for AccountantWithYieldStreaming funaccouctions
+  // Set role capabilities for Accountant functions
   m.call(
     rolesAuthority,
     "setRoleCapability",
@@ -38,7 +43,6 @@ export default buildModule("AccountantModule", (m) => {
     { id: "setRoleCapability_setFirstDepositTimestamp" },
   );
 
-  // Set role capabilities for AccountantWithRateProviders functions
   m.call(
     rolesAuthority,
     "setRoleCapability",

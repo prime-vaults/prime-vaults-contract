@@ -1,33 +1,39 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { toFunctionSelector } from "viem";
 
-import PrimeRegistry from "./PrimeRegistry.js";
+import PrimeRegistryModule from "./PrimeRegistry.js";
 
+/**
+ * Vault Module
+ * Deploys BoringVault and RolesAuthority with initial permissions
+ */
 export default buildModule("VaultModule", (m) => {
-  const { primeRegistry } = m.useModule(PrimeRegistry);
+  const { primeRegistry } = m.useModule(PrimeRegistryModule);
 
+  // Get role constants
   const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
   const MINTER_ROLE = m.getParameter("MINTER_ROLE");
   const BURNER_ROLE = m.getParameter("BURNER_ROLE");
 
-  const rolesAuthority = m.contract("RolesAuthority", [m.getParameter("adminAddress")], {
-    after: [],
-  });
+  // Deploy RolesAuthority for this vault
+  const rolesAuthority = m.contract("RolesAuthority", [m.getParameter("adminAddress")]);
 
+  // Deploy BoringVault
   const vault = m.contract(
     "BoringVault",
     [m.getParameter("adminAddress"), m.getParameter("name"), m.getParameter("symbol"), m.getParameter("decimals")],
-    {
-      after: [primeRegistry, rolesAuthority],
-    },
+    { after: [primeRegistry, rolesAuthority] },
   );
 
-  m.call(vault, "setAuthority", [rolesAuthority]);
+  // Link vault to authority
+  m.call(vault, "setAuthority", [rolesAuthority], { id: "vault_setAuthority" });
 
-  // Allow the boring vault to receive ETH
-  m.call(rolesAuthority, "setPublicCapability", [vault, "0x00000000", true], { id: "setPublicCapability_receiveETH" });
+  // Allow vault to receive ETH (fallback function)
+  m.call(rolesAuthority, "setPublicCapability", [vault, "0x00000000", true], {
+    id: "setPublicCapability_receiveETH",
+  });
 
-  // Set role capabilities for manage functions
+  // Set role capabilities for vault management
   m.call(
     rolesAuthority,
     "setRoleCapability",
@@ -42,7 +48,7 @@ export default buildModule("VaultModule", (m) => {
     { id: "setRoleCapability_manage_multi" },
   );
 
-  // Set role capabilities for enter and exit functions
+  // Set role capabilities for minting and burning shares
   m.call(
     rolesAuthority,
     "setRoleCapability",

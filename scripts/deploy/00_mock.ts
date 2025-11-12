@@ -1,34 +1,48 @@
 import { NetworkConnection } from "hardhat/types/network";
 
-import Decoder from "../../ignition/modules/Decoder.js";
+import DecoderModule from "../../ignition/modules/Decoder.js";
 import MockERC20Module from "../../ignition/modules/MockERC20.js";
-import MockStrategist from "../../ignition/modules/MockStrategist.js";
+import MockStrategistModule from "../../ignition/modules/MockStrategist.js";
 import { getParamsPath, readParams, writeParams } from "../../ignition/parameters/utils.js";
 
+/**
+ * Deploy mock contracts for testing
+ * Deploys: MockERC20, MockStrategist, FullDecoderAndSanitizer
+ */
 export default async function deployMocks(connection: NetworkConnection, parameterId: string) {
+  console.log("\n🚀 Deploying mock contracts...\n");
+
+  // Deploy mock ERC20 token
   const { mockERC20 } = await connection.ignition.deploy(MockERC20Module, {
     parameters: getParamsPath(parameterId),
     displayUi: true,
   });
-  const { mockStrategist } = await connection.ignition.deploy(MockStrategist, {
-    parameters: getParamsPath(parameterId),
-    displayUi: true,
-  });
-  const { decoder } = await connection.ignition.deploy(Decoder, {
+
+  // Deploy mock strategist
+  const { mockStrategist } = await connection.ignition.deploy(MockStrategistModule, {
     parameters: getParamsPath(parameterId),
     displayUi: true,
   });
 
+  // Deploy decoder/sanitizer
+  const { decoder } = await connection.ignition.deploy(DecoderModule, {
+    parameters: getParamsPath(parameterId),
+    displayUi: true,
+  });
+
+  // Update parameters with deployed addresses
   const parameters = readParams(parameterId);
   parameters.$global.stakingToken = mockERC20.address;
   parameters.$global.PrimeStrategistAddress = mockStrategist.address;
   parameters.$global.DecoderAndSanitizerAddress = decoder.address;
   await writeParams(parameterId, parameters);
 
+  console.log("\n✅ Mock contracts deployed:\n");
   console.table({
     MockERC20: mockERC20.address,
     MockStrategist: mockStrategist.address,
     Decoder: decoder.address,
   });
+
   return { mockERC20, mockStrategist, decoder };
 }

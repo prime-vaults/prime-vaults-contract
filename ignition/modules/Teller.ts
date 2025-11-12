@@ -3,33 +3,38 @@ import { toFunctionSelector } from "viem";
 
 import AccountantModule from "./Accountant.js";
 
+/**
+ * Teller Module
+ * Deploys TellerWithYieldStreaming for user deposits and withdrawals
+ */
 export default buildModule("TellerModule", (m) => {
-  const { vault, accountant, ...rest } = m.useModule(AccountantModule);
+  const { vault, accountant, primeRegistry, rolesAuthority } = m.useModule(AccountantModule);
 
+  // Get role constants
   const MINTER_ROLE = m.getParameter("MINTER_ROLE");
   const BURNER_ROLE = m.getParameter("BURNER_ROLE");
   const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
 
+  // Deploy Teller
   const teller = m.contract(
     "TellerWithYieldStreaming",
-    [rest.primeRegistry, vault, accountant, m.getParameter("stakingToken"), m.getParameter("wrapNative")],
-    {
-      after: [accountant],
-    },
+    [primeRegistry, vault, accountant, m.getParameter("stakingToken"), m.getParameter("wrapNative")],
+    { after: [accountant] },
   );
 
-  m.call(teller, "setAuthority", [rest.rolesAuthority]);
+  // Link teller to authority
+  m.call(teller, "setAuthority", [rolesAuthority], { id: "teller_setAuthority" });
 
   // Set role capabilities for deposit functions
   m.call(
-    rest.rolesAuthority,
+    rolesAuthority,
     "setRoleCapability",
     [MINTER_ROLE, teller, toFunctionSelector("deposit(address,uint256,uint256)"), true],
     { id: "setRoleCapability_deposit" },
   );
 
   m.call(
-    rest.rolesAuthority,
+    rolesAuthority,
     "setRoleCapability",
     [
       MINTER_ROLE,
@@ -42,41 +47,33 @@ export default buildModule("TellerModule", (m) => {
 
   // Set role capability for withdraw function
   m.call(
-    rest.rolesAuthority,
+    rolesAuthority,
     "setRoleCapability",
     [BURNER_ROLE, teller, toFunctionSelector("withdraw(uint256,uint256,address)"), true],
     { id: "setRoleCapability_withdraw" },
   );
 
-  // Set role capabilities for buffer helper functions
+  // Set role capabilities for buffer helper management (future use)
   m.call(
-    rest.rolesAuthority,
+    rolesAuthority,
     "setRoleCapability",
     [MANAGER_ROLE, teller, toFunctionSelector("setDepositBufferHelper(address)"), true],
     { id: "setRoleCapability_setDepositBufferHelper" },
   );
 
   m.call(
-    rest.rolesAuthority,
+    rolesAuthority,
     "setRoleCapability",
     [MANAGER_ROLE, teller, toFunctionSelector("setWithdrawBufferHelper(address)"), true],
     { id: "setRoleCapability_setWithdrawBufferHelper" },
   );
 
   m.call(
-    rest.rolesAuthority,
+    rolesAuthority,
     "setRoleCapability",
     [MANAGER_ROLE, teller, toFunctionSelector("allowBufferHelper(address)"), true],
     { id: "setRoleCapability_allowBufferHelper" },
   );
 
-  // const primeBufferHelper = m.contract("PrimeBufferHelper", [m.getParameter("PrimeStrategistAddress"), vault], {
-  //   after: [teller],
-  // });
-  // m.call(vault, "setBeforeTransferHook", [teller]);
-  // m.call(teller, "allowBufferHelper", [primeBufferHelper]);
-  // m.call(teller, "setDepositBufferHelper", [primeBufferHelper]);
-  // m.call(teller, "setWithdrawBufferHelper", [primeBufferHelper]);
-
-  return { teller, accountant, vault, ...rest };
+  return { teller, accountant, vault, primeRegistry, rolesAuthority };
 });
