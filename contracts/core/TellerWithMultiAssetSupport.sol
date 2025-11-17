@@ -2,7 +2,6 @@
 pragma solidity ^0.8.30;
 
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
-import {WETH} from "solmate/src/tokens/WETH.sol";
 import {BoringVault} from "./BoringVault.sol";
 import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
@@ -16,7 +15,6 @@ import "../auth/PrimeAuth.sol";
 contract TellerWithMultiAssetSupport is PrimeAuth, BeforeTransferHook, ReentrancyGuard, IPausable {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
-    using SafeTransferLib for WETH;
 
     // ========================================= STRUCTS =========================================
 
@@ -155,23 +153,11 @@ contract TellerWithMultiAssetSupport is PrimeAuth, BeforeTransferHook, Reentranc
      */
     uint256 internal immutable ONE_SHARE;
 
-    /**
-     * @notice The native wrapper contract.
-     */
-    WETH public immutable nativeWrapper;
-
-    constructor(
-        address _primeRegistry,
-        address _vault,
-        address _accountant,
-        address _asset,
-        address _weth
-    ) PrimeAuth(_primeRegistry) {
+    constructor(address _primeRegistry, address _vault, address _accountant, address _asset) PrimeAuth(_primeRegistry) {
         vault = BoringVault(payable(_vault));
         ONE_SHARE = 10 ** vault.decimals();
         accountant = AccountantWithRateProviders(_accountant);
         asset = ERC20(_asset);
-        nativeWrapper = WETH(payable(_weth));
         tellerState = TellerState({
             isPaused: false,
             allowDeposits: true,
@@ -408,30 +394,10 @@ contract TellerWithMultiAssetSupport is PrimeAuth, BeforeTransferHook, Reentranc
     ) external payable virtual requiresAuth nonReentrant returns (uint256 shares) {
         _beforeDeposit();
 
-        ERC20 depositAsset = asset;
-        address from;
-        if (address(asset) == address(nativeWrapper) && msg.value > 0) {
-            if (msg.value == 0) revert TellerWithMultiAssetSupport__ZeroAssets();
-            nativeWrapper.deposit{value: msg.value}();
-            // Set depositAmount to msg.value.
-            depositAmount = msg.value;
-            nativeWrapper.safeApprove(address(vault), depositAmount);
-            // Set from to this address since user transferred value.
-            from = address(this);
-        } else {
-            if (msg.value > 0) revert TellerWithMultiAssetSupport__DualDeposit();
-            from = msg.sender;
-        }
+        if (msg.value > 0) revert TellerWithMultiAssetSupport__CannotDepositNative();
 
-        shares = _erc20Deposit(depositAsset, depositAmount, minimumMint, from, msg.sender);
-        _afterPublicDeposit(
-            msg.sender,
-            depositAsset,
-            depositAmount,
-            shares,
-            tellerState.shareLockPeriod,
-            referralAddress
-        );
+        shares = _erc20Deposit(asset, depositAmount, minimumMint, msg.sender, msg.sender);
+        _afterPublicDeposit(msg.sender, asset, depositAmount, shares, tellerState.shareLockPeriod, referralAddress);
     }
 
     /**

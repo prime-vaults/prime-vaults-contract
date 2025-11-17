@@ -131,7 +131,6 @@ export function writeParams(paramsId: string, params: ParamsJson): void {
 
   try {
     fs.writeFileSync(filePath, content, "utf-8");
-    console.log(`💾 Parameters written to: ${filePath}`);
   } catch (error) {
     throw new Error(`Failed to write parameters file: ${filePath}\n${error}`);
   }

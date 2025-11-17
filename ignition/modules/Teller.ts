@@ -18,7 +18,7 @@ export default buildModule("TellerModule", (m) => {
   // Deploy Teller
   const teller = m.contract(
     "TellerWithYieldStreaming",
-    [primeRegistry, vault, accountant, m.getParameter("stakingToken"), m.getParameter("wrapNative")],
+    [primeRegistry, vault, accountant, m.getParameter("stakingToken")],
     { after: [accountant, primeRegistry, vault] },
   );
 

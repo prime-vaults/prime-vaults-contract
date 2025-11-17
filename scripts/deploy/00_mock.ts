@@ -9,25 +9,23 @@ import { getParamsPath, readParams, writeParams } from "../../ignition/parameter
  * Deploy mock contracts for testing
  * Deploys: MockERC20, MockStrategist, FullDecoderAndSanitizer
  */
-export default async function deployMocks(connection: NetworkConnection, parameterId: string) {
-  console.log("\n🚀 Deploying mock contracts...\n");
-
+export default async function deployMocks(connection: NetworkConnection, parameterId: string, displayUi = false) {
   // Deploy mock ERC20 token
   const { mockERC20 } = await connection.ignition.deploy(MockERC20Module, {
     parameters: getParamsPath(parameterId),
-    displayUi: true,
+    displayUi,
   });
 
   // Deploy mock strategist
   const { mockStrategist } = await connection.ignition.deploy(MockStrategistModule, {
     parameters: getParamsPath(parameterId),
-    displayUi: true,
+    displayUi,
   });
 
   // Deploy decoder/sanitizer
   const { decoder } = await connection.ignition.deploy(DecoderModule, {
     parameters: getParamsPath(parameterId),
-    displayUi: true,
+    displayUi,
   });
 
   // Update parameters with deployed addresses
@@ -37,12 +35,13 @@ export default async function deployMocks(connection: NetworkConnection, paramet
   parameters.$global.DecoderAndSanitizerAddress = decoder.address;
   await writeParams(parameterId, parameters);
 
-  console.log("\n✅ Mock contracts deployed:\n");
-  console.table({
-    MockERC20: mockERC20.address,
-    MockStrategist: mockStrategist.address,
-    Decoder: decoder.address,
-  });
+  if (displayUi) {
+    console.table({
+      MockERC20: mockERC20.address,
+      MockStrategist: mockStrategist.address,
+      Decoder: decoder.address,
+    });
+  }
 
   return { mockERC20, mockStrategist, decoder };
 }

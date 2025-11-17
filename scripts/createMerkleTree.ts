@@ -201,8 +201,8 @@ export function readLeaf(
  *
  * @param paramsId - Params file ID (e.g., "localhost-usd")
  */
-export function createMerkleTree(paramsId: string) {
-  console.log(`\n📄 Reading params from: ${paramsId}`);
+export function createMerkleTree(paramsId: string, displayUI = false) {
+  if (displayUI) console.log(`\n📄 Reading params from: ${paramsId}`);
 
   // Read params using utility
   const params = readParams(paramsId);
@@ -269,7 +269,7 @@ export function createMerkleTree(paramsId: string) {
     LeafDigest: "0x",
   });
 
-  console.log(`\n🌳 Building Merkle tree with ${leaves.length} leaves...\n`);
+  if (displayUI) console.log(`\n🌳 Building Merkle tree with ${leaves.length} leaves...\n`);
 
   // Process each leaf and generate digest
   const leafDigests: `0x${string}`[] = [];
@@ -289,8 +289,10 @@ export function createMerkleTree(paramsId: string) {
   const tree = generateMerkleTree(leafDigests);
   const root = tree[tree.length - 1][0];
 
-  console.log(`\n✅ Merkle Root: ${root}`);
-  console.log(`   Tree Levels: ${tree.length}`);
+  if (displayUI) {
+    console.log(`\n✅ Merkle Root: ${root}`);
+    console.log(`   Tree Levels: ${tree.length}`);
+  }
 
   // Update params - store in $metadata instead of ManagerModule
   params.$metadata.ManageRoot = root;
@@ -299,9 +301,11 @@ export function createMerkleTree(paramsId: string) {
   // Write updated params back to file using utility
   writeParams(paramsId, params);
 
-  console.log(`\n💾 Updated params file: ${paramsId}`);
-  console.log(`   - ManageRoot: ${root}`);
-  console.log(`   - Generated ${leaves.length} leaf configurations`);
+  if (displayUI) {
+    console.log(`\n💾 Updated params file: ${paramsId}`);
+    console.log(`   - ManageRoot: ${root}`);
+    console.log(`   - Generated ${leaves.length} leaf configurations`);
+  }
 
   return { ManageRoot: root, leafs: leaves };
 }
@@ -311,5 +315,5 @@ export function createMerkleTree(paramsId: string) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const paramsPath = process.argv[2];
   if (!paramsPath) throw new Error("Please provide the params file path as an argument");
-  createMerkleTree(paramsPath);
+  createMerkleTree(paramsPath, true);
 }

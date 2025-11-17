@@ -12,8 +12,9 @@ export default async function deployPrimeVault(
   connection: NetworkConnection,
   parameterId: string,
   payload: { stakingToken: `0x${string}`; primeStrategistAddress: `0x${string}` },
+  displayUi = false,
 ) {
-  console.log("\n🚀 Deploying Prime Vault system...\n");
+  if (displayUi) console.log("\n🚀 Deploying Prime Vault system...\n");
 
   // Update parameters with required addresses
   const parameters = readParams(parameterId);
@@ -24,7 +25,7 @@ export default async function deployPrimeVault(
   // Deploy all vault modules
   const modules = await connection.ignition.deploy(PrimeVaultModule, {
     parameters,
-    displayUi: true,
+    displayUi,
   });
 
   // Save deployed addresses to metadata
@@ -40,15 +41,17 @@ export default async function deployPrimeVault(
     leafs: [],
   };
 
-  console.log("\n✅ Prime Vault deployed:\n");
-  console.table(parameters.$metadata);
+  if (displayUi) {
+    console.log("\n✅ Prime Vault deployed:\n");
+    console.table(parameters.$metadata);
+  }
   await writeParams(parameterId, parameters);
 
   // Generate and set Merkle root
-  console.log("\n🌳 Generating Merkle tree...\n");
-  const { ManageRoot } = createMerkleTree(parameterId);
+  if (displayUi) console.log("\n🌳 Generating Merkle tree...\n");
+  const { ManageRoot } = createMerkleTree(parameterId, displayUi);
   await modules.manager.write.setManageRoot([parameters.$global.adminAddress, ManageRoot]);
-  console.log(`✅ Merkle root set: ${ManageRoot}\n`);
+  if (displayUi) console.log(`✅ Merkle root set: ${ManageRoot}\n`);
 
   return modules;
 }

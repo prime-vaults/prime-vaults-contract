@@ -433,7 +433,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         //     // Transfer assets to user.
         //     asset.safeTransfer(account, assetsOut);
         // }
-        teller.withdraw(shares, 0, account);
+        teller.withdraw(shares, assetsOut, account);
 
         emit WithdrawCompleted(account, asset, shares, assetsOut);
     }
