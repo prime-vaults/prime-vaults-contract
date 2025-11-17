@@ -15,9 +15,8 @@ contract TellerWithYieldStreaming is TellerWithBuffer {
         address _primeRegistry,
         address _vault,
         address _accountant,
-        address _asset,
-        address _weth
-    ) TellerWithBuffer(_primeRegistry, _vault, _accountant, _asset, _weth) {}
+        address _asset
+    ) TellerWithBuffer(_primeRegistry, _vault, _accountant, _asset) {}
 
     /**
      * @notice Allows off ramp role to withdraw from this contract.

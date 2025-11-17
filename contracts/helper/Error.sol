@@ -23,4 +23,10 @@ library Error {
 
     /// @dev thrown if msg.sender is not emergency admin
     error NOT_EMERGENCY_ADMIN();
+
+    //////////////////////////////////////////////////////////////
+    //                  EXECUTION ERRORS                        //
+    //////////////////////////////////////////////////////////////
+    /// @dev thrown if contract has insufficient balance for operations
+    error INSUFFICIENT_BALANCE(uint256 available, uint256 required);
 }
