@@ -24,12 +24,11 @@ void describe("01_Deposit", function () {
       context = await initializeTest();
     });
 
-    void it("Step 1: Should approve and deposit 1000 tokens successfully", async function () {
+    void it("Step 1: User deposits 1000 tokens", async function () {
       const depositAmount = 1000n * ONE_TOKEN;
 
       const result = await depositTokens(context, depositAmount);
 
-      // Verify: User received shares equal to deposit amount (1:1 ratio on first deposit)
       assert.equal(result.shares, depositAmount, "Shares should equal deposit amount on first deposit");
       assert.equal(
         result.balanceAfter,

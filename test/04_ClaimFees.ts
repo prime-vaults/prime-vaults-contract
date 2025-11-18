@@ -49,7 +49,10 @@ void describe("04_ClaimFees", function () {
       const { accountant, networkHelpers } = context;
 
       await accountant.write.updateExchangeRate();
-      await networkHelpers.time.increase(2 * 24 * 60 * 60); // 2 days
+
+      // Wait 2 days for fees to accrue
+      await networkHelpers.time.increase(2 * 24 * 60 * 60);
+
       await accountant.write.updateExchangeRate();
     });
 

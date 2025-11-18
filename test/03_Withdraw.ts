@@ -134,11 +134,12 @@ void describe("03_Withdraw", function () {
 
     void it("Step 5: Wait 1 day for withdrawal delay", async function () {
       const { networkHelpers } = context;
-      await networkHelpers.time.increase(1 * 24 * 60 * 60);
+
+      await networkHelpers.time.increase(24 * 60 * 60);
     });
 
     void it("Step 6: Complete withdrawal (auto pulls from PrimeStrategist)", async function () {
-      const { withdrawer, mockERC20, deployer, mockStrategist, vault } = context;
+      const { withdrawer, mockERC20, deployer, mockStrategist } = context;
 
       const userBalanceBefore = await mockERC20.read.balanceOf([deployer.account.address]);
       const strategistBalanceBefore = await mockERC20.read.balanceOf([mockStrategist.address]);
