@@ -26,8 +26,8 @@ export default buildModule("TellerModule", (m) => {
   // Set role capabilities for deposit functions
   m.call(
     rolesAuthority,
-    "setRoleCapability",
-    [MINTER_ROLE, teller, toFunctionSelector("deposit(address,uint256,uint256)"), true],
+    "setPublicCapability",
+    [teller, toFunctionSelector("deposit(uint256,uint256,address)"), true],
     { id: "setRoleCapability_deposit" },
   );
 

@@ -9,6 +9,7 @@ import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {IPausable} from "../interfaces/IPausable.sol";
+import {Distributor} from "./Distributor.sol";
 
 import "../auth/PrimeAuth.sol";
 
@@ -132,6 +133,11 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
     AccountantWithRateProviders public immutable accountant;
 
     /**
+     * @notice The Distributor contract for reward distribution (optional).
+     */
+    Distributor public distributor;
+
+    /**
      * @notice One share of the BoringVault.
      */
     uint256 internal immutable ONE_SHARE;
@@ -175,7 +181,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
      * @notice Enable or disable deposits for the asset.
      * @dev Callable by OWNER_ROLE.
      */
-    function setAllowDeposits(bool _allowDeposits) external requiresAuth {
+    function setAllowDeposits(bool _allowDeposits) external onlyProtocolAdmin {
         tellerState.allowDeposits = _allowDeposits;
         emit DepositsAllowed(_allowDeposits);
     }
@@ -184,9 +190,17 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
      * @notice Enable or disable withdrawals for the asset.
      * @dev Callable by OWNER_ROLE.
      */
-    function setAllowWithdraws(bool _allowWithdraws) external requiresAuth {
+    function setAllowWithdraws(bool _allowWithdraws) external onlyProtocolAdmin {
         tellerState.allowWithdraws = _allowWithdraws;
         emit WithdrawsAllowed(_allowWithdraws);
+    }
+
+    /**
+     * @notice Set the Distributor contract for reward distribution.
+     * @dev Callable by OWNER_ROLE.
+     */
+    function setDistributor(address _distributor) external onlyProtocolAdmin {
+        distributor = Distributor(_distributor);
     }
 
     /**
@@ -325,7 +339,17 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
      * @notice When minting (from = address(0)), only checks `to` and `operator`.
      * @notice When burning (to = address(0)), only checks `from` and `operator`.
      */
-    function beforeUpdate(address from, address to, uint256 /* amount */, address operator) public view virtual {
+    function beforeUpdate(address from, address to, uint256 /* amount */, address operator) public virtual {
+        // Update rewards BEFORE balance changes if distributor is set
+        if (address(distributor) != address(0)) {
+            if (from != address(0)) {
+                distributor.updateRewardForAccount(from);
+            }
+            if (to != address(0)) {
+                distributor.updateRewardForAccount(to);
+            }
+        }
+
         // For minting: from = address(0), skip from checks
         if (from != address(0)) {
             // Check if from is denied

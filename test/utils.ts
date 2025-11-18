@@ -1,4 +1,5 @@
 import { network } from "hardhat";
+import { Account } from "viem";
 
 import deployMocks from "../scripts/deploy/00_mock.js";
 import deployPrimeVault from "../scripts/deploy/01_primeVault.js";
@@ -9,13 +10,15 @@ export const PARAMETERS_ID = "localhost-usd";
 
 export async function initializeTest() {
   const connection = await network.connect();
-  const [deployer] = await connection.viem.getWalletClients();
+  const [deployer, alice, bob] = await connection.viem.getWalletClients();
 
   // Deploy mocks
   const mocks = await deployMocks(connection, PARAMETERS_ID);
 
   // Mint tokens to deployer
   await mocks.mockERC20.write.mint([deployer.account.address, 10000n * 10n ** 18n]);
+  await mocks.mockERC20.write.mint([alice.account.address, 10000n * 10n ** 18n]);
+  await mocks.mockERC20.write.mint([bob.account.address, 10000n * 10n ** 18n]);
 
   // Deploy full system (vault + accountant + teller + manager)
   const primeModules = await deployPrimeVault(connection, PARAMETERS_ID, {
@@ -38,19 +41,24 @@ export async function initializeTest() {
  * @param depositAmount - Amount to deposit (in wei)
  * @returns Object containing shares received and balance changes
  */
-export async function depositTokens(context: Awaited<ReturnType<typeof initializeTest>>, depositAmount: bigint) {
-  const { mockERC20, vault, teller, deployer } = context;
+export async function depositTokens(
+  context: Awaited<ReturnType<typeof initializeTest>>,
+  depositAmount: bigint,
+  account?: Account,
+) {
+  const { mockERC20, vault, teller } = context;
+  if (!account) account = context.deployer.account;
 
-  const initialBalance = await mockERC20.read.balanceOf([deployer.account.address]);
+  const initialBalance = await mockERC20.read.balanceOf([account.address]);
 
   // Approve vault to spend tokens
-  await mockERC20.write.approve([vault.address, depositAmount]);
+  await mockERC20.write.approve([vault.address, depositAmount], { account });
 
   // Deposit tokens
-  await teller.write.deposit([depositAmount, 0n, deployer.account.address]);
+  await teller.write.deposit([depositAmount, 0n, account.address], { account });
 
-  const shares = await vault.read.balanceOf([deployer.account.address]);
-  const balanceAfter = await mockERC20.read.balanceOf([deployer.account.address]);
+  const shares = await vault.read.balanceOf([account.address]);
+  const balanceAfter = await mockERC20.read.balanceOf([account.address]);
 
   return {
     shares,

@@ -33,14 +33,14 @@
     "performanceFee": 0
   },
   "$metadata": {
-    "BoringVaultAddress": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-    "AccountantAddress": "0x9A676e781A523b5d0C0e43731313A708CB607508",
-    "TellerAddress": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
-    "WithdrawerAddress": "0x9d4454B023096f34B160D6B654540c56A1F81688",
-    "ManagerAddress": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-    "PrimeRegistryAddress": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
-    "RolesAuthorityAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-    "ManageRoot": "0x71a22587408e016457546979f73ac18c0c947ebebc2d8ca999c7848360f046b2",
+    "BoringVaultAddress": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+    "AccountantAddress": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+    "TellerAddress": "0x84eA74d481Ee0A5332c457a4d796187F6Ba67fEB",
+    "WithdrawerAddress": "0x4c5859f0F772848b2D91F1D83E2Fe57935348029",
+    "ManagerAddress": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+    "PrimeRegistryAddress": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+    "RolesAuthorityAddress": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+    "ManageRoot": "0xf3fcd9478479edde5a820ae68b582ed7bc9584abf70db69ed0989fa02c61215b",
     "leafs": [
       {
         "Description": "Approve Accountant to spend base asset (staking token)",
@@ -50,10 +50,10 @@
         "TargetAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
         "CanSendValue": false,
         "AddressArguments": [
-          "0x9A676e781A523b5d0C0e43731313A708CB607508"
+          "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1"
         ],
-        "PackedArgumentAddresses": "9a676e781a523b5d0c0e43731313a708cb607508",
-        "LeafDigest": "0xf503c6ce31720159fd297f6aa0b7e952dd73a3f9746fa108634a084ede9f223d"
+        "PackedArgumentAddresses": "959922be3caee4b8cd9a407cc3ac1c251c2007b1",
+        "LeafDigest": "0x43b9d0eb604393c675fff43512243ee09a71d75b4639371a3f18773f80d5239a"
       },
       {
         "Description": "Approve PrimeStrategist to spend base asset (staking token)",
@@ -77,21 +77,21 @@
         "CanSendValue": false,
         "AddressArguments": [
           "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-          "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"
+          "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
         ],
-        "PackedArgumentAddresses": "5fbdb2315678afecb367f032d93f642f64180aa3a513e6e4b8f2a923d98304ec87f64353c4d5c853",
-        "LeafDigest": "0x09c00b92fe0f0adb5eee88e423b9ec62baced62275200e0b40f1be25e3fb4bec"
+        "PackedArgumentAddresses": "5fbdb2315678afecb367f032d93f642f64180aa38a791620dd6260079bf849dc5567adc3f2fdc318",
+        "LeafDigest": "0xaec566cf4bc01851d5c5ce196e8f5a40cdbdc2dcde161c750a2c6e2107ee8aa4"
       },
       {
         "Description": "Claim platform fees from Accountant",
         "FunctionSignature": "claimFees()",
         "FunctionSelector": "0xd294f093",
         "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-        "TargetAddress": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+        "TargetAddress": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
         "CanSendValue": false,
         "AddressArguments": [],
         "PackedArgumentAddresses": "",
-        "LeafDigest": "0xa8a8d00a8ad4668bed6932c4871cb92640096be563eb1a6d5f23c18d81d80d20"
+        "LeafDigest": "0x5f3c4dd52d566303244d2465159b46ac71a4261dc74aa87a39a8e702895b3215"
       }
     ]
   }
