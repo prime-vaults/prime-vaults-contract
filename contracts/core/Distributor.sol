@@ -207,24 +207,6 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     }
 
     // ========================================= USER FUNCTIONS =========================================
-
-    /**
-     * @notice Claim all accumulated rewards for all reward tokens
-     * @dev No staking required - rewards are based on vault share balance
-     */
-    function getReward() public nonReentrant updateReward(msg.sender) {
-        for (uint256 i = 0; i < rewardTokens.length; i++) {
-            address _rewardsToken = rewardTokens[i];
-            uint256 reward = rewards[msg.sender][_rewardsToken];
-
-            if (reward > 0) {
-                rewards[msg.sender][_rewardsToken] = 0;
-                ERC20(_rewardsToken).safeTransfer(msg.sender, reward);
-                emit RewardPaid(msg.sender, _rewardsToken, reward);
-            }
-        }
-    }
-
     /**
      * @notice Claim accumulated rewards for specific tokens
      * @dev No staking required - rewards are based on vault share balance

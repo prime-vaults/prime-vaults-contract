@@ -21,7 +21,7 @@ export default buildModule("VaultModule", (m) => {
   // Deploy BoringVault
   const vault = m.contract(
     "BoringVault",
-    [primeRegistry, m.getParameter("name"), m.getParameter("symbol"), m.getParameter("decimals")],
+    [primeRegistry, m.getParameter("name"), m.getParameter("symbol"), m.getParameter("stakingToken")],
     { after: [primeRegistry, rolesAuthority] },
   );
 

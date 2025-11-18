@@ -74,7 +74,7 @@ void describe("02_Reward", function () {
       const earnedBefore = await distributor.read.earned([deployer.account.address, mockERC20.address]);
 
       // Claim rewards
-      await distributor.write.getReward();
+      await distributor.write.claimRewards([[mockERC20.address]]);
 
       const balanceAfter = await mockERC20.read.balanceOf([deployer.account.address]);
       const earnedAfter = await distributor.read.earned([deployer.account.address, mockERC20.address]);
