@@ -17,7 +17,7 @@ export default buildModule("TellerModule", (m) => {
 
   // Deploy Teller
   const teller = m.contract("TellerWithYieldStreaming", [primeRBAC, vault, accountant], {
-    after: [accountant, primeRegistry, vault],
+    after: [accountant, vault],
   });
 
   // Link teller to authority

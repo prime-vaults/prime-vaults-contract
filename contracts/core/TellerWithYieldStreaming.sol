@@ -12,10 +12,10 @@ contract TellerWithYieldStreaming is TellerWithBuffer {
     using SafeTransferLib for ERC20;
 
     constructor(
-        address _primeRegistry,
+        address _primeRBAC,
         address _vault,
         address _accountant
-    ) TellerWithBuffer(_primeRegistry, _vault, _accountant) {}
+    ) TellerWithBuffer(_primeRBAC, _vault, _accountant) {}
 
     /**
      * @notice Allows off ramp role to withdraw from this contract.
