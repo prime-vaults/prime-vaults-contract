@@ -7,7 +7,8 @@ import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
-import {BeforeTransferHook} from "../interfaces/hooks/BeforeTransferHook.sol";
+import {IBeforeTransferHook} from "../interfaces/hooks/IBeforeTransferHook.sol";
+import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
 
 import {PrimeAuth} from "../auth/PrimeAuth.sol";
 
@@ -21,7 +22,12 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
     /**
      * @notice Contract responsbile for implementing `beforeTransfer`.
      */
-    BeforeTransferHook public hook;
+    IBeforeTransferHook public hook;
+
+    /**
+     * @notice Contract responsible for implementing `beforeUpdate`.
+     */
+    IBeforeUpdateHook public beforeUpdateHook;
 
     //============================== EVENTS ===============================
 
@@ -84,6 +90,9 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
         // Transfer assets in
         if (assetAmount > 0) asset.safeTransferFrom(from, address(this), assetAmount);
 
+        // Update rewards BEFORE minting (with old balances)
+        _callBeforeUpdate(address(0), to, shareAmount);
+
         // Mint shares.
         _mint(to, shareAmount);
 
@@ -104,6 +113,9 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
         address from,
         uint256 shareAmount
     ) external requiresAuth {
+        // Update rewards BEFORE burning (with old balances)
+        _callBeforeUpdate(from, address(0), shareAmount);
+
         // Burn shares.
         _burn(from, shareAmount);
 
@@ -120,7 +132,16 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
      * @dev Callable by OWNER_ROLE.
      */
     function setBeforeTransferHook(address _hook) external onlyProtocolAdmin {
-        hook = BeforeTransferHook(_hook);
+        hook = IBeforeTransferHook(_hook);
+    }
+
+    /**
+     * @notice Sets the before update hook (e.g., Distributor).
+     * @notice If set to zero address, the hook is disabled.
+     * @dev Callable by OWNER_ROLE.
+     */
+    function setBeforeUpdateHook(address _hook) external onlyProtocolAdmin {
+        beforeUpdateHook = IBeforeUpdateHook(_hook);
     }
 
     /**
@@ -130,13 +151,22 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
         if (address(hook) != address(0)) hook.beforeTransfer(from, to, msg.sender);
     }
 
+    /**
+     * @notice Call `beforeUpdate` hook BEFORE balance changes.
+     */
+    function _callBeforeUpdate(address from, address to, uint256 amount) internal {
+        if (address(beforeUpdateHook) != address(0)) beforeUpdateHook.beforeUpdate(from, to, amount);
+    }
+
     function transfer(address to, uint256 amount) public override returns (bool) {
         _callBeforeTransfer(msg.sender, to);
+        _callBeforeUpdate(msg.sender, to, amount);
         return super.transfer(to, amount);
     }
 
     function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
         _callBeforeTransfer(from, to);
+        _callBeforeUpdate(from, to, amount);
         return super.transferFrom(from, to, amount);
     }
 

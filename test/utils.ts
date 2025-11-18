@@ -26,6 +26,7 @@ export async function initializeTest() {
   return {
     deployer,
     connection,
+    networkHelpers: connection.networkHelpers,
     ...mocks,
     ...primeModules,
   };

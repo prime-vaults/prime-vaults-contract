@@ -1,5 +1,6 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
+import DistributorModule from "./Distributor.js";
 import ManagerModule from "./Manager.js";
 import WithdrawerModule from "./Withdrawer.js";
 
@@ -11,6 +12,7 @@ export default buildModule("PrimeVaultModule", (m) => {
   // Import all sub-modules
   const { withdrawer, vault, accountant, teller, primeRegistry, rolesAuthority } = m.useModule(WithdrawerModule);
   const { manager } = m.useModule(ManagerModule);
+  const { distributor } = m.useModule(DistributorModule);
 
   // Get role constants
   const ADMIN_ROLE = m.getParameter("ADMIN_ROLE");
@@ -68,5 +70,6 @@ export default buildModule("PrimeVaultModule", (m) => {
     manager,
     primeRegistry,
     rolesAuthority,
+    distributor,
   };
 });

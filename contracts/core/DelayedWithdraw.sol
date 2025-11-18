@@ -8,7 +8,7 @@ import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
 import {TellerWithMultiAssetSupport} from "./TellerWithMultiAssetSupport.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
-import {BeforeTransferHook} from "../interfaces/hooks/BeforeTransferHook.sol";
+import {IBeforeTransferHook} from "../interfaces/hooks/IBeforeTransferHook.sol";
 
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {IPausable} from "../interfaces/IPausable.sol";

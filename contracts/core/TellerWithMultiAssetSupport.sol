@@ -6,13 +6,13 @@ import {BoringVault} from "./BoringVault.sol";
 import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
-import {BeforeTransferHook} from "../interfaces/hooks/BeforeTransferHook.sol";
+import {IBeforeTransferHook} from "../interfaces/hooks/IBeforeTransferHook.sol";
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {IPausable} from "../interfaces/IPausable.sol";
 
 import "../auth/PrimeAuth.sol";
 
-contract TellerWithMultiAssetSupport is PrimeAuth, BeforeTransferHook, ReentrancyGuard, IPausable {
+contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, ReentrancyGuard, IPausable {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
@@ -332,7 +332,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, BeforeTransferHook, Reentranc
         emit DepositCapSet(cap);
     }
 
-    // ========================================= BeforeTransferHook FUNCTIONS =========================================
+    // ========================================= IBeforeTransferHook FUNCTIONS =========================================
 
     /**
      * @notice Implement beforeTransfer hook to check if shares are locked, or if `from`, `to`, or `operator` are denied in beforeTransferData.
