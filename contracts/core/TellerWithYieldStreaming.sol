@@ -35,7 +35,6 @@ contract TellerWithYieldStreaming is TellerWithBuffer {
     }
 
     function _erc20Deposit(
-        ERC20 depositAsset,
         uint256 depositAmount,
         uint256 minimumMint,
         address from,
@@ -46,7 +45,7 @@ contract TellerWithYieldStreaming is TellerWithBuffer {
         if (vault.totalSupply() == 0) {
             _getAccountant().setFirstDepositTimestamp();
         }
-        shares = super._erc20Deposit(depositAsset, depositAmount, minimumMint, from, to);
+        shares = super._erc20Deposit(depositAmount, minimumMint, from, to);
     }
 
     /**

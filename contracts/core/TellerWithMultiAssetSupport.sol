@@ -53,11 +53,6 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
     // ========================================= CONSTANTS =========================================
 
     /**
-     * @notice Native address used to tell the contract to handle native asset deposits.
-     */
-    address internal constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-
-    /**
      * @notice The maximum possible share lock period.
      */
     uint256 internal constant MAX_SHARE_LOCK_PERIOD = 3 days;
@@ -91,7 +86,6 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
     error TellerWithMultiAssetSupport__DualDeposit();
     error TellerWithMultiAssetSupport__Paused();
     error TellerWithMultiAssetSupport__TransferDenied(address from, address to, address operator);
-    error TellerWithMultiAssetSupport__CannotDepositNative();
     error TellerWithMultiAssetSupport__DepositExceedsCap();
     error TellerWithMultiAssetSupport__DepositsNotAllowed();
     error TellerWithMultiAssetSupport__WithdrawsNotAllowed();
@@ -105,7 +99,6 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
     event Deposit(
         uint256 nonce,
         address indexed receiver,
-        address indexed depositAsset,
         uint256 depositAmount,
         uint256 shareAmount,
         uint256 depositTimestamp,
@@ -125,16 +118,6 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
     event AllowPermissionedOperator(address indexed operator);
     event DenyPermissionedOperator(address indexed operator);
     event DepositCapSet(uint112 cap);
-
-    // =============================== MODIFIERS ===============================
-
-    /**
-     * @notice Reverts if the deposit asset is the native asset.
-     */
-    modifier revertOnNativeDeposit(address depositAsset) {
-        if (depositAsset == NATIVE) revert TellerWithMultiAssetSupport__CannotDepositNative();
-        _;
-    }
 
     //============================== IMMUTABLES ===============================
 
@@ -391,13 +374,10 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
         uint256 depositAmount,
         uint256 minimumMint,
         address referralAddress
-    ) external payable virtual requiresAuth nonReentrant returns (uint256 shares) {
+    ) external virtual requiresAuth nonReentrant returns (uint256 shares) {
         _beforeDeposit();
-
-        if (msg.value > 0) revert TellerWithMultiAssetSupport__CannotDepositNative();
-
-        shares = _erc20Deposit(asset, depositAmount, minimumMint, msg.sender, msg.sender);
-        _afterPublicDeposit(msg.sender, asset, depositAmount, shares, tellerState.shareLockPeriod, referralAddress);
+        shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, msg.sender);
+        _afterPublicDeposit(msg.sender, depositAmount, shares, tellerState.shareLockPeriod, referralAddress);
     }
 
     /**
@@ -414,11 +394,9 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
         address referralAddress
     ) external virtual requiresAuth nonReentrant returns (uint256 shares) {
         _beforeDeposit();
-
-        _handlePermit(asset, depositAmount, deadline, v, r, s);
-
-        shares = _erc20Deposit(asset, depositAmount, minimumMint, msg.sender, msg.sender);
-        _afterPublicDeposit(msg.sender, asset, depositAmount, shares, tellerState.shareLockPeriod, referralAddress);
+        _handlePermit(depositAmount, deadline, v, r, s);
+        shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, msg.sender);
+        _afterPublicDeposit(msg.sender, depositAmount, shares, tellerState.shareLockPeriod, referralAddress);
     }
 
     /**
@@ -432,8 +410,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
         address to
     ) external virtual requiresAuth nonReentrant returns (uint256 shares) {
         _beforeDeposit();
-
-        shares = _erc20Deposit(asset, depositAmount, minimumMint, msg.sender, to);
+        shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, to);
         emit BulkDeposit(address(asset), depositAmount);
     }
 
@@ -470,7 +447,6 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
      * @notice Implements a common ERC20 deposit into BoringVault.
      */
     function _erc20Deposit(
-        ERC20 /* depositAsset */,
         uint256 depositAmount,
         uint256 minimumMint,
         address from,
@@ -522,7 +498,6 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
      */
     function _afterPublicDeposit(
         address user,
-        ERC20 depositAsset,
         uint256 depositAmount,
         uint256 shares,
         uint256 currentShareLockPeriod,
@@ -535,7 +510,6 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
         emit Deposit(
             0, // nonce no longer used
             user,
-            address(depositAsset),
             depositAmount,
             shares,
             block.timestamp,
@@ -547,16 +521,9 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
     /**
      * @notice Handle permit logic.
      */
-    function _handlePermit(
-        ERC20 depositAsset,
-        uint256 depositAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) internal {
-        try depositAsset.permit(msg.sender, address(vault), depositAmount, deadline, v, r, s) {} catch {
-            if (depositAsset.allowance(msg.sender, address(vault)) < depositAmount) {
+    function _handlePermit(uint256 depositAmount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) internal {
+        try asset.permit(msg.sender, address(vault), depositAmount, deadline, v, r, s) {} catch {
+            if (asset.allowance(msg.sender, address(vault)) < depositAmount) {
                 revert TellerWithMultiAssetSupport__PermitFailedAndAllowanceTooLow();
             }
         }
