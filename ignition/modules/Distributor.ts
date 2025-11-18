@@ -2,10 +2,14 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 import TellerModule from "./Teller.js";
 
+/**
+ * Distributor Module
+ * Deploys Distributor for reward distribution
+ */
 const DistributorModule = buildModule("DistributorModule", (m) => {
-  const { vault, teller, primeRegistry, rolesAuthority } = m.useModule(TellerModule);
+  const { vault, teller, primeRegistry, rolesAuthority, primeRBAC } = m.useModule(TellerModule);
 
-  const distributor = m.contract("Distributor", [primeRegistry, vault], {
+  const distributor = m.contract("Distributor", [primeRBAC, vault], {
     after: [vault, primeRegistry],
   });
 

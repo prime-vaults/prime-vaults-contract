@@ -89,7 +89,7 @@ contract AccountantWithYieldStreaming is AccountantWithRateProviders {
     event MaximumDeviationYieldUpdated(uint64 newMaximum);
 
     constructor(
-        address _primeRegistry,
+        address _primeRBAC,
         address _vault,
         address payoutAddress,
         uint96 startingExchangeRate,
@@ -100,9 +100,9 @@ contract AccountantWithYieldStreaming is AccountantWithRateProviders {
         uint16 performanceFee
     )
         AccountantWithRateProviders(
-            _primeRegistry,
+            _primeRBAC,
             _vault,
-            payoutAddress,
+            payable(payoutAddress),
             startingExchangeRate,
             allowedExchangeRateChangeUpper,
             allowedExchangeRateChangeLower,

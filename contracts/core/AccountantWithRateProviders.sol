@@ -99,22 +99,22 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
     uint256 internal immutable ONE_SHARE;
 
     constructor(
-        address _primeRegistry,
+        address _primeRBAC,
         address _vault,
-        address payoutAddress,
+        address payable _payoutAddress,
         uint96 startingExchangeRate,
         uint16 allowedExchangeRateChangeUpper,
         uint16 allowedExchangeRateChangeLower,
         uint24 minimumUpdateDelayInSeconds,
         uint16 platformFee,
         uint16 performanceFee
-    ) PrimeAuth(_primeRegistry) {
+    ) PrimeAuth(_primeRBAC) {
         vault = BoringVault(payable(_vault));
         base = vault.asset();
         decimals = base.decimals();
         ONE_SHARE = 10 ** vault.decimals();
         accountantState = AccountantState({
-            payoutAddress: payoutAddress,
+            payoutAddress: _payoutAddress,
             feesOwedInBase: 0,
             totalSharesLastUpdate: uint128(vault.totalSupply()),
             exchangeRate: startingExchangeRate,

@@ -8,7 +8,7 @@ import VaultModule from "./Vault.js";
  * Deploys AccountantWithYieldStreaming for exchange rate and fee management
  */
 export default buildModule("AccountantModule", (m) => {
-  const { vault, primeRegistry, rolesAuthority } = m.useModule(VaultModule);
+  const { vault, primeRegistry, rolesAuthority, primeRBAC } = m.useModule(VaultModule);
 
   // Get role constants
   const MINTER_ROLE = m.getParameter("MINTER_ROLE");
@@ -18,7 +18,7 @@ export default buildModule("AccountantModule", (m) => {
   const accountant = m.contract(
     "AccountantWithYieldStreaming",
     [
-      primeRegistry,
+      primeRBAC,
       vault,
       m.getParameter("adminAddress"),
       m.getParameter("startingExchangeRate"),
@@ -56,5 +56,5 @@ export default buildModule("AccountantModule", (m) => {
     { id: "setRoleCapability_updateCumulative" },
   );
 
-  return { accountant, vault, primeRegistry, rolesAuthority };
+  return { accountant, vault, primeRegistry, rolesAuthority, primeRBAC };
 });

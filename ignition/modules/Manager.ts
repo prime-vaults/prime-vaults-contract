@@ -8,7 +8,7 @@ import VaultModule from "./Vault.js";
  * Deploys ManagerWithMerkleVerification for secure strategy execution
  */
 export default buildModule("ManagerModule", (m) => {
-  const { vault, primeRegistry, rolesAuthority } = m.useModule(VaultModule);
+  const { vault, primeRegistry, rolesAuthority, primeRBAC } = m.useModule(VaultModule);
 
   // Get role constants
   const adminAddress = m.getParameter("adminAddress");
@@ -16,7 +16,7 @@ export default buildModule("ManagerModule", (m) => {
   const STRATEGIST_ROLE = m.getParameter("STRATEGIST_ROLE");
 
   // Deploy Manager
-  const manager = m.contract("ManagerWithMerkleVerification", [primeRegistry, vault]);
+  const manager = m.contract("ManagerWithMerkleVerification", [primeRBAC, vault]);
 
   // Link manager to authority
   m.call(manager, "setAuthority", [rolesAuthority], { id: "manager_setAuthority" });

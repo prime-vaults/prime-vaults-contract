@@ -40,11 +40,11 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
     //============================== CONSTRUCTOR ===============================
 
     constructor(
-        address _primeRegistry,
+        address _primeRBAC,
         string memory _name,
         string memory _symbol,
         address _asset
-    ) ERC20(_name, _symbol, ERC20(_asset).decimals()) PrimeAuth(_primeRegistry) {
+    ) ERC20(_name, _symbol, ERC20(_asset).decimals()) PrimeAuth(_primeRBAC) {
         asset = ERC20(_asset);
     }
 

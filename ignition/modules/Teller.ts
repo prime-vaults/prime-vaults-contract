@@ -8,7 +8,7 @@ import AccountantModule from "./Accountant.js";
  * Deploys TellerWithYieldStreaming for user deposits and withdrawals
  */
 export default buildModule("TellerModule", (m) => {
-  const { vault, accountant, primeRegistry, rolesAuthority } = m.useModule(AccountantModule);
+  const { vault, accountant, primeRegistry, rolesAuthority, primeRBAC } = m.useModule(AccountantModule);
 
   // Get role constants
   const MINTER_ROLE = m.getParameter("MINTER_ROLE");
@@ -16,7 +16,7 @@ export default buildModule("TellerModule", (m) => {
   const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
 
   // Deploy Teller
-  const teller = m.contract("TellerWithYieldStreaming", [primeRegistry, vault, accountant], {
+  const teller = m.contract("TellerWithYieldStreaming", [primeRBAC, vault, accountant], {
     after: [accountant, primeRegistry, vault],
   });
 
@@ -81,5 +81,5 @@ export default buildModule("TellerModule", (m) => {
   m.call(teller, "setWithdrawBufferHelper", [primeBufferHelper], { id: "teller_setWithdrawBufferHelper" });
   m.call(vault, "setBeforeUpdateHook", [teller], { id: "vault_setBeforeUpdateHook" });
 
-  return { teller, primeBufferHelper, accountant, vault, primeRegistry, rolesAuthority };
+  return { teller, primeBufferHelper, accountant, vault, primeRegistry, rolesAuthority, primeRBAC };
 });

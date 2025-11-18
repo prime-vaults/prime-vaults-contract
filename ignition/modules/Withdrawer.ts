@@ -8,12 +8,12 @@ import TellerModule from "./Teller.js";
  * Deploys DelayedWithdraw for time-delayed withdrawal functionality
  */
 export default buildModule("WithdrawerModule", (m) => {
-  const { vault, accountant, teller, primeRegistry, rolesAuthority } = m.useModule(TellerModule);
+  const { vault, accountant, teller, primeRegistry, rolesAuthority, primeRBAC } = m.useModule(TellerModule);
 
   // Deploy DelayedWithdraw
   const withdrawer = m.contract(
     "DelayedWithdraw",
-    [primeRegistry, vault, accountant, teller, m.getParameter("adminAddress")],
+    [primeRBAC, vault, accountant, teller, m.getParameter("adminAddress")],
     { after: [teller] },
   );
 
@@ -56,5 +56,5 @@ export default buildModule("WithdrawerModule", (m) => {
     { id: "withdrawer_setupWithdrawAsset" },
   );
 
-  return { withdrawer, vault, accountant, teller, primeRegistry, rolesAuthority };
+  return { withdrawer, vault, accountant, teller, primeRegistry, rolesAuthority, primeRBAC };
 });

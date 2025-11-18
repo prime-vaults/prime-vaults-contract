@@ -133,18 +133,18 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     uint256 internal immutable ONE_SHARE;
 
     constructor(
-        address _primeRegistry,
-        address _boringVault,
+        address _primeRBAC,
+        address _vault,
         address _accountant,
         address _teller,
-        address _feeAddress
-    ) PrimeAuth(_primeRegistry) {
+        address _payoutAddress
+    ) PrimeAuth(_primeRBAC) {
         accountant = AccountantWithRateProviders(_accountant);
         teller = TellerWithMultiAssetSupport(_teller);
-        boringVault = BoringVault(payable(_boringVault));
+        boringVault = BoringVault(payable(_vault));
         ONE_SHARE = 10 ** boringVault.decimals();
-        if (_feeAddress == address(0)) revert DelayedWithdraw__BadAddress();
-        feeAddress = _feeAddress;
+        if (_payoutAddress == address(0)) revert DelayedWithdraw__BadAddress();
+        feeAddress = _payoutAddress;
     }
 
     // ========================================= ADMIN FUNCTIONS =========================================

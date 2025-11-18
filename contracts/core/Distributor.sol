@@ -72,10 +72,10 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
 
     /**
      * @notice Initializes the Distributor contract
-     * @param _primeRegistry The PrimeRegistry contract for authentication
+     * @param _primeRBAC The PrimeRBAC contract for authentication
      * @param _vault The vault contract (source of share balances)
      */
-    constructor(address _primeRegistry, address _vault) PrimeAuth(_primeRegistry) {
+    constructor(address _primeRBAC, address _vault) PrimeAuth(_primeRBAC) {
         vault = ERC20(_vault);
     }
 

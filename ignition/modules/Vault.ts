@@ -8,7 +8,7 @@ import PrimeRegistryModule from "./PrimeRegistry.js";
  * Deploys BoringVault and RolesAuthority with initial permissions
  */
 export default buildModule("VaultModule", (m) => {
-  const { primeRegistry } = m.useModule(PrimeRegistryModule);
+  const { primeRegistry, primeRBAC } = m.useModule(PrimeRegistryModule);
 
   // Get role constants
   const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
@@ -21,7 +21,7 @@ export default buildModule("VaultModule", (m) => {
   // Deploy BoringVault
   const vault = m.contract(
     "BoringVault",
-    [primeRegistry, m.getParameter("name"), m.getParameter("symbol"), m.getParameter("stakingToken")],
+    [primeRBAC, m.getParameter("name"), m.getParameter("symbol"), m.getParameter("stakingToken")],
     { after: [primeRegistry, rolesAuthority] },
   );
 
@@ -63,5 +63,5 @@ export default buildModule("VaultModule", (m) => {
     { id: "setRoleCapability_exit" },
   );
 
-  return { vault, rolesAuthority, primeRegistry };
+  return { vault, rolesAuthority, primeRegistry, primeRBAC };
 });

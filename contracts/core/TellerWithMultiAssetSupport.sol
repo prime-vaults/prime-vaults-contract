@@ -142,7 +142,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
      */
     uint256 internal immutable ONE_SHARE;
 
-    constructor(address _primeRegistry, address _vault, address _accountant) PrimeAuth(_primeRegistry) {
+    constructor(address _primeRBAC, address _vault, address _accountant) PrimeAuth(_primeRBAC) {
         vault = BoringVault(payable(_vault));
         ONE_SHARE = 10 ** vault.decimals();
         accountant = AccountantWithRateProviders(_accountant);
