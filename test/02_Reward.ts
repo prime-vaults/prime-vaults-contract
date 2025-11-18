@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 
-import { ONE_DAY_SECS, ONE_TOKEN, initializeTest } from "./utils.js";
+import { ONE_DAY_SECS, ONE_TOKEN, assertApproxEqual, depositTokens, initializeTest } from "./utils.js";
 
 void describe("02_Reward", function () {
   void describe("Single Reward Distribution", function () {
@@ -11,21 +11,13 @@ void describe("02_Reward", function () {
       context = await initializeTest();
     });
 
-    void it("Step 1: User deposits tokens", async function () {
-      const { mockERC20, vault, teller, deployer } = context;
-
+    void it("Step 1: User deposits 1000 tokens", async function () {
       const depositAmount = 1000n * ONE_TOKEN;
-
-      // Approve and deposit
-      await mockERC20.write.approve([vault.address, depositAmount]);
-      await teller.write.deposit([depositAmount, 0n, deployer.account.address]);
-
-      const shares = await vault.read.balanceOf([deployer.account.address]);
-
-      assert.equal(shares, depositAmount, "Shares should equal deposit amount");
+      const result = await depositTokens(context, depositAmount);
+      assert.equal(result.shares, depositAmount, "Shares should equal deposit amount");
     });
 
-    void it("Step 2: Admin adds reward token and sets up distribution", async function () {
+    void it("Step 2: Admin adds reward token with 7 day duration", async function () {
       const { mockERC20, distributor, deployer } = context;
 
       const rewardDuration = 7n * ONE_DAY_SECS; // 7 days
@@ -43,7 +35,7 @@ void describe("02_Reward", function () {
       assert.equal(rewardData[1], rewardDuration, "Duration should be 7 days");
     });
 
-    void it("Step 3: Distributor notifies reward amount", async function () {
+    void it("Step 3: Distributor notifies 700 tokens reward (100/day)", async function () {
       const { mockERC20, distributor } = context;
 
       const rewardAmount = 700n * ONE_TOKEN; // 700 tokens over 7 days = 100/day
@@ -62,7 +54,7 @@ void describe("02_Reward", function () {
       assert.ok(periodFinish > 0n, "Period finish should be set");
     });
 
-    void it("Step 4: Time passes and user earns rewards", async function () {
+    void it("Step 4: After 1 day, user earns ~100 tokens", async function () {
       const { mockERC20, distributor, deployer, networkHelpers } = context;
 
       // Fast forward 1 day
@@ -71,14 +63,8 @@ void describe("02_Reward", function () {
       const earned = await distributor.read.earned([deployer.account.address, mockERC20.address]);
 
       // Should earn ~100 tokens (700 tokens / 7 days = 100 per day)
-      // Allow 1% tolerance for rounding
       const expected = 100n * ONE_TOKEN;
-      const tolerance = expected / 100n;
-
-      assert.ok(
-        earned >= expected - tolerance && earned <= expected + tolerance,
-        "Should earn ~100 tokens after 1 day",
-      );
+      assertApproxEqual(earned, expected, "Should earn ~100 tokens after 1 day");
     });
 
     void it("Step 5: User claims rewards", async function () {
@@ -93,18 +79,12 @@ void describe("02_Reward", function () {
       const balanceAfter = await mockERC20.read.balanceOf([deployer.account.address]);
       const earnedAfter = await distributor.read.earned([deployer.account.address, mockERC20.address]);
 
-      // Allow small tolerance due to time passing between earned() call and getReward()
       const received = balanceAfter - balanceBefore;
-      const tolerance = earnedBefore / 100n; // 1% tolerance
-
-      assert.ok(
-        received >= earnedBefore && received <= earnedBefore + tolerance,
-        "Should receive approximately all earned rewards",
-      );
+      assertApproxEqual(received, earnedBefore, "Should receive approximately all earned rewards");
       assert.equal(earnedAfter, 0n, "Earned should be 0 after claiming");
     });
 
-    void it("Step 6: User continues earning after claim", async function () {
+    void it("Step 6: After another day, user earns another ~100 tokens", async function () {
       const { mockERC20, distributor, deployer, networkHelpers } = context;
 
       // Fast forward another day
@@ -114,12 +94,7 @@ void describe("02_Reward", function () {
 
       // Should earn another ~100 tokens
       const expected = 100n * ONE_TOKEN;
-      const tolerance = expected / 100n;
-
-      assert.ok(
-        earned >= expected - tolerance && earned <= expected + tolerance,
-        "Should earn ~100 tokens after another day",
-      );
+      assertApproxEqual(earned, expected, "Should earn ~100 tokens after another day");
     });
   });
 });

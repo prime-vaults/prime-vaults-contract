@@ -187,12 +187,11 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @notice BeforeUpdate hook - updates rewards BEFORE balance changes
      * @param from The sender address (address(0) for mint)
      * @param to The recipient address (address(0) for burn)
-     * @param amount The amount of shares being transferred
      * @dev Called by vault BEFORE any balance change (mint/burn/transfer)
      * @dev Must update rewards based on OLD balances before they change
      * @dev Callable by vault only
      */
-    function beforeUpdate(address from, address to, uint256 amount) external override {
+    function beforeUpdate(address from, address to, uint256 /* amount */) external override {
         if (msg.sender != address(vault)) revert Distributor__NotAuthorized();
         if (paused) return; // Skip updates if paused
 
