@@ -3,53 +3,54 @@ import { before, describe, it } from "node:test";
 import { encodeFunctionData } from "viem";
 
 import { readLeaf } from "../scripts/createMerkleTree.js";
-import { ONE_TOKEN, depositTokens, initializeTest } from "./utils.js";
+import { DEPOSIT_AMOUNT, depositTokens, initializeTest } from "./utils.js";
 
 void describe("03_Withdraw", function () {
   /**
    * Scenario: Complete withdrawal flow with strategist interaction.
    *
    * Step 1 (At T0):
-   *  - User deposits 1 token to vault.
-   *  - User receives 1 share.
+   *  - Alice deposits 100 tokens to vault.
+   *  - Alice receives 100 shares.
    *
    * Step 2:
    *  - Manager approves PrimeStrategist via Merkle verification.
    *  - Authorizes strategist to spend vault's base asset.
    *
    * Step 3:
-   *  - Manager deposits 1 token from vault to PrimeStrategist.
-   *  - Vault balance becomes 0, strategist holds 1 token.
+   *  - Manager deposits 100 tokens from vault to PrimeStrategist.
+   *  - Vault balance becomes 0, strategist holds 100 tokens.
    *
    * Step 4:
-   *  - User requests withdrawal of 1 token.
-   *  - User approves withdrawer to spend shares.
-   *  - Withdrawer holds user's shares.
+   *  - Alice requests withdrawal of 100 tokens.
+   *  - Alice approves withdrawer to spend shares.
+   *  - Withdrawer holds Alice's shares.
    *
    * Step 5 (After 1 day → T1):
    *  - Wait for withdrawal delay period (1 day).
    *
    * Step 6:
-   *  - User completes withdrawal.
+   *  - Alice completes withdrawal.
    *  - System automatically pulls tokens from PrimeStrategist.
-   *  - User receives 1 token back.
+   *  - Alice receives 100 tokens back.
    *
    * Expected outcome:
-   *  - User successfully withdraws deposited amount.
+   *  - Alice successfully withdraws deposited amount.
    *  - Tokens are pulled from strategist automatically.
-   *  - User shares are burned.
+   *  - Alice shares are burned.
    */
   void describe("Full Withdrawal Flow", function () {
     let context: Awaited<ReturnType<typeof initializeTest>>;
-    const depositAmount = 1n * ONE_TOKEN;
 
     before(async function () {
       context = await initializeTest();
     });
 
-    void it("Step 1: User deposits 1 token", async function () {
-      const result = await depositTokens(context, depositAmount);
-      assert.equal(result.shares, depositAmount, "Shares should equal deposit amount");
+    void it("Step 1: Alice deposits 100 tokens", async function () {
+      const { alice } = context;
+
+      const result = await depositTokens(context, DEPOSIT_AMOUNT, alice.account);
+      assert.equal(result.shares, DEPOSIT_AMOUNT, "Shares should equal deposit amount");
     });
 
     void it("Step 2: Approve PrimeStrategist via Merkle verification", async function () {
@@ -105,7 +106,7 @@ void describe("03_Withdraw", function () {
           },
         ],
         functionName: "deposit",
-        args: [mockERC20.address, depositAmount],
+        args: [mockERC20.address, DEPOSIT_AMOUNT],
       });
 
       await vault.write.manage([mockStrategist.address, depositCalldata, 0n]);
@@ -113,20 +114,20 @@ void describe("03_Withdraw", function () {
       const strategistBalance = await mockERC20.read.balanceOf([mockStrategist.address]);
       const vaultBalance = await mockERC20.read.balanceOf([vault.address]);
 
-      assert.equal(strategistBalance, depositAmount, "Strategist should hold deposited amount");
+      assert.equal(strategistBalance, DEPOSIT_AMOUNT, "Strategist should hold deposited amount");
       assert.equal(vaultBalance, 0n, "Vault should have 0 balance after depositing to strategist");
     });
 
-    void it("Step 4: User requests withdrawal of 1 token", async function () {
-      const { vault, withdrawer, deployer, mockERC20 } = context;
+    void it("Step 4: Alice requests withdrawal of 100 tokens", async function () {
+      const { vault, withdrawer, alice, mockERC20 } = context;
 
-      const userShares = await vault.read.balanceOf([deployer.account.address]);
+      const userShares = await vault.read.balanceOf([alice.account.address]);
 
-      await vault.write.approve([withdrawer.address, userShares]);
-      await withdrawer.write.requestWithdraw([mockERC20.address, userShares, false]);
+      await vault.write.approve([withdrawer.address, userShares], { account: alice.account });
+      await withdrawer.write.requestWithdraw([mockERC20.address, userShares, false], { account: alice.account });
 
       const withdrawerShares = await vault.read.balanceOf([withdrawer.address]);
-      const userSharesAfter = await vault.read.balanceOf([deployer.account.address]);
+      const userSharesAfter = await vault.read.balanceOf([alice.account.address]);
 
       assert.equal(withdrawerShares, userShares, "Withdrawer should hold user's shares");
       assert.equal(userSharesAfter, 0n, "User should have 0 shares after request");
@@ -138,18 +139,20 @@ void describe("03_Withdraw", function () {
       await networkHelpers.time.increase(24 * 60 * 60);
     });
 
-    void it("Step 6: Complete withdrawal (auto pulls from PrimeStrategist)", async function () {
-      const { withdrawer, mockERC20, deployer, mockStrategist } = context;
+    void it("Step 6: Alice completes withdrawal (auto pulls from PrimeStrategist)", async function () {
+      const { withdrawer, mockERC20, alice, mockStrategist } = context;
 
-      const userBalanceBefore = await mockERC20.read.balanceOf([deployer.account.address]);
+      const userBalanceBefore = await mockERC20.read.balanceOf([alice.account.address]);
       const strategistBalanceBefore = await mockERC20.read.balanceOf([mockStrategist.address]);
 
-      await withdrawer.write.completeWithdraw([mockERC20.address, deployer.account.address]);
+      await withdrawer.write.completeWithdraw([mockERC20.address, alice.account.address], {
+        account: alice.account,
+      });
 
-      const userBalanceAfter = await mockERC20.read.balanceOf([deployer.account.address]);
+      const userBalanceAfter = await mockERC20.read.balanceOf([alice.account.address]);
       const strategistBalanceAfter = await mockERC20.read.balanceOf([mockStrategist.address]);
 
-      assert.equal(userBalanceAfter - userBalanceBefore, depositAmount, "User should receive deposited amount");
+      assert.equal(userBalanceAfter - userBalanceBefore, DEPOSIT_AMOUNT, "User should receive deposited amount");
       assert.ok(strategistBalanceAfter < strategistBalanceBefore, "Strategist balance should decrease");
     });
   });

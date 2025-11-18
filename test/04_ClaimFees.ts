@@ -3,15 +3,15 @@ import { before, describe, it } from "node:test";
 import { encodeFunctionData } from "viem";
 
 import { readLeaf } from "../scripts/createMerkleTree.js";
-import { ONE_TOKEN, depositTokens, initializeTest } from "./utils.js";
+import { DEPOSIT_AMOUNT, depositTokens, initializeTest } from "./utils.js";
 
 void describe("04_ClaimFees", function () {
   /**
    * Scenario: Manager claims protocol fees via Merkle verification.
    *
    * Step 1 (At T0):
-   *  - User deposits 1000 tokens.
-   *  - Vault holds 1000 tokens.
+   *  - Alice deposits 100 tokens.
+   *  - Vault holds 100 tokens.
    *
    * Step 2 (After 2 days → T2):
    *  - Accountant updates exchange rate (initial).
@@ -34,15 +34,16 @@ void describe("04_ClaimFees", function () {
    */
   void describe("Manager Claims Fees via Merkle", function () {
     let context: Awaited<ReturnType<typeof initializeTest>>;
-    const depositAmount = 1000n * ONE_TOKEN;
 
     before(async function () {
       context = await initializeTest();
     });
 
-    void it("Step 1: User deposits 1000 tokens", async function () {
-      const result = await depositTokens(context, depositAmount);
-      assert.equal(result.shares, depositAmount, "Shares should equal deposit amount");
+    void it("Step 1: Alice deposits 100 tokens", async function () {
+      const { alice } = context;
+
+      const result = await depositTokens(context, DEPOSIT_AMOUNT, alice.account);
+      assert.equal(result.shares, DEPOSIT_AMOUNT, "Shares should equal deposit amount");
     });
 
     void it("Step 2: Generate fees by updating exchange rate", async function () {
