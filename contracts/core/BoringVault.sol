@@ -20,6 +20,11 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
     // ========================================= STATE =========================================
 
     /**
+     * @notice The underlying asset token for this vault
+     */
+    ERC20 public immutable asset;
+
+    /**
      * @notice Contract responsbile for implementing `beforeTransfer`.
      */
     IBeforeTransferHook public hook;
@@ -34,6 +39,10 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
     event Enter(address indexed from, address indexed asset, uint256 amount, address indexed to, uint256 shares);
     event Exit(address indexed to, address indexed asset, uint256 amount, address indexed from, uint256 shares);
 
+    //============================== ERRORS ===============================
+
+    error BoringVault__InvalidAsset();
+
     //============================== CONSTRUCTOR ===============================
 
     constructor(
@@ -41,7 +50,9 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
         string memory _name,
         string memory _symbol,
         address _asset
-    ) ERC20(_name, _symbol, ERC20(_asset).decimals()) PrimeAuth(_primeRegistry) {}
+    ) ERC20(_name, _symbol, ERC20(_asset).decimals()) PrimeAuth(_primeRegistry) {
+        asset = ERC20(_asset);
+    }
 
     //============================== MANAGE ===============================
 
@@ -80,13 +91,7 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
      * @dev If assetAmount is zero, no assets are transferred in.
      * @dev Callable by MINTER_ROLE.
      */
-    function enter(
-        address from,
-        ERC20 asset,
-        uint256 assetAmount,
-        address to,
-        uint256 shareAmount
-    ) external requiresAuth {
+    function enter(address from, uint256 assetAmount, address to, uint256 shareAmount) external requiresAuth {
         // Transfer assets in
         if (assetAmount > 0) asset.safeTransferFrom(from, address(this), assetAmount);
 
@@ -106,13 +111,7 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
      * @dev If assetAmount is zero, no assets are transferred out.
      * @dev Callable by BURNER_ROLE.
      */
-    function exit(
-        address to,
-        ERC20 asset,
-        uint256 assetAmount,
-        address from,
-        uint256 shareAmount
-    ) external requiresAuth {
+    function exit(address to, uint256 assetAmount, address from, uint256 shareAmount) external requiresAuth {
         // Update rewards BEFORE burning (with old balances)
         _callBeforeUpdate(from, address(0), shareAmount);
 

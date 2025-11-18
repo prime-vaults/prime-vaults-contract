@@ -52,14 +52,14 @@ export default buildModule("VaultModule", (m) => {
   m.call(
     rolesAuthority,
     "setRoleCapability",
-    [MINTER_ROLE, vault, toFunctionSelector("enter(address,address,uint256,address,uint256)"), true],
+    [MINTER_ROLE, vault, toFunctionSelector("enter(address,uint256,address,uint256)"), true],
     { id: "setRoleCapability_enter" },
   );
 
   m.call(
     rolesAuthority,
     "setRoleCapability",
-    [BURNER_ROLE, vault, toFunctionSelector("exit(address,address,uint256,address,uint256)"), true],
+    [BURNER_ROLE, vault, toFunctionSelector("exit(address,uint256,address,uint256)"), true],
     { id: "setRoleCapability_exit" },
   );
 

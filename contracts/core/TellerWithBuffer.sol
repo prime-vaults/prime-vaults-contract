@@ -37,14 +37,12 @@ contract TellerWithBuffer is TellerWithMultiAssetSupport {
      * @param _primeRegistry The address that will have owner privileges
      * @param _vault The vault contract address this teller will interact with
      * @param _accountant The accountant contract address associated with the vault
-     * @param _asset The single asset this teller supports
      */
     constructor(
         address _primeRegistry,
         address _vault,
-        address _accountant,
-        address _asset
-    ) TellerWithMultiAssetSupport(_primeRegistry, _vault, _accountant, _asset) {}
+        address _accountant
+    ) TellerWithMultiAssetSupport(_primeRegistry, _vault, _accountant) {}
 
     /**
      * @notice Executes buffer management after a deposit operation

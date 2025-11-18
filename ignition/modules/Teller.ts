@@ -16,11 +16,9 @@ export default buildModule("TellerModule", (m) => {
   const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
 
   // Deploy Teller
-  const teller = m.contract(
-    "TellerWithYieldStreaming",
-    [primeRegistry, vault, accountant, m.getParameter("stakingToken")],
-    { after: [accountant, primeRegistry, vault] },
-  );
+  const teller = m.contract("TellerWithYieldStreaming", [primeRegistry, vault, accountant], {
+    after: [accountant, primeRegistry, vault],
+  });
 
   // Link teller to authority
   m.call(teller, "setAuthority", [rolesAuthority], { id: "teller_setAuthority" });

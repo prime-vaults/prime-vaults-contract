@@ -153,11 +153,11 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
      */
     uint256 internal immutable ONE_SHARE;
 
-    constructor(address _primeRegistry, address _vault, address _accountant, address _asset) PrimeAuth(_primeRegistry) {
+    constructor(address _primeRegistry, address _vault, address _accountant) PrimeAuth(_primeRegistry) {
         vault = BoringVault(payable(_vault));
         ONE_SHARE = 10 ** vault.decimals();
         accountant = AccountantWithRateProviders(_accountant);
-        asset = ERC20(_asset);
+        asset = vault.asset();
         tellerState = TellerState({
             isPaused: false,
             allowDeposits: true,
@@ -470,7 +470,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
      * @notice Implements a common ERC20 deposit into BoringVault.
      */
     function _erc20Deposit(
-        ERC20 depositAsset,
+        ERC20 /* depositAsset */,
         uint256 depositAmount,
         uint256 minimumMint,
         address from,
@@ -485,7 +485,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
             if (shares + vault.totalSupply() > state.depositCap)
                 revert TellerWithMultiAssetSupport__DepositExceedsCap();
         }
-        vault.enter(from, depositAsset, depositAmount, to, shares);
+        vault.enter(from, depositAmount, to, shares);
         _afterDeposit(depositAmount);
     }
 
@@ -505,7 +505,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
         assetsOut = shareAmount.mulDivDown(accountant.getRate(), ONE_SHARE);
         if (assetsOut < minimumAssets) revert TellerWithMultiAssetSupport__MinimumAssetsNotMet();
         _beforeWithdraw(assetsOut);
-        vault.exit(to, asset, assetsOut, msg.sender, shareAmount);
+        vault.exit(to, assetsOut, msg.sender, shareAmount);
     }
 
     /**
