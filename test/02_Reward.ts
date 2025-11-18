@@ -191,8 +191,6 @@ void describe("02_Reward", function () {
     void it("Step 3.5: User1 claims 100 tokens before User2 joins", async function () {
       const { mockERC20, distributor, deployer } = context;
 
-      const earnedBefore = await distributor.read.earned([deployer.account.address, mockERC20.address]);
-
       // Claim rewards to reset User1's earned amount
       await distributor.write.claimRewards([[mockERC20.address]]);
 
@@ -201,13 +199,12 @@ void describe("02_Reward", function () {
     });
 
     void it("Step 4: User2 stakes 100 tokens at T1 (pool becomes 200)", async function () {
-      const { vault, connection } = context;
-      const [, user2] = await connection.viem.getWalletClients();
+      const { vault, alice } = context;
 
       const depositAmount = 100n * ONE_TOKEN;
 
-      // Deposit using helper (user2 already has tokens from initializeTest)
-      const result = await depositTokens(context, depositAmount, user2.account);
+      // Deposit using helper (alice already has tokens from initializeTest)
+      const result = await depositTokens(context, depositAmount, alice.account);
       assert.equal(result.shares, depositAmount, "User2 shares should equal deposit amount");
 
       // Verify total supply is now 200
@@ -216,8 +213,7 @@ void describe("02_Reward", function () {
     });
 
     void it("Step 5: Wait 1 day, check proportional rewards (50/50 split)", async function () {
-      const { mockERC20, distributor, deployer, connection, networkHelpers } = context;
-      const [, user2] = await connection.viem.getWalletClients();
+      const { mockERC20, distributor, deployer, alice, networkHelpers } = context;
 
       // Fast forward another day
       await networkHelpers.time.increase(Number(ONE_DAY_SECS));
@@ -228,7 +224,7 @@ void describe("02_Reward", function () {
       // User2: 100/200 = 50% → earns 50 tokens this day
 
       const user1Earned = await distributor.read.earned([deployer.account.address, mockERC20.address]);
-      const user2Earned = await distributor.read.earned([user2.account.address, mockERC20.address]);
+      const user2Earned = await distributor.read.earned([alice.account.address, mockERC20.address]);
 
       // User1 claimed 100 tokens earlier, now earns 50 more
       const expectedUser1 = 50n * ONE_TOKEN;
@@ -257,17 +253,16 @@ void describe("02_Reward", function () {
     });
 
     void it("Step 7: User2 claims rewards (should get ~50 tokens)", async function () {
-      const { mockERC20, distributor, connection } = context;
-      const [, user2] = await connection.viem.getWalletClients();
+      const { mockERC20, distributor, alice } = context;
 
-      const balanceBefore = await mockERC20.read.balanceOf([user2.account.address]);
-      const earnedBefore = await distributor.read.earned([user2.account.address, mockERC20.address]);
+      const balanceBefore = await mockERC20.read.balanceOf([alice.account.address]);
+      const earnedBefore = await distributor.read.earned([alice.account.address, mockERC20.address]);
 
       // Claim rewards
-      await distributor.write.claimRewards([[mockERC20.address]], { account: user2.account });
+      await distributor.write.claimRewards([[mockERC20.address]], { account: alice.account });
 
-      const balanceAfter = await mockERC20.read.balanceOf([user2.account.address]);
-      const earnedAfter = await distributor.read.earned([user2.account.address, mockERC20.address]);
+      const balanceAfter = await mockERC20.read.balanceOf([alice.account.address]);
+      const earnedAfter = await distributor.read.earned([alice.account.address, mockERC20.address]);
 
       const received = balanceAfter - balanceBefore;
       assertApproxEqual(received, earnedBefore, "User2 should receive all earned rewards (~50 tokens)");
@@ -275,14 +270,13 @@ void describe("02_Reward", function () {
     });
 
     void it("Step 8: Wait another day, verify continued proportional distribution", async function () {
-      const { mockERC20, distributor, deployer, connection, networkHelpers } = context;
-      const [, user2] = await connection.viem.getWalletClients();
+      const { mockERC20, distributor, deployer, alice, networkHelpers } = context;
 
       // Fast forward another day
       await networkHelpers.time.increase(Number(ONE_DAY_SECS));
 
       const user1Earned = await distributor.read.earned([deployer.account.address, mockERC20.address]);
-      const user2Earned = await distributor.read.earned([user2.account.address, mockERC20.address]);
+      const user2Earned = await distributor.read.earned([alice.account.address, mockERC20.address]);
 
       // Both should earn 50 tokens (50/50 split)
       const expected = 50n * ONE_TOKEN;

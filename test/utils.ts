@@ -28,6 +28,8 @@ export async function initializeTest() {
 
   return {
     deployer,
+    alice,
+    bob,
     connection,
     networkHelpers: connection.networkHelpers,
     ...mocks,
