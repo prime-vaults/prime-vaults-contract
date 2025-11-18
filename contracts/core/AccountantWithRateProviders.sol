@@ -103,16 +103,15 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
         address _vault,
         address payoutAddress,
         uint96 startingExchangeRate,
-        address _base,
         uint16 allowedExchangeRateChangeUpper,
         uint16 allowedExchangeRateChangeLower,
         uint24 minimumUpdateDelayInSeconds,
         uint16 platformFee,
         uint16 performanceFee
     ) PrimeAuth(_primeRegistry) {
-        base = ERC20(_base);
-        decimals = ERC20(_base).decimals();
         vault = BoringVault(payable(_vault));
+        base = vault.asset();
+        decimals = base.decimals();
         ONE_SHARE = 10 ** vault.decimals();
         accountantState = AccountantState({
             payoutAddress: payoutAddress,

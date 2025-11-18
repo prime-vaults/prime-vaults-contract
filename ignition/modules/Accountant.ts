@@ -22,7 +22,6 @@ export default buildModule("AccountantModule", (m) => {
       vault,
       m.getParameter("adminAddress"),
       m.getParameter("startingExchangeRate"),
-      m.getParameter("stakingToken"),
       m.getParameter("allowedExchangeRateChangeUpper"),
       m.getParameter("allowedExchangeRateChangeLower"),
       m.getParameter("minimumUpdateDelayInSeconds"),
