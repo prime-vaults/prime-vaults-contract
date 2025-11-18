@@ -6,6 +6,32 @@ import { readLeaf } from "../scripts/createMerkleTree.js";
 import { ONE_TOKEN, depositTokens, initializeTest } from "./utils.js";
 
 void describe("04_ClaimFees", function () {
+  /**
+   * Scenario: Manager claims protocol fees via Merkle verification.
+   *
+   * Step 1 (At T0):
+   *  - User deposits 1000 tokens.
+   *  - Vault holds 1000 tokens.
+   *
+   * Step 2 (After 2 days → T2):
+   *  - Accountant updates exchange rate (initial).
+   *  - Wait 2 days.
+   *  - Accountant updates exchange rate again.
+   *  - Fees are generated based on vault performance.
+   *
+   * Step 3:
+   *  - Manager approves Accountant to spend base asset via Merkle verification.
+   *  - Required for accountant to collect fees.
+   *
+   * Step 4:
+   *  - Manager claims fees via Merkle verification.
+   *  - Uses manageVaultWithMerkleVerification for security.
+   *  - Accountant collects accumulated fees.
+   *
+   * Expected outcome:
+   *  - Protocol fees are successfully claimed by manager.
+   *  - Merkle verification ensures authorized operations only.
+   */
   void describe("Manager Claims Fees via Merkle", function () {
     let context: Awaited<ReturnType<typeof initializeTest>>;
     const depositAmount = 1000n * ONE_TOKEN;

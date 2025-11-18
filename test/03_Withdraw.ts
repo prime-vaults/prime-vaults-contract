@@ -6,6 +6,39 @@ import { readLeaf } from "../scripts/createMerkleTree.js";
 import { ONE_TOKEN, depositTokens, initializeTest } from "./utils.js";
 
 void describe("03_Withdraw", function () {
+  /**
+   * Scenario: Complete withdrawal flow with strategist interaction.
+   *
+   * Step 1 (At T0):
+   *  - User deposits 1 token to vault.
+   *  - User receives 1 share.
+   *
+   * Step 2:
+   *  - Manager approves PrimeStrategist via Merkle verification.
+   *  - Authorizes strategist to spend vault's base asset.
+   *
+   * Step 3:
+   *  - Manager deposits 1 token from vault to PrimeStrategist.
+   *  - Vault balance becomes 0, strategist holds 1 token.
+   *
+   * Step 4:
+   *  - User requests withdrawal of 1 token.
+   *  - User approves withdrawer to spend shares.
+   *  - Withdrawer holds user's shares.
+   *
+   * Step 5 (After 1 day → T1):
+   *  - Wait for withdrawal delay period (1 day).
+   *
+   * Step 6:
+   *  - User completes withdrawal.
+   *  - System automatically pulls tokens from PrimeStrategist.
+   *  - User receives 1 token back.
+   *
+   * Expected outcome:
+   *  - User successfully withdraws deposited amount.
+   *  - Tokens are pulled from strategist automatically.
+   *  - User shares are burned.
+   */
   void describe("Full Withdrawal Flow", function () {
     let context: Awaited<ReturnType<typeof initializeTest>>;
     const depositAmount = 1n * ONE_TOKEN;

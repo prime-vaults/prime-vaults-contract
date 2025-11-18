@@ -4,6 +4,32 @@ import { before, describe, it } from "node:test";
 import { ONE_DAY_SECS, ONE_TOKEN, assertApproxEqual, depositTokens, initializeTest } from "./utils.js";
 
 void describe("02_Reward", function () {
+  /**
+   * Scenario 1: Single user reward distribution over time.
+   * Reward rate = 100 tokens/day (700 tokens over 7 days).
+   *
+   * Step 1 (At T0):
+   *  - User deposits 1000 tokens.
+   *
+   * Step 2:
+   *  - Admin adds reward token with 7 day duration.
+   *
+   * Step 3:
+   *  - Admin notifies 700 tokens reward (100/day).
+   *
+   * Step 4 (After 1 day → T1):
+   *  - User earns ~100 tokens.
+   *
+   * Step 5:
+   *  - User claims rewards.
+   *  - Earned balance resets to 0.
+   *
+   * Step 6 (After another 1 day → T2):
+   *  - User earns another ~100 tokens.
+   *
+   * Final expected:
+   *  - User can continuously earn and claim rewards over the 7-day period.
+   */
   void describe("Base Single Reward Distribution", function () {
     let context: Awaited<ReturnType<typeof initializeTest>>;
 
