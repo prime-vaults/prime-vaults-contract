@@ -191,7 +191,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @dev Must update rewards based on OLD balances before they change
      * @dev Callable by vault only
      */
-    function beforeUpdate(address from, address to, uint256 /* amount */) external override {
+    function beforeUpdate(address from, address to, uint256 /* amount */, address /* operator */) external override {
         if (msg.sender != address(vault)) revert Distributor__NotAuthorized();
         if (paused) return; // Skip updates if paused
 

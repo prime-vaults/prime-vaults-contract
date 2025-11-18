@@ -80,13 +80,11 @@ export function getParamsPath(paramsId: string): string {
 /**
  * Read parameters from JSON file
  * @param paramsId - Id of the params file (e.g., "localhost-usd")
- * @returns Parsed JSON parameters
- * @throws Error if file doesn't exist or cannot be parsed
+ * @returns Parsed parameters object
  *
  * @example
  * ```typescript
  * const params = readParams("localhost-usd");
- * console.log(params.$global.adminAddress);
  * console.log(params.ManagerModule.ManageRoot);
  * ```
  */
@@ -97,12 +95,25 @@ export function readParams(paramsId: string): ParamsJson {
     throw new Error(`Parameters file not found: ${filePath}`);
   }
 
-  try {
-    const content = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(content);
-  } catch (error) {
-    throw new Error(`Failed to parse parameters file: ${filePath}\n${error}`);
+  // Retry logic with exponential backoff for race conditions
+  const maxRetries = 10;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const content = fs.readFileSync(filePath, "utf-8");
+      return JSON.parse(content);
+    } catch (error) {
+      if (attempt === maxRetries - 1) {
+        throw new Error(`Failed to parse parameters file after ${maxRetries} attempts: ${filePath}\n${error}`);
+      }
+      // Wait before retry with exponential backoff (synchronous sleep)
+      const delay = 30 * (attempt + 1);
+      const start = Date.now();
+      while (Date.now() - start < delay) {
+        // Busy wait (not ideal but works for short delays in Node.js)
+      }
+    }
   }
+  throw new Error(`Failed to read parameters file: ${filePath}`);
 }
 
 /**
@@ -114,10 +125,10 @@ export function readParams(paramsId: string): ParamsJson {
  * ```typescript
  * const params = readParams("localhost-usd");
  * params.ManagerModule.ManageRoot = "0x123...";
- * writeParams("localhost-usd", params);
+ * await writeParams("localhost-usd", params);
  * ```
  */
-export function writeParams(paramsId: string, params: ParamsJson): void {
+export async function writeParams(paramsId: string, params: ParamsJson): Promise<void> {
   const filePath = getParamsPath(paramsId);
 
   // Ensure directory exists
@@ -129,11 +140,7 @@ export function writeParams(paramsId: string, params: ParamsJson): void {
   // Write file with pretty format
   const content = JSON.stringify(params, null, 2) + "\n";
 
-  try {
-    fs.writeFileSync(filePath, content, "utf-8");
-  } catch (error) {
-    throw new Error(`Failed to write parameters file: ${filePath}\n${error}`);
-  }
+  await fs.promises.writeFile(filePath, content, "utf-8");
 }
 
 /**

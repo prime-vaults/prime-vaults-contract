@@ -79,7 +79,7 @@ export default buildModule("TellerModule", (m) => {
 
   m.call(teller, "allowBufferHelper", [primeBufferHelper], { id: "teller_allowBufferHelper" });
   m.call(teller, "setWithdrawBufferHelper", [primeBufferHelper], { id: "teller_setWithdrawBufferHelper" });
-  m.call(vault, "setBeforeTransferHook", [teller], { id: "vault_setBeforeTransferHook" });
+  m.call(vault, "setBeforeUpdateHook", [teller], { id: "vault_setBeforeUpdateHook" });
 
   return { teller, primeBufferHelper, accountant, vault, primeRegistry, rolesAuthority };
 });

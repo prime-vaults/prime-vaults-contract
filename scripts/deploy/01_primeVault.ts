@@ -20,7 +20,7 @@ export default async function deployPrimeVault(
   const parameters = readParams(parameterId);
   parameters.$global.stakingToken = payload.stakingToken;
   parameters.$global.PrimeStrategistAddress = payload.primeStrategistAddress;
-  writeParams(parameterId, parameters);
+  await writeParams(parameterId, parameters);
 
   // Deploy all vault modules
   const modules = await connection.ignition.deploy(PrimeVaultModule, {
@@ -49,7 +49,7 @@ export default async function deployPrimeVault(
 
   // Generate and set Merkle root
   if (displayUi) console.log("\n🌳 Generating Merkle tree...\n");
-  const { ManageRoot } = createMerkleTree(parameterId, displayUi);
+  const { ManageRoot } = await createMerkleTree(parameterId, displayUi);
   await modules.manager.write.setManageRoot([parameters.$global.adminAddress, ManageRoot]);
   if (displayUi) console.log(`✅ Merkle root set: ${ManageRoot}\n`);
 

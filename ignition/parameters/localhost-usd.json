@@ -35,8 +35,8 @@
   "$metadata": {
     "BoringVaultAddress": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
     "AccountantAddress": "0x9A676e781A523b5d0C0e43731313A708CB607508",
-    "TellerAddress": "0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E",
-    "WithdrawerAddress": "0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00",
+    "TellerAddress": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
+    "WithdrawerAddress": "0x9d4454B023096f34B160D6B654540c56A1F81688",
     "ManagerAddress": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
     "PrimeRegistryAddress": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
     "RolesAuthorityAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",

@@ -6,13 +6,13 @@ import {BoringVault} from "./BoringVault.sol";
 import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
-import {IBeforeTransferHook} from "../interfaces/hooks/IBeforeTransferHook.sol";
+import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {IPausable} from "../interfaces/IPausable.sol";
 
 import "../auth/PrimeAuth.sol";
 
-contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, ReentrancyGuard, IPausable {
+contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
@@ -315,35 +315,47 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
         emit DepositCapSet(cap);
     }
 
-    // ========================================= IBeforeTransferHook FUNCTIONS =========================================
+    // ========================================= IBeforeUpdateHook FUNCTIONS =========================================
 
     /**
-     * @notice Implement beforeTransfer hook to check if shares are locked, or if `from`, `to`, or `operator` are denied in beforeTransferData.
+     * @notice Implement beforeUpdate hook to check if shares are locked, or if `from`, `to`, or `operator` are denied.
      * @notice If permissionedTransfers is true, then only operators on the allow list can transfer shares.
      * @notice If share lock period is set to zero, then users will be able to mint and transfer in the same tx.
      *         if this behavior is not desired then a share lock period of >=1 should be used.
+     * @notice When minting (from = address(0)), only checks `to` and `operator`.
+     * @notice When burning (to = address(0)), only checks `from` and `operator`.
      */
-    function beforeTransfer(address from, address to, address operator) public view virtual {
-        _handleDenyList(from, to, operator);
+    function beforeUpdate(address from, address to, uint256 /* amount */, address operator) public view virtual {
+        // For minting: from = address(0), skip from checks
+        if (from != address(0)) {
+            // Check if from is denied
+            if (beforeTransferData[from].denyFrom) {
+                revert TellerWithMultiAssetSupport__TransferDenied(from, to, operator);
+            }
+            // Check if shares are locked
+            if (beforeTransferData[from].shareUnlockTime > block.timestamp) {
+                revert TellerWithMultiAssetSupport__SharesAreLocked();
+            }
+        }
 
-        if (tellerState.permissionedTransfers && !beforeTransferData[operator].permissionedOperator) {
+        // For burning: to = address(0), skip to checks
+        if (to != address(0)) {
+            // Check if to is denied
+            if (beforeTransferData[to].denyTo) {
+                revert TellerWithMultiAssetSupport__TransferDenied(from, to, operator);
+            }
+        }
+
+        // Always check operator (unless it's address(0))
+        if (operator != address(0) && beforeTransferData[operator].denyOperator) {
             revert TellerWithMultiAssetSupport__TransferDenied(from, to, operator);
         }
 
-        if (beforeTransferData[from].shareUnlockTime > block.timestamp) {
-            revert TellerWithMultiAssetSupport__SharesAreLocked();
-        }
-    }
-
-    /**
-     * @notice Implement legacy beforeTransfer hook to check if shares are locked, or if `from`is on the deny list.
-     */
-    function beforeTransfer(address from) public view virtual {
-        if (beforeTransferData[from].denyFrom) {
-            revert TellerWithMultiAssetSupport__TransferDenied(from, address(0), address(0));
-        }
-        if (beforeTransferData[from].shareUnlockTime > block.timestamp) {
-            revert TellerWithMultiAssetSupport__SharesAreLocked();
+        // Check permissioned transfers (only for transfers, not mint/burn)
+        if (from != address(0) && to != address(0)) {
+            if (tellerState.permissionedTransfers && !beforeTransferData[operator].permissionedOperator) {
+                revert TellerWithMultiAssetSupport__TransferDenied(from, to, operator);
+            }
         }
     }
 
@@ -436,7 +448,6 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeTransferHook, Reentran
         uint256 minimumAssets,
         address to
     ) external virtual requiresAuth nonReentrant returns (uint256 assetsOut) {
-        beforeTransfer(msg.sender, address(0), msg.sender);
         assetsOut = _withdraw(shareAmount, minimumAssets, to);
         emit Withdraw(address(asset), shareAmount);
     }

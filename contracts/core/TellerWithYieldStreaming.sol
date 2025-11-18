@@ -28,7 +28,6 @@ contract TellerWithYieldStreaming is TellerWithBuffer {
     ) external override requiresAuth nonReentrant returns (uint256 assetsOut) {
         //update vested yield before withdraw
         _getAccountant().updateExchangeRate();
-        beforeTransfer(msg.sender, address(0), msg.sender);
         assetsOut = _withdraw(shareAmount, minimumAssets, to);
 
         emit Withdraw(address(asset), shareAmount);

@@ -201,7 +201,7 @@ export function readLeaf(
  *
  * @param paramsId - Params file ID (e.g., "localhost-usd")
  */
-export function createMerkleTree(paramsId: string, displayUI = false) {
+export async function createMerkleTree(paramsId: string, displayUI = false) {
   if (displayUI) console.log(`\n📄 Reading params from: ${paramsId}`);
 
   // Read params using utility
@@ -299,7 +299,7 @@ export function createMerkleTree(paramsId: string, displayUI = false) {
   params.$metadata.leafs = leaves;
 
   // Write updated params back to file using utility
-  writeParams(paramsId, params);
+  await writeParams(paramsId, params);
 
   if (displayUI) {
     console.log(`\n💾 Updated params file: ${paramsId}`);
@@ -315,5 +315,5 @@ export function createMerkleTree(paramsId: string, displayUI = false) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const paramsPath = process.argv[2];
   if (!paramsPath) throw new Error("Please provide the params file path as an argument");
-  createMerkleTree(paramsPath, true);
+  await createMerkleTree(paramsPath, true);
 }
