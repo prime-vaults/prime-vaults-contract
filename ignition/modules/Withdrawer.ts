@@ -16,23 +16,15 @@ export default buildModule("WithdrawerModule", (m) => {
     { after: [teller] },
   );
 
-  // Link withdrawer to authority
-  m.call(withdrawer, "setAuthority", [rolesAuthority], { id: "withdrawer_setAuthority" });
-
   // Register withdrawer and setup all permissions via PrimeRegistry
   m.call(primeRegistry, "registerWithdrawer", [withdrawer], {
     id: "registerWithdrawer",
   });
 
-  // Configure withdrawer
-  m.call(withdrawer, "setPullFundsFromVault", [true], { id: "withdrawer_setPullFundsFromVault" });
-
-  m.call(
-    withdrawer,
-    "setupWithdrawAsset",
-    [m.getParameter("stakingToken"), m.getParameter("withdrawDelayInSeconds"), m.getParameter("withdrawFee")],
-    { id: "withdrawer_setupWithdrawAsset" },
-  );
+  // Setup withdrawal with delay and fee (no need to pass asset, it's derived from vault)
+  m.call(withdrawer, "setupWithdraw", [m.getParameter("withdrawDelayInSeconds"), m.getParameter("withdrawFee")], {
+    id: "withdrawer_setupWithdraw",
+  });
 
   return { withdrawer, vault, accountant, teller, primeRegistry, rolesAuthority, primeRBAC };
 });

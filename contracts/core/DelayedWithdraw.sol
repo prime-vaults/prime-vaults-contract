@@ -73,14 +73,14 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     bool public pullFundsFromVault;
 
     /**
-     * @notice The mapping of assets to their respective withdrawal settings.
+     * @notice The withdrawal settings for the asset.
      */
-    mapping(ERC20 => WithdrawAsset) public withdrawAssets;
+    WithdrawAsset public withdrawAsset;
 
     /**
-     * @notice The mapping of users to withdraw asset to their withdrawal requests.
+     * @notice The mapping of users to their withdrawal requests.
      */
-    mapping(address => mapping(ERC20 => WithdrawRequest)) public withdrawRequests;
+    mapping(address => WithdrawRequest) public withdrawRequests;
 
     //============================== ERRORS ===============================
 
@@ -128,6 +128,11 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     BoringVault public immutable boringVault;
 
     /**
+     * @notice The asset that can be withdrawn from the vault.
+     */
+    ERC20 public immutable asset;
+
+    /**
      * @notice Constant that represents 1 share.
      */
     uint256 internal immutable ONE_SHARE;
@@ -142,6 +147,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         accountant = AccountantWithRateProviders(_accountant);
         teller = TellerWithMultiAssetSupport(_teller);
         boringVault = BoringVault(payable(_vault));
+        asset = ERC20(address(boringVault.asset()));
         ONE_SHARE = 10 ** boringVault.decimals();
         if (_payoutAddress == address(0)) revert DelayedWithdraw__BadAddress();
         feeAddress = _payoutAddress;
@@ -168,11 +174,10 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     }
 
     /**
-     * @notice Stops withdrawals for a specific asset.
+     * @notice Stops withdrawals.
      * @dev Callable by MULTISIG_ROLE.
      */
-    function stopWithdrawalsInAsset(ERC20 asset) external requiresAuth {
-        WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
+    function stopWithdrawals() external requiresAuth {
         if (!withdrawAsset.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         withdrawAsset.allowWithdraws = false;
@@ -181,12 +186,10 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     }
 
     /**
-     * @notice Sets up the withdrawal settings for a specific asset.
+     * @notice Sets up the withdrawal settings.
      * @dev Callable by OWNER_ROLE.
      */
-    function setupWithdrawAsset(ERC20 asset, uint32 withdrawDelay, uint16 withdrawFee) external onlyProtocolAdmin {
-        WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
-
+    function setupWithdraw(uint32 withdrawDelay, uint16 withdrawFee) external onlyProtocolAdmin {
         if (withdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__WithdrawFeeTooHigh();
 
         if (withdrawAsset.allowWithdraws) revert DelayedWithdraw__AlreadySetup();
@@ -198,11 +201,10 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     }
 
     /**
-     * @notice Changes the withdraw delay for a specific asset.
+     * @notice Changes the withdraw delay.
      * @dev Callable by MULTISIG_ROLE.
      */
-    function changeWithdrawDelay(ERC20 asset, uint32 withdrawDelay) external requiresAuth {
-        WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
+    function changeWithdrawDelay(uint32 withdrawDelay) external requiresAuth {
         if (!withdrawAsset.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         withdrawAsset.withdrawDelay = withdrawDelay;
@@ -211,11 +213,10 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     }
 
     /**
-     * @notice Changes the withdraw fee for a specific asset.
+     * @notice Changes the withdraw fee.
      * @dev Callable by OWNER_ROLE.
      */
-    function changeWithdrawFee(ERC20 asset, uint16 withdrawFee) external requiresAuth {
-        WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
+    function changeWithdrawFee(uint16 withdrawFee) external requiresAuth {
         if (!withdrawAsset.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         if (withdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__WithdrawFeeTooHigh();
@@ -240,8 +241,8 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @notice Cancels a user's withdrawal request.
      * @dev Callable by MULTISIG_ROLE, and STRATEGIST_MULTISIG_ROLE.
      */
-    function cancelUserWithdraw(ERC20 asset, address user) external requiresAuth {
-        _cancelWithdraw(asset, user);
+    function cancelUserWithdraw(address user) external requiresAuth {
+        _cancelWithdraw(user);
     }
 
     /**
@@ -249,10 +250,9 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @dev Admins can complete requests even if they are outside the completion window.
      * @dev Callable by MULTISIG_ROLE, and STRATEGIST_MULTISIG_ROLE.
      */
-    function completeUserWithdraw(ERC20 asset, address user) external requiresAuth returns (uint256 assetsOut) {
-        WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
-        WithdrawRequest storage req = withdrawRequests[user][asset];
-        assetsOut = _completeWithdraw(asset, user, withdrawAsset, req);
+    function completeUserWithdraw(address user) external requiresAuth returns (uint256 assetsOut) {
+        WithdrawRequest storage req = withdrawRequests[user];
+        assetsOut = _completeWithdraw(user, req);
     }
 
     /**
@@ -290,30 +290,25 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     /**
      * @notice Allows a user to set whether or not a 3rd party can complete withdraws on behalf of them.
      */
-    function setAllowThirdPartyToComplete(ERC20 asset, bool allow) external requiresAuth {
-        withdrawRequests[msg.sender][asset].allowThirdPartyToComplete = allow;
+    function setAllowThirdPartyToComplete(bool allow) external requiresAuth {
+        withdrawRequests[msg.sender].allowThirdPartyToComplete = allow;
 
         emit ThirdPartyCompletionChanged(msg.sender, asset, allow);
     }
 
     /**
-     * @notice Requests a withdrawal of shares for a specific asset.
+     * @notice Requests a withdrawal of shares.
      * @dev Publicly callable.
      */
-    function requestWithdraw(
-        ERC20 asset,
-        uint96 shares,
-        bool allowThirdPartyToComplete
-    ) external requiresAuth nonReentrant {
+    function requestWithdraw(uint96 shares, bool allowThirdPartyToComplete) external requiresAuth nonReentrant {
         if (isPaused) revert DelayedWithdraw__Paused();
-        WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
         if (!withdrawAsset.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         boringVault.safeTransferFrom(msg.sender, address(this), shares);
 
         withdrawAsset.outstandingShares += shares;
 
-        WithdrawRequest storage req = withdrawRequests[msg.sender][asset];
+        WithdrawRequest storage req = withdrawRequests[msg.sender];
 
         req.shares += shares;
         uint40 maturity = uint40(block.timestamp + withdrawAsset.withdrawDelay);
@@ -328,47 +323,33 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @notice Cancels msg.sender's withdrawal request.
      * @dev Publicly callable.
      */
-    function cancelWithdraw(ERC20 asset) external requiresAuth nonReentrant {
-        _cancelWithdraw(asset, msg.sender);
+    function cancelWithdraw() external requiresAuth nonReentrant {
+        _cancelWithdraw(msg.sender);
     }
 
     /**
      * @notice Completes a user's withdrawal request.
      * @dev Publicly callable. No time limit after maturity.
      */
-    function completeWithdraw(
-        ERC20 asset,
-        address account
-    ) external requiresAuth nonReentrant returns (uint256 assetsOut) {
+    function completeWithdraw(address account) external requiresAuth nonReentrant returns (uint256 assetsOut) {
         if (isPaused) revert DelayedWithdraw__Paused();
-        WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
-        WithdrawRequest storage req = withdrawRequests[account][asset];
+        WithdrawRequest storage req = withdrawRequests[account];
 
         if (msg.sender != account && !req.allowThirdPartyToComplete) {
             revert DelayedWithdraw__ThirdPartyCompletionNotAllowed();
         }
-        assetsOut = _completeWithdraw(asset, account, withdrawAsset, req);
+        assetsOut = _completeWithdraw(account, req);
     }
 
     // ========================================= VIEW FUNCTIONS =========================================
 
     /**
-     * @notice Helper function to view the outstanding withdraw debt for a specific asset.
+     * @notice Helper function to view the outstanding withdraw debt.
      */
-    function viewOutstandingDebt(ERC20 asset) public view returns (uint256 debt) {
+    function viewOutstandingDebt() public view returns (uint256 debt) {
         uint256 rate = accountant.getRateSafe();
 
-        debt = rate.mulDivDown(withdrawAssets[asset].outstandingShares, ONE_SHARE);
-    }
-
-    /**
-     * @notice Helper function to view the outstanding withdraw debt for multiple assets.
-     */
-    function viewOutstandingDebts(ERC20[] calldata assets) external view returns (uint256[] memory debts) {
-        debts = new uint256[](assets.length);
-        for (uint256 i = 0; i < assets.length; i++) {
-            debts[i] = viewOutstandingDebt(assets[i]);
-        }
+        debt = rate.mulDivDown(withdrawAsset.outstandingShares, ONE_SHARE);
     }
 
     // ========================================= INTERNAL FUNCTIONS =========================================
@@ -376,11 +357,10 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     /**
      * @notice Internal helper function that implements shared logic for cancelling a user's withdrawal request.
      */
-    function _cancelWithdraw(ERC20 asset, address account) internal {
-        WithdrawAsset storage withdrawAsset = withdrawAssets[asset];
+    function _cancelWithdraw(address account) internal {
         // We do not check if `asset` is allowed, to handle edge cases where the asset is no longer allowed.
 
-        WithdrawRequest storage req = withdrawRequests[account][asset];
+        WithdrawRequest storage req = withdrawRequests[account];
         uint96 shares = req.shares;
         if (shares == 0) revert DelayedWithdraw__NoSharesToWithdraw();
         withdrawAsset.outstandingShares -= shares;
@@ -393,12 +373,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     /**
      * @notice Internal helper function that implements shared logic for completing a user's withdrawal request.
      */
-    function _completeWithdraw(
-        ERC20 asset,
-        address account,
-        WithdrawAsset storage withdrawAsset,
-        WithdrawRequest storage req
-    ) internal returns (uint256 assetsOut) {
+    function _completeWithdraw(address account, WithdrawRequest storage req) internal returns (uint256 assetsOut) {
         if (!withdrawAsset.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         if (block.timestamp < req.maturity) revert DelayedWithdraw__WithdrawNotMatured();
@@ -432,7 +407,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         //     // Transfer assets to user.
         //     asset.safeTransfer(account, assetsOut);
         // }
-        teller.withdraw(shares, assetsOut, account);
+        teller.bulkWithdraw(shares, assetsOut, account);
 
         emit WithdrawCompleted(account, asset, shares, assetsOut);
     }

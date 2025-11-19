@@ -119,12 +119,12 @@ void describe("03_Withdraw", function () {
     });
 
     void it("Step 4: Alice requests withdrawal of 100 tokens", async function () {
-      const { vault, withdrawer, alice, mockERC20 } = context;
+      const { vault, withdrawer, alice } = context;
 
       const userShares = await vault.read.balanceOf([alice.account.address]);
 
       await vault.write.approve([withdrawer.address, userShares], { account: alice.account });
-      await withdrawer.write.requestWithdraw([mockERC20.address, userShares, false], { account: alice.account });
+      await withdrawer.write.requestWithdraw([userShares, false], { account: alice.account });
 
       const withdrawerShares = await vault.read.balanceOf([withdrawer.address]);
       const userSharesAfter = await vault.read.balanceOf([alice.account.address]);
@@ -145,7 +145,7 @@ void describe("03_Withdraw", function () {
       const userBalanceBefore = await mockERC20.read.balanceOf([alice.account.address]);
       const strategistBalanceBefore = await mockERC20.read.balanceOf([mockStrategist.address]);
 
-      await withdrawer.write.completeWithdraw([mockERC20.address, alice.account.address], {
+      await withdrawer.write.completeWithdraw([alice.account.address], {
         account: alice.account,
       });
 

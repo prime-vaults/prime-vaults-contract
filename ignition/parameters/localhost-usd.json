@@ -5,16 +5,7 @@
     "wrapNative": "0x0000000000000000000000000000000000000000",
     "stakingToken": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
     "PrimeStrategistAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-    "ADMIN_ROLE": 1,
-    "MANAGER_ROLE": 2,
-    "MINTER_ROLE": 3,
-    "BORING_VAULT_ROLE": 4,
-    "STRATEGIST_ROLE": 7,
-    "BURNER_ROLE": 8,
-    "SOLVER_ROLE": 9,
-    "QUEUE_ROLE": 10,
-    "CAN_SOLVE_ROLE": 11
+    "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
   },
   "WithdrawerModule": {
     "withdrawDelayInSeconds": 86400,
