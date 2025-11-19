@@ -29,6 +29,7 @@ export default async function deployPrimeVault(
   });
 
   // Save deployed addresses to metadata
+  parameters.$global.DecoderAndSanitizerAddress = modules.decoder.address;
   parameters.$metadata = {
     BoringVaultAddress: modules.vault.address,
     AccountantAddress: modules.accountant.address,

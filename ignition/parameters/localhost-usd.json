@@ -5,7 +5,7 @@
     "wrapNative": "0x0000000000000000000000000000000000000000",
     "stakingToken": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
     "PrimeStrategistAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+    "DecoderAndSanitizerAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
   },
   "WithdrawerModule": {
     "withdrawDelayInSeconds": 86400,
@@ -31,39 +31,39 @@
     "ManagerAddress": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
     "PrimeRegistryAddress": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
     "RolesAuthorityAddress": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-    "ManageRoot": "0x22925bb507553abd13a335f95a78ef3f3215d1e3e6e073ffa3e375d544f29768",
+    "ManageRoot": "0xcd01bc2c700422bf233ecd5c30127dcbbde953532e12501f70866bae2d421203",
     "leafs": [
       {
         "Description": "Approve Accountant to spend base asset (staking token)",
         "FunctionSignature": "approve(address,uint256)",
         "FunctionSelector": "0x095ea7b3",
-        "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+        "DecoderAndSanitizerAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
         "TargetAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
         "CanSendValue": false,
         "AddressArguments": [
           "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
         ],
         "PackedArgumentAddresses": "b7f8bc63bbcad18155201308c8f3540b07f84f5e",
-        "LeafDigest": "0x8ac0f1880fa74257d60cce0a77b55d3a4f1d6dcf090d1740bd63ecfd3c25074c"
+        "LeafDigest": "0x69593bf8b3a3b3317357f70d94757af3b853cb1308a4254835a631f1dd229ea2"
       },
       {
         "Description": "Approve PrimeStrategist to spend base asset (staking token)",
         "FunctionSignature": "approve(address,uint256)",
         "FunctionSelector": "0x095ea7b3",
-        "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+        "DecoderAndSanitizerAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
         "TargetAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
         "CanSendValue": false,
         "AddressArguments": [
           "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
         ],
         "PackedArgumentAddresses": "e7f1725e7734ce288f8367e1bb143e90bb3f0512",
-        "LeafDigest": "0x5a80e53e0ae84046a4d3d6525c8d2e761f4d1359cb6948ddd3f25920061a2e6c"
+        "LeafDigest": "0xe6b0e070efb366358c9821065d1e056f78d639c75e4673d586660936270b532c"
       },
       {
         "Description": "Withdraw from PrimeStrategist back to vault",
         "FunctionSignature": "withdraw(address,uint256,address)",
         "FunctionSelector": "0x69328dec",
-        "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+        "DecoderAndSanitizerAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
         "TargetAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
         "CanSendValue": false,
         "AddressArguments": [
@@ -71,18 +71,18 @@
           "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
         ],
         "PackedArgumentAddresses": "5fbdb2315678afecb367f032d93f642f64180aa38a791620dd6260079bf849dc5567adc3f2fdc318",
-        "LeafDigest": "0xaec566cf4bc01851d5c5ce196e8f5a40cdbdc2dcde161c750a2c6e2107ee8aa4"
+        "LeafDigest": "0xa0d26dc771bd8aa77ddb81731b9a474f2d3cb97fc90b1dc97b94f430eb8e67ec"
       },
       {
         "Description": "Claim platform fees from Accountant",
         "FunctionSignature": "claimFees()",
         "FunctionSelector": "0xd294f093",
-        "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+        "DecoderAndSanitizerAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
         "TargetAddress": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
         "CanSendValue": false,
         "AddressArguments": [],
         "PackedArgumentAddresses": "",
-        "LeafDigest": "0x99494eeac79b632595a2533d374dd93acaafbe22871ebf3b6240cbb8dade99e0"
+        "LeafDigest": "0xfa0c9caa511ae2cc023a3275e7216d7893e30aff8323dedf63b6d41933792737"
       }
     ]
   }
