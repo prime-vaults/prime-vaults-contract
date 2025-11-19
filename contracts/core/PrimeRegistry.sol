@@ -176,6 +176,17 @@ contract PrimeRegistry is PrimeAuth {
     }
 
     /**
+     * @notice Grant STRATEGIST_ROLE to an address (e.g., admin for testing)
+     * @param strategist The address to grant the role to
+     * @param vault The vault whose RolesAuthority to update
+     */
+    function grantStrategistRole(address strategist, BoringVault vault) public onlyProtocolAdmin {
+        Authority authority = vault.authority();
+        RolesAuthority rolesAuthority = RolesAuthority(address(authority));
+        rolesAuthority.setUserRole(strategist, STRATEGIST_ROLE, true);
+    }
+
+    /**
      * @notice Register and setup permissions for a withdrawer
      * @param withdrawer The DelayedWithdraw to register
      */

@@ -13,10 +13,7 @@ export interface GlobalConfig {
   PrimeStrategistAddress: `0x${string}`;
   DecoderAndSanitizerAddress: `0x${string}`;
   PrimeRegistryAddress: `0x${string}`;
-}
-
-export interface Metadata {
-  VaultAddress: `0x${string}`;
+  //
   BoringVaultAddress: `0x${string}`;
   AccountantAddress: `0x${string}`;
   TellerAddress: `0x${string}`;
@@ -52,7 +49,6 @@ export interface ManagerModule {
  */
 export interface ParamsJson {
   $global: GlobalConfig;
-  $metadata: Metadata;
   ManagerModule?: ManagerModule; // Optional for backward compatibility
   [key: string]: any;
 }

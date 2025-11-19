@@ -11,11 +11,11 @@ import { runHardhatCmd } from "../utils.js";
 export default async function deployPrimeRegistry(
   connection: NetworkConnection,
   parameterId: string,
-  displayUi = true,
+  displayUi = false,
 ) {
   const modules = await connection.ignition.deploy(PrimeRegistryModule, {
     displayUi,
-    deploymentId: `${connection.networkName}-prime-registry`,
+    deploymentId: parameterId,
   });
 
   const [deployer] = await connection.viem.getWalletClients();

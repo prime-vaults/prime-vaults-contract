@@ -113,7 +113,7 @@ export function findLeaf(
   functionSignature: string,
   target?: string,
 ): { leaf: LeafConfig; index: number } | undefined {
-  // Read from $metadata (new location) or fallback to ManagerModule (backward compatibility)
+  // Read from $global (new location) or fallback to ManagerModule (backward compatibility)
   const leaves = params.ManagerModule?.leafs;
   if (!leaves) return undefined;
 
@@ -161,7 +161,7 @@ export function readLeaf(
   filters: { FunctionSignature?: string; Description?: string },
 ): { leaf: LeafConfig; index: number; proof: `0x${string}`[]; tree: `0x${string}`[][] } | undefined {
   const params = readParams(paramsId);
-  // Read from $metadata (new location) or fallback to ManagerModule (backward compatibility)
+  // Read from $global (new location) or fallback to ManagerModule (backward compatibility)
   const leaves = params.ManagerModule?.leafs;
 
   if (!leaves) return undefined;
@@ -196,17 +196,12 @@ export function readLeaf(
 
 /**
  * Create Merkle tree from params file
- * Auto-generates approve and claimFees leaves based on $metadata addresses
+ * Auto-generates approve and claimFees leaves based on $global addresses
  *
  * @param paramsId - Params file ID (e.g., "localhost-usd")
  */
 export async function createMerkleTree(params: ParamsJson) {
-  if (!params.$metadata) {
-    throw new Error("$metadata not found in params file - need deployed contract addresses");
-  }
-
-  const { AccountantAddress } = params.$metadata;
-  const { DecoderAndSanitizerAddress, stakingToken, PrimeStrategistAddress } = params.$global;
+  const { DecoderAndSanitizerAddress, stakingToken, PrimeStrategistAddress, AccountantAddress } = params.$global;
 
   // Create leaves array automatically
   const leafs: LeafConfig[] = [];
@@ -237,7 +232,20 @@ export async function createMerkleTree(params: ParamsJson) {
     LeafDigest: "0x",
   });
 
-  // Leaf 2: withdraw(address,uint256,address) - Withdraw from PrimeStrategist to vault
+  // Leaf 2: deposit(address,uint256) - Deposit to PrimeStrategist
+  leafs.push({
+    Description: "Deposit base asset to PrimeStrategist",
+    FunctionSignature: "deposit(address,uint256)",
+    FunctionSelector: toFunctionSelector("deposit(address,uint256)"),
+    DecoderAndSanitizerAddress,
+    TargetAddress: PrimeStrategistAddress,
+    CanSendValue: false,
+    AddressArguments: [stakingToken],
+    PackedArgumentAddresses: "0x",
+    LeafDigest: "0x",
+  });
+
+  // Leaf 3: withdraw(address,uint256,address) - Withdraw from PrimeStrategist to vault
   leafs.push({
     Description: "Withdraw from PrimeStrategist back to vault",
     FunctionSignature: "withdraw(address,uint256,address)",
@@ -245,12 +253,12 @@ export async function createMerkleTree(params: ParamsJson) {
     DecoderAndSanitizerAddress,
     TargetAddress: PrimeStrategistAddress,
     CanSendValue: false,
-    AddressArguments: [stakingToken, params.$metadata.BoringVaultAddress],
+    AddressArguments: [stakingToken, params.$global.BoringVaultAddress],
     PackedArgumentAddresses: "0x",
     LeafDigest: "0x",
   });
 
-  // Leaf 3: claimFees() - Claim platform fees from Accountant
+  // Leaf 4: claimFees() - Claim platform fees from Accountant
   leafs.push({
     Description: "Claim platform fees from Accountant",
     FunctionSignature: "claimFees()",

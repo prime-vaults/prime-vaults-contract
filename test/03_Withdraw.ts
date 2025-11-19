@@ -3,7 +3,7 @@ import { before, describe, it } from "node:test";
 import { encodeFunctionData } from "viem";
 
 import { readLeaf } from "../scripts/createMerkleTree.js";
-import { DEPOSIT_AMOUNT, depositTokens, initializeTest } from "./utils.js";
+import { DEPOSIT_AMOUNT, PARAMETERS_ID, depositTokens, initializeTest } from "./utils.js";
 
 void describe("03_Withdraw", function () {
   /**
@@ -51,6 +51,9 @@ void describe("03_Withdraw", function () {
 
       const result = await depositTokens(context, DEPOSIT_AMOUNT, alice.account);
       assert.equal(result.shares, DEPOSIT_AMOUNT, "Shares should equal deposit amount");
+      // check vault balance
+      const vaultBalance = await context.mockERC20.read.balanceOf([context.vault.address]);
+      assert.equal(vaultBalance, DEPOSIT_AMOUNT, "Vault should hold deposited amount");
     });
 
     void it("Step 2: Approve PrimeStrategist via Merkle verification", async function () {
@@ -89,8 +92,14 @@ void describe("03_Withdraw", function () {
       ]);
     });
 
-    void it("Step 3: Manager deposits 1 token to PrimeStrategist", async function () {
-      const { mockERC20, vault, mockStrategist } = context;
+    void it("Step 3: Manager deposits 100 tokens to PrimeStrategist", async function () {
+      const { mockERC20, vault, manager } = context;
+
+      const depositLeafData = readLeaf(PARAMETERS_ID, {
+        FunctionSignature: "deposit(address,uint256)",
+        Description: "Deposit base asset to PrimeStrategist",
+      });
+      assert.ok(depositLeafData, "Deposit leaf not found");
 
       const depositCalldata = encodeFunctionData({
         abi: [
@@ -109,13 +118,20 @@ void describe("03_Withdraw", function () {
         args: [mockERC20.address, DEPOSIT_AMOUNT],
       });
 
-      await vault.write.manage([mockStrategist.address, depositCalldata, 0n]);
-
-      const strategistBalance = await mockERC20.read.balanceOf([mockStrategist.address]);
       const vaultBalance = await mockERC20.read.balanceOf([vault.address]);
+      console.log("Vault balance before deposit to strategist:", vaultBalance);
+      await manager.write.manageVaultWithMerkleVerification([
+        [depositLeafData.proof],
+        [depositLeafData.leaf.DecoderAndSanitizerAddress],
+        [depositLeafData.leaf.TargetAddress as `0x${string}`],
+        [depositCalldata],
+        [0n],
+      ]);
+
+      const strategistAddress = depositLeafData.leaf.TargetAddress as `0x${string}`;
+      const strategistBalance = await mockERC20.read.balanceOf([strategistAddress]);
 
       assert.equal(strategistBalance, DEPOSIT_AMOUNT, "Strategist should hold deposited amount");
-      assert.equal(vaultBalance, 0n, "Vault should have 0 balance after depositing to strategist");
     });
 
     void it("Step 4: Alice requests withdrawal of 100 tokens", async function () {

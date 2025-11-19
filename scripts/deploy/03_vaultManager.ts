@@ -25,11 +25,13 @@ export default async function deployPrimeManager(
   await writeParams(parameterId, parameters);
 
   // Deploy Manager
-  const { manager } = await connection.ignition.deploy(PrimeManagerModule, {
+  const { manager, vault } = await connection.ignition.deploy(PrimeManagerModule, {
     parameters,
     displayUi,
     deploymentId: parameterId,
   });
+  console.log("parameterId", parameterId);
+  console.log("vault address in manager deploy:", vault.address);
 
   if (displayUi) console.table({ Manager: manager.address });
   return { manager };

@@ -8,7 +8,7 @@ import { runHardhatCmd } from "../utils.js";
  * Deploy Prime Vault system
  * Deploys: Vault, Accountant, Teller, Withdrawer, Manager, Registry, RolesAuthority
  */
-export default async function deployPrimeVault(connection: NetworkConnection, parameterId: string, displayUi = true) {
+export default async function deployPrimeVault(connection: NetworkConnection, parameterId: string, displayUi = false) {
   if (displayUi) console.log("\n🚀 Deploying Prime Vault system...\n");
 
   // Update parameters with required addresses
@@ -20,10 +20,12 @@ export default async function deployPrimeVault(connection: NetworkConnection, pa
     displayUi,
     deploymentId: parameterId,
   });
+  console.log("parameterId", parameterId);
 
+  console.log("✅ Prime Vault system deployed.\n", modules.vault.address);
   // Save deployed addresses
-  parameters.$metadata = {
-    VaultAddress: modules.vault.address,
+  parameters.$global = {
+    ...parameters.$global,
     BoringVaultAddress: modules.vault.address,
     AccountantAddress: modules.accountant.address,
     TellerAddress: modules.teller.address,
@@ -31,7 +33,6 @@ export default async function deployPrimeVault(connection: NetworkConnection, pa
     RolesAuthorityAddress: modules.rolesAuthority.address,
   };
 
-  if (displayUi) console.table(parameters.$metadata);
   await writeParams(parameterId, parameters);
 
   return modules;

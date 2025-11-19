@@ -2,7 +2,7 @@ import { NetworkConnection } from "hardhat/types/network";
 
 import MockERC20Module from "../../ignition/modules/mocks/MockERC20.js";
 import MockStrategistModule from "../../ignition/modules/mocks/MockStrategist.js";
-import { getParamsPath, readParams } from "../../ignition/parameters/utils.js";
+import { getParamsPath, readParams, writeParams } from "../../ignition/parameters/utils.js";
 import { runHardhatCmd } from "../utils.js";
 
 /**
@@ -30,6 +30,8 @@ export default async function deployMocks(connection: NetworkConnection, paramet
   parameters.$global.stakingToken = mockERC20.address;
   parameters.$global.adminAddress = deployer.account.address;
   parameters.$global.PrimeStrategistAddress = mockStrategist.address;
+
+  await writeParams(parameterId, parameters);
 
   if (displayUi) {
     console.table({
