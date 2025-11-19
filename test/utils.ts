@@ -2,6 +2,7 @@ import { network } from "hardhat";
 import { Account } from "viem";
 
 import deployMocks from "../scripts/deploy/00_mock.js";
+import deployPrimeRegistry from "../scripts/deploy/01_primeRegistry.js";
 import deployPrimeVault from "../scripts/deploy/02_primeVault.js";
 import deployPrimeManager from "../scripts/deploy/03_vaultManager.js";
 
@@ -24,6 +25,7 @@ export async function initializeTest() {
   await mocks.mockERC20.write.mint([bob.account.address, DEPOSIT_AMOUNT]);
 
   // Deploy full system (vault + accountant + teller + manager)
+  await deployPrimeRegistry(connection, PARAMETERS_ID, true);
   const primeModules = await deployPrimeVault(connection, PARAMETERS_ID);
   const managerModules = await deployPrimeManager(connection, PARAMETERS_ID);
 
@@ -45,7 +47,11 @@ export async function initializeTest() {
  * @param depositAmount - Amount to deposit (in wei)
  * @returns Object containing shares received and balance changes
  */
-export async function depositTokens(context: Awaited<ReturnType<typeof initializeTest>>, depositAmount: bigint, account?: Account) {
+export async function depositTokens(
+  context: Awaited<ReturnType<typeof initializeTest>>,
+  depositAmount: bigint,
+  account?: Account,
+) {
   const { mockERC20, vault, teller } = context;
   if (!account) account = context.deployer.account;
 
@@ -82,6 +88,8 @@ export function assertApproxEqual(actual: bigint, expected: bigint, message?: st
 
   if (actual < min || actual > max) {
     const error = message || `Expected ${actual} to be approximately ${expected} (±${tolerancePercent}%)`;
-    throw new Error(`${error}\n  Actual: ${actual}\n  Expected: ${expected}\n  Tolerance: ±${tolerance} (${tolerancePercent}%)`);
+    throw new Error(
+      `${error}\n  Actual: ${actual}\n  Expected: ${expected}\n  Tolerance: ±${tolerance} (${tolerancePercent}%)`,
+    );
   }
 }
