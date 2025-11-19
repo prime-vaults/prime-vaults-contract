@@ -6,6 +6,5 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
  */
 export default buildModule("DecoderModule", (m) => {
   const decoder = m.contract("FullDecoderAndSanitizer");
-
   return { decoder };
 });

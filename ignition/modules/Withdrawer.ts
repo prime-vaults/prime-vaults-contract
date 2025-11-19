@@ -1,5 +1,4 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import { toFunctionSelector } from "viem";
 
 import TellerModule from "./Teller.js";
 
@@ -20,31 +19,10 @@ export default buildModule("WithdrawerModule", (m) => {
   // Link withdrawer to authority
   m.call(withdrawer, "setAuthority", [rolesAuthority], { id: "withdrawer_setAuthority" });
 
-  // Set public capabilities for withdrawer user functions
-  m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("cancelWithdraw(address)"), true], {
-    id: "setPublicCapability_cancelWithdraw",
+  // Register withdrawer and setup all permissions via PrimeRegistry
+  m.call(primeRegistry, "registerWithdrawer", [withdrawer], {
+    id: "registerWithdrawer",
   });
-
-  m.call(
-    rolesAuthority,
-    "setPublicCapability",
-    [withdrawer, toFunctionSelector("requestWithdraw(address,uint96,bool)"), true],
-    { id: "setPublicCapability_requestWithdraw" },
-  );
-
-  m.call(
-    rolesAuthority,
-    "setPublicCapability",
-    [withdrawer, toFunctionSelector("completeWithdraw(address,address)"), true],
-    { id: "setPublicCapability_completeWithdraw" },
-  );
-
-  m.call(
-    rolesAuthority,
-    "setPublicCapability",
-    [withdrawer, toFunctionSelector("setAllowThirdPartyToComplete(address,bool)"), true],
-    { id: "setPublicCapability_setAllowThirdPartyToComplete" },
-  );
 
   // Configure withdrawer
   m.call(withdrawer, "setPullFundsFromVault", [true], { id: "withdrawer_setPullFundsFromVault" });

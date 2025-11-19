@@ -22,45 +22,45 @@ export default buildModule("PrimeVaultModule", (m) => {
   const STRATEGIST_ROLE = m.getParameter("STRATEGIST_ROLE");
   const BURNER_ROLE = m.getParameter("BURNER_ROLE");
 
-  // Assign roles to Accountant
-  m.call(rolesAuthority, "setUserRole", [accountant, MINTER_ROLE, true], {
-    id: "setUserRole_accountant_minter",
-  });
+  // // Assign roles to Accountant
+  // m.call(rolesAuthority, "setUserRole", [accountant, MINTER_ROLE, true], {
+  //   id: "setUserRole_accountant_minter",
+  // });
 
-  m.call(rolesAuthority, "setUserRole", [accountant, ADMIN_ROLE, true], {
-    id: "setUserRole_accountant_admin",
-  });
+  // m.call(rolesAuthority, "setUserRole", [accountant, ADMIN_ROLE, true], {
+  //   id: "setUserRole_accountant_admin",
+  // });
 
-  m.call(rolesAuthority, "setUserRole", [accountant, STRATEGIST_ROLE, true], {
-    id: "setUserRole_accountant_strategist",
-  });
+  // m.call(rolesAuthority, "setUserRole", [accountant, STRATEGIST_ROLE, true], {
+  //   id: "setUserRole_accountant_strategist",
+  // });
 
-  // Assign role to Vault
-  m.call(rolesAuthority, "setUserRole", [vault, BORING_VAULT_ROLE, true], {
-    id: "setUserRole_vault_boringVault",
-  });
+  // // Assign role to Vault
+  // m.call(rolesAuthority, "setUserRole", [vault, BORING_VAULT_ROLE, true], {
+  //   id: "setUserRole_vault_boringVault",
+  // });
 
-  // Assign roles to Teller
-  m.call(rolesAuthority, "setUserRole", [teller, MINTER_ROLE, true], {
-    id: "setUserRole_teller_minter",
-  });
+  // // Assign roles to Teller
+  // m.call(rolesAuthority, "setUserRole", [teller, MINTER_ROLE, true], {
+  //   id: "setUserRole_teller_minter",
+  // });
 
-  m.call(rolesAuthority, "setUserRole", [teller, BURNER_ROLE, true], {
-    id: "setUserRole_teller_burner",
-  });
+  // m.call(rolesAuthority, "setUserRole", [teller, BURNER_ROLE, true], {
+  //   id: "setUserRole_teller_burner",
+  // });
 
-  m.call(rolesAuthority, "setUserRole", [teller, MANAGER_ROLE, true], {
-    id: "setUserRole_teller_manager",
-  });
+  // m.call(rolesAuthority, "setUserRole", [teller, MANAGER_ROLE, true], {
+  //   id: "setUserRole_teller_manager",
+  // });
 
-  m.call(rolesAuthority, "setUserRole", [teller, STRATEGIST_ROLE, true], {
-    id: "setUserRole_teller_strategist",
-  });
+  // m.call(rolesAuthority, "setUserRole", [teller, STRATEGIST_ROLE, true], {
+  //   id: "setUserRole_teller_strategist",
+  // });
 
-  // Assign role to Withdrawer
-  m.call(rolesAuthority, "setUserRole", [withdrawer, BURNER_ROLE, true], {
-    id: "setUserRole_withdrawer_burner",
-  });
+  // // Assign role to Withdrawer
+  // m.call(rolesAuthority, "setUserRole", [withdrawer, BURNER_ROLE, true], {
+  //   id: "setUserRole_withdrawer_burner",
+  // });
 
   return {
     vault,

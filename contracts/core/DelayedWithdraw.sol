@@ -125,7 +125,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     /**
      * @notice The BoringVault contract that users are withdrawing from.
      */
-    BoringVault internal immutable boringVault;
+    BoringVault public immutable boringVault;
 
     /**
      * @notice Constant that represents 1 share.

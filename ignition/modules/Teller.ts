@@ -1,5 +1,4 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import { toFunctionSelector } from "viem";
 
 import AccountantModule from "./Accountant.js";
 
@@ -10,69 +9,12 @@ import AccountantModule from "./Accountant.js";
 export default buildModule("TellerModule", (m) => {
   const { vault, accountant, primeRegistry, rolesAuthority, primeRBAC } = m.useModule(AccountantModule);
 
-  // Get role constants
-  const MINTER_ROLE = m.getParameter("MINTER_ROLE");
-  const BURNER_ROLE = m.getParameter("BURNER_ROLE");
-  const MANAGER_ROLE = m.getParameter("MANAGER_ROLE");
-
   // Deploy Teller
   const teller = m.contract("TellerWithYieldStreaming", [primeRBAC, vault, accountant], {
     after: [accountant, vault],
   });
-
-  // Link teller to authority
-  m.call(teller, "setAuthority", [rolesAuthority], { id: "teller_setAuthority" });
-
-  // Set role capabilities for deposit functions
-  m.call(
-    rolesAuthority,
-    "setPublicCapability",
-    [teller, toFunctionSelector("deposit(uint256,uint256,address)"), true],
-    { id: "setRoleCapability_deposit" },
-  );
-
-  m.call(
-    rolesAuthority,
-    "setRoleCapability",
-    [
-      MINTER_ROLE,
-      teller,
-      toFunctionSelector("depositWithPermit(address,uint256,uint256,uint256,uint8,bytes32,bytes32)"),
-      true,
-    ],
-    { id: "setRoleCapability_depositWithPermit" },
-  );
-
-  // Set role capability for withdraw function
-  m.call(
-    rolesAuthority,
-    "setRoleCapability",
-    [BURNER_ROLE, teller, toFunctionSelector("withdraw(uint256,uint256,address)"), true],
-    { id: "setRoleCapability_withdraw" },
-  );
-
-  // Set role capabilities for buffer helper management (future use)
-  m.call(
-    rolesAuthority,
-    "setRoleCapability",
-    [MANAGER_ROLE, teller, toFunctionSelector("setDepositBufferHelper(address)"), true],
-    { id: "setRoleCapability_setDepositBufferHelper" },
-  );
-
-  m.call(
-    rolesAuthority,
-    "setRoleCapability",
-    [MANAGER_ROLE, teller, toFunctionSelector("setWithdrawBufferHelper(address)"), true],
-    { id: "setRoleCapability_setWithdrawBufferHelper" },
-  );
-
-  m.call(
-    rolesAuthority,
-    "setRoleCapability",
-    [MANAGER_ROLE, teller, toFunctionSelector("allowBufferHelper(address)"), true],
-    { id: "setRoleCapability_allowBufferHelper" },
-  );
-
+  // Register teller and setup all permissions via PrimeRegistry
+  m.call(primeRegistry, "registerTeller", [teller], { id: "registerTeller" });
   const primeBufferHelper = m.contract("PrimeBufferHelper", [m.getParameter("PrimeStrategistAddress"), vault], {
     after: [teller],
   });

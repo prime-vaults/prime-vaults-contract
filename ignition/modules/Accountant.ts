@@ -1,5 +1,4 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import { toFunctionSelector } from "viem";
 
 import VaultModule from "./Vault.js";
 
@@ -9,10 +8,6 @@ import VaultModule from "./Vault.js";
  */
 export default buildModule("AccountantModule", (m) => {
   const { vault, primeRegistry, rolesAuthority, primeRBAC } = m.useModule(VaultModule);
-
-  // Get role constants
-  const MINTER_ROLE = m.getParameter("MINTER_ROLE");
-  const STRATEGIST_ROLE = m.getParameter("STRATEGIST_ROLE");
 
   // Deploy Accountant
   const accountant = m.contract(
@@ -30,31 +25,8 @@ export default buildModule("AccountantModule", (m) => {
     ],
     { after: [vault] },
   );
-
-  // Link accountant to authority
-  m.call(accountant, "setAuthority", [rolesAuthority], { id: "accountant_setAuthority" });
-
-  // Set role capabilities for Accountant functions
-  m.call(
-    rolesAuthority,
-    "setRoleCapability",
-    [MINTER_ROLE, accountant, toFunctionSelector("setFirstDepositTimestamp()"), true],
-    { id: "setRoleCapability_setFirstDepositTimestamp" },
-  );
-
-  m.call(
-    rolesAuthority,
-    "setRoleCapability",
-    [STRATEGIST_ROLE, accountant, toFunctionSelector("updateExchangeRate()"), true],
-    { id: "setRoleCapability_updateExchangeRate" },
-  );
-
-  m.call(
-    rolesAuthority,
-    "setRoleCapability",
-    [MINTER_ROLE, accountant, toFunctionSelector("updateCumulative()"), true],
-    { id: "setRoleCapability_updateCumulative" },
-  );
+  // Register accountant and setup all permissions via PrimeRegistry
+  m.call(primeRegistry, "registerAccountant", [accountant], { id: "registerAccountant" });
 
   return { accountant, vault, primeRegistry, rolesAuthority, primeRBAC };
 });
