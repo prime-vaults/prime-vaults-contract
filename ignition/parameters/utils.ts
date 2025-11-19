@@ -24,6 +24,7 @@ export interface GlobalConfig {
 }
 
 export interface Metadata {
+  VaultAddress: `0x${string}`;
   BoringVaultAddress: `0x${string}`;
   AccountantAddress: `0x${string}`;
   TellerAddress: `0x${string}`;

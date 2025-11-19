@@ -25,6 +25,7 @@
     "withdrawFee": 0
   },
   "$metadata": {
+    "VaultAddress": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
     "BoringVaultAddress": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
     "AccountantAddress": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
     "TellerAddress": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",

@@ -32,6 +32,7 @@ export default async function deployPrimeVault(
   parameters.$global.DecoderAndSanitizerAddress = modules.decoder.address;
   parameters.$global.PrimeRegistryAddress = modules.primeRegistry.address;
   parameters.$metadata = {
+    VaultAddress: modules.vault.address,
     BoringVaultAddress: modules.vault.address,
     AccountantAddress: modules.accountant.address,
     TellerAddress: modules.teller.address,
