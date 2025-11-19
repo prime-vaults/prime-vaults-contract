@@ -11,8 +11,6 @@ import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
 
 import {PrimeAuth} from "../auth/PrimeAuth.sol";
 
-import "hardhat/console.sol";
-
 contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
     using Address for address;
     using SafeTransferLib for ERC20;
@@ -62,7 +60,6 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
         bytes calldata data,
         uint256 value
     ) external requiresAuth returns (bytes memory result) {
-        console.log("BoringVault: manage call", address(this));
         result = target.functionCallWithValue(data, value);
     }
 

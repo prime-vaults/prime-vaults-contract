@@ -93,7 +93,7 @@ void describe("03_Withdraw", function () {
     });
 
     void it("Step 3: Manager deposits 100 tokens to PrimeStrategist", async function () {
-      const { mockERC20, vault, manager } = context;
+      const { mockERC20, manager } = context;
 
       const depositLeafData = readLeaf(PARAMETERS_ID, {
         FunctionSignature: "deposit(address,uint256)",
@@ -118,8 +118,6 @@ void describe("03_Withdraw", function () {
         args: [mockERC20.address, DEPOSIT_AMOUNT],
       });
 
-      const vaultBalance = await mockERC20.read.balanceOf([vault.address]);
-      console.log("Vault balance before deposit to strategist:", vaultBalance);
       await manager.write.manageVaultWithMerkleVerification([
         [depositLeafData.proof],
         [depositLeafData.leaf.DecoderAndSanitizerAddress],

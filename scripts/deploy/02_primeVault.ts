@@ -20,9 +20,7 @@ export default async function deployPrimeVault(connection: NetworkConnection, pa
     displayUi,
     deploymentId: parameterId,
   });
-  console.log("parameterId", parameterId);
 
-  console.log("✅ Prime Vault system deployed.\n", modules.vault.address);
   // Save deployed addresses
   parameters.$global = {
     ...parameters.$global,

@@ -25,11 +25,10 @@ export async function initializeTest() {
   await mocks.mockERC20.write.mint([bob.account.address, DEPOSIT_AMOUNT]);
 
   // Deploy full system (vault + accountant + teller + manager)
-  const registryModules = await deployPrimeRegistry(connection, PARAMETERS_ID, true);
+  await deployPrimeRegistry(connection, PARAMETERS_ID, false);
   const primeModules = await deployPrimeVault(connection, PARAMETERS_ID);
   const managerModules = await deployPrimeManager(connection, PARAMETERS_ID);
 
-  console.log("primeModules", primeModules.vault.address);
   return {
     deployer,
     alice,
@@ -37,7 +36,6 @@ export async function initializeTest() {
     connection,
     networkHelpers: connection.networkHelpers,
     ...mocks,
-    ...registryModules,
     ...primeModules,
     ...managerModules,
   };

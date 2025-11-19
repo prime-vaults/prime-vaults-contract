@@ -11,8 +11,6 @@ import {ManagerWithMerkleVerification} from "./ManagerWithMerkleVerification.sol
 import {DelayedWithdraw} from "./DelayedWithdraw.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title PrimeRegistry
  * @author PrimeVaults Labs
