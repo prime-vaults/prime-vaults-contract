@@ -108,7 +108,7 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
         uint24 minimumUpdateDelayInSeconds,
         uint16 platformFee,
         uint16 performanceFee
-    ) PrimeAuth(_primeRBAC) {
+    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
         vault = BoringVault(payable(_vault));
         base = vault.asset();
         decimals = base.decimals();

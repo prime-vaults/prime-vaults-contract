@@ -58,7 +58,10 @@ contract ManagerWithMerkleVerification is PrimeAuth, IPausable {
 
     // ========================================= CONSTRUCTOR =========================================
 
-    constructor(address _primeRBAC, address _vault) PrimeAuth(_primeRBAC) {
+    constructor(
+        address _primeRBAC,
+        address _vault
+    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
         vault = BoringVault(payable(_vault));
     }
 

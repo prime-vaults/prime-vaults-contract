@@ -34,13 +34,13 @@
   },
   "$metadata": {
     "BoringVaultAddress": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
-    "AccountantAddress": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
-    "TellerAddress": "0x84eA74d481Ee0A5332c457a4d796187F6Ba67fEB",
-    "WithdrawerAddress": "0x4c5859f0F772848b2D91F1D83E2Fe57935348029",
-    "ManagerAddress": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
-    "PrimeRegistryAddress": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-    "RolesAuthorityAddress": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-    "ManageRoot": "0xf3fcd9478479edde5a820ae68b582ed7bc9584abf70db69ed0989fa02c61215b",
+    "AccountantAddress": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+    "TellerAddress": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
+    "WithdrawerAddress": "0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf",
+    "ManagerAddress": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+    "PrimeRegistryAddress": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+    "RolesAuthorityAddress": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+    "ManageRoot": "0x22925bb507553abd13a335f95a78ef3f3215d1e3e6e073ffa3e375d544f29768",
     "leafs": [
       {
         "Description": "Approve Accountant to spend base asset (staking token)",
@@ -50,10 +50,10 @@
         "TargetAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
         "CanSendValue": false,
         "AddressArguments": [
-          "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1"
+          "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
         ],
-        "PackedArgumentAddresses": "959922be3caee4b8cd9a407cc3ac1c251c2007b1",
-        "LeafDigest": "0x43b9d0eb604393c675fff43512243ee09a71d75b4639371a3f18773f80d5239a"
+        "PackedArgumentAddresses": "b7f8bc63bbcad18155201308c8f3540b07f84f5e",
+        "LeafDigest": "0x8ac0f1880fa74257d60cce0a77b55d3a4f1d6dcf090d1740bd63ecfd3c25074c"
       },
       {
         "Description": "Approve PrimeStrategist to spend base asset (staking token)",
@@ -87,11 +87,11 @@
         "FunctionSignature": "claimFees()",
         "FunctionSelector": "0xd294f093",
         "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-        "TargetAddress": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+        "TargetAddress": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
         "CanSendValue": false,
         "AddressArguments": [],
         "PackedArgumentAddresses": "",
-        "LeafDigest": "0x5f3c4dd52d566303244d2465159b46ac71a4261dc74aa87a39a8e702895b3215"
+        "LeafDigest": "0x99494eeac79b632595a2533d374dd93acaafbe22871ebf3b6240cbb8dade99e0"
       }
     ]
   }

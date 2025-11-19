@@ -41,10 +41,11 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
 
     constructor(
         address _primeRBAC,
+        address _authority,
         string memory _name,
         string memory _symbol,
         address _asset
-    ) ERC20(_name, _symbol, ERC20(_asset).decimals()) PrimeAuth(_primeRBAC) {
+    ) ERC20(_name, _symbol, ERC20(_asset).decimals()) PrimeAuth(_primeRBAC, _authority) {
         asset = ERC20(_asset);
     }
 
@@ -66,7 +67,7 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
      * @notice Allows manager to make arbitrary function calls from this contract.
      * @dev Callable by MANAGER_ROLE.
      */
-    function manage(
+    function bulkManage(
         address[] calldata targets,
         bytes[] calldata data,
         uint256[] calldata values

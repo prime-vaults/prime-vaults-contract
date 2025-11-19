@@ -138,7 +138,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         address _accountant,
         address _teller,
         address _payoutAddress
-    ) PrimeAuth(_primeRBAC) {
+    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
         accountant = AccountantWithRateProviders(_accountant);
         teller = TellerWithMultiAssetSupport(_teller);
         boringVault = BoringVault(payable(_vault));

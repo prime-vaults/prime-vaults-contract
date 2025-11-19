@@ -7,6 +7,7 @@ import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
+import {BoringVault} from "./BoringVault.sol";
 
 /**
  * @title Distributor
@@ -75,7 +76,10 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @param _primeRBAC The PrimeRBAC contract for authentication
      * @param _vault The vault contract (source of share balances)
      */
-    constructor(address _primeRBAC, address _vault) PrimeAuth(_primeRBAC) {
+    constructor(
+        address _primeRBAC,
+        address _vault
+    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
         vault = ERC20(_vault);
     }
 

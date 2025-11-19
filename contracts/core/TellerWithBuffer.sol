@@ -56,7 +56,7 @@ contract TellerWithBuffer is TellerWithMultiAssetSupport {
             (address[] memory targets, bytes[] memory data, uint256[] memory values) = bufferHelpers
                 .depositBufferHelper
                 .getDepositManageCall(address(asset), assetAmount);
-            vault.manage(targets, data, values);
+            vault.bulkManage(targets, data, values);
         }
     }
 
@@ -72,7 +72,7 @@ contract TellerWithBuffer is TellerWithMultiAssetSupport {
             (address[] memory targets, bytes[] memory data, uint256[] memory values) = bufferHelpers
                 .withdrawBufferHelper
                 .getWithdrawManageCall(address(asset), assetAmount);
-            vault.manage(targets, data, values);
+            vault.bulkManage(targets, data, values);
         }
     }
 
