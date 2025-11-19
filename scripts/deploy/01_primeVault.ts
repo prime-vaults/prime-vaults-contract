@@ -48,10 +48,8 @@ export default async function deployPrimeVault(
   await writeParams(parameterId, parameters);
 
   // Generate and set Merkle root
-  if (displayUi) console.log("\n🌳 Generating Merkle tree...\n");
   const { ManageRoot } = await createMerkleTree(parameterId, displayUi);
   await modules.manager.write.setManageRoot([parameters.$global.adminAddress, ManageRoot]);
-  if (displayUi) console.log(`✅ Merkle root set: ${ManageRoot}\n`);
 
   return modules;
 }

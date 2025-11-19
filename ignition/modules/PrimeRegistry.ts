@@ -13,5 +13,6 @@ export default buildModule("PrimeRegistryModule", (m) => {
     after: [primeRBAC],
   });
 
-  return { primeRegistry, primeRBAC };
+  const decoder = m.contract("FullDecoderAndSanitizer", []);
+  return { primeRegistry, primeRBAC, decoder };
 });

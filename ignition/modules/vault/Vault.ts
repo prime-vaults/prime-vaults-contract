@@ -1,6 +1,6 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-import PrimeRegistryModule from "./PrimeRegistry.js";
+import PrimeRegistryModule from "../PrimeRegistry.js";
 
 /**
  * Vault Module
@@ -18,8 +18,7 @@ export default buildModule("VaultModule", (m) => {
     [primeRBAC, rolesAuthority, m.getParameter("name"), m.getParameter("symbol"), m.getParameter("stakingToken")],
     { after: [primeRegistry, rolesAuthority] },
   );
-
-  // Register vault and setup all permissions via PrimeRegistry
   m.call(primeRegistry, "registerVault", [vault], { id: "registerVault" });
+
   return { vault, rolesAuthority, primeRegistry, primeRBAC };
 });
