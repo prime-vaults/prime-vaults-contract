@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-import {SafeERC20, IERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import {ReentrancyGuard} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-import {Pausable} from '@openzeppelin/contracts/utils/Pausable.sol';
-import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
-import {ISingleAssetStrategy, IPairAssetStrategy, StrategyKind} from './interfaces/IStrategy.sol';
-import './interfaces/IVaultCore.sol';
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {ISingleAssetStrategy, IPairAssetStrategy, StrategyKind} from "../interfaces/IStrategy.sol";
+import "../interfaces/IVaultCore.sol";
 
 /**
  * @title VaultManager
@@ -15,7 +15,7 @@ import './interfaces/IVaultCore.sol';
 contract VaultManager is ReentrancyGuard, Pausable, AccessControl {
     using SafeERC20 for IERC20;
 
-    bytes32 public constant MANAGER_ROLE = keccak256('MANAGER_ROLE');
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     address public treasury;
     address public immutable vaultRegister;
@@ -430,10 +430,10 @@ contract VaultManager is ReentrancyGuard, Pausable, AccessControl {
     function swap(SwapParams calldata params) external onlyManager nonReentrant {
         if (params.value > 0 && address(this).balance < params.value) revert VAULT__INSUFFICIENT_FUNDS();
 
-        require(bytes4(params.data) == KX_SWAP_SELECTOR, 'KX: bad selector');
+        require(bytes4(params.data) == KX_SWAP_SELECTOR, "KX: bad selector");
         bytes memory payload = params.data[4:];
         (, KxOutput memory output, , ) = abi.decode(payload, (KxInput, KxOutput, KxSwapData, KxFee));
-        require(output.receiver == address(this), 'bad receiver');
+        require(output.receiver == address(this), "bad receiver");
 
         uint256 bal = IERC20(params.tokenIn).balanceOf(address(this));
         if (bal < params.amountIn) revert VAULT__INSUFFICIENT_FUNDS();

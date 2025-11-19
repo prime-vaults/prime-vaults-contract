@@ -1,13 +1,13 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-import PrimeRegistryModule from "../PrimeRegistry.js";
-
 /**
  * Vault Module
  * Deploys BoringVault and RolesAuthority with initial permissions
  */
 export default buildModule("VaultModule", (m) => {
-  const { primeRegistry, primeRBAC } = m.useModule(PrimeRegistryModule);
+  const primeRegistry = m.contractAt("PrimeRegistry", m.getParameter("PrimeRegistryAddress"));
+  const primeRBAC = m.contractAt("PrimeRBAC", m.getParameter("PrimeRBAC"));
+  const decoder = m.contractAt("FullDecoderAndSanitizer", m.getParameter("DecoderAndSanitizerAddress"));
 
   // Deploy RolesAuthority for this vault
   const rolesAuthority = m.contract("RolesAuthority", [primeRegistry]);
@@ -20,5 +20,5 @@ export default buildModule("VaultModule", (m) => {
   );
   m.call(primeRegistry, "registerVault", [vault], { id: "registerVault" });
 
-  return { vault, rolesAuthority, primeRegistry, primeRBAC };
+  return { vault, rolesAuthority, primeRegistry, primeRBAC, decoder };
 });

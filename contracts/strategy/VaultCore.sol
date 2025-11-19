@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-import './VaultManager.sol';
-import './interfaces/IStrategy.sol';
+import "./VaultManager.sol";
+import "../interfaces/IStrategy.sol";
 
 /**
  * @title VaultCore

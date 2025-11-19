@@ -1,6 +1,6 @@
 import { concat, keccak256, toFunctionSelector } from "viem";
 
-import { type LeafConfig, type ParamsJson, readParams, writeParams } from "../ignition/parameters/utils.js";
+import { type LeafConfig, type ParamsJson, readParams } from "../ignition/parameters/utils.js";
 
 /**
  * Generate leaf digest from leaf configuration
@@ -114,7 +114,7 @@ export function findLeaf(
   target?: string,
 ): { leaf: LeafConfig; index: number } | undefined {
   // Read from $metadata (new location) or fallback to ManagerModule (backward compatibility)
-  const leaves = params.$metadata?.leafs || params.ManagerModule?.leafs;
+  const leaves = params.ManagerModule?.leafs;
   if (!leaves) return undefined;
 
   const index = leaves.findIndex((l) => {
@@ -161,9 +161,8 @@ export function readLeaf(
   filters: { FunctionSignature?: string; Description?: string },
 ): { leaf: LeafConfig; index: number; proof: `0x${string}`[]; tree: `0x${string}`[][] } | undefined {
   const params = readParams(paramsId);
-
   // Read from $metadata (new location) or fallback to ManagerModule (backward compatibility)
-  const leaves = params.$metadata?.leafs || params.ManagerModule?.leafs;
+  const leaves = params.ManagerModule?.leafs;
 
   if (!leaves) return undefined;
 
@@ -201,12 +200,7 @@ export function readLeaf(
  *
  * @param paramsId - Params file ID (e.g., "localhost-usd")
  */
-export async function createMerkleTree(paramsId: string, displayUI = false) {
-  if (displayUI) console.log(`\n📄 Reading params from: ${paramsId}`);
-
-  // Read params using utility
-  const params = readParams(paramsId);
-
+export async function createMerkleTree(params: ParamsJson) {
   if (!params.$metadata) {
     throw new Error("$metadata not found in params file - need deployed contract addresses");
   }
@@ -215,10 +209,10 @@ export async function createMerkleTree(paramsId: string, displayUI = false) {
   const { DecoderAndSanitizerAddress, stakingToken, PrimeStrategistAddress } = params.$global;
 
   // Create leaves array automatically
-  const leaves: LeafConfig[] = [];
+  const leafs: LeafConfig[] = [];
 
   // Leaf 0: approve(address,uint256) - Approve Accountant
-  leaves.push({
+  leafs.push({
     Description: "Approve Accountant to spend base asset (staking token)",
     FunctionSignature: "approve(address,uint256)",
     FunctionSelector: toFunctionSelector("approve(address,uint256)"),
@@ -231,7 +225,7 @@ export async function createMerkleTree(paramsId: string, displayUI = false) {
   });
 
   // Leaf 1: approve(address,uint256) - Approve PrimeStrategist
-  leaves.push({
+  leafs.push({
     Description: "Approve PrimeStrategist to spend base asset (staking token)",
     FunctionSignature: "approve(address,uint256)",
     FunctionSelector: toFunctionSelector("approve(address,uint256)"),
@@ -244,7 +238,7 @@ export async function createMerkleTree(paramsId: string, displayUI = false) {
   });
 
   // Leaf 2: withdraw(address,uint256,address) - Withdraw from PrimeStrategist to vault
-  leaves.push({
+  leafs.push({
     Description: "Withdraw from PrimeStrategist back to vault",
     FunctionSignature: "withdraw(address,uint256,address)",
     FunctionSelector: toFunctionSelector("withdraw(address,uint256,address)"),
@@ -257,7 +251,7 @@ export async function createMerkleTree(paramsId: string, displayUI = false) {
   });
 
   // Leaf 3: claimFees() - Claim platform fees from Accountant
-  leaves.push({
+  leafs.push({
     Description: "Claim platform fees from Accountant",
     FunctionSignature: "claimFees()",
     FunctionSelector: toFunctionSelector("claimFees()"),
@@ -269,12 +263,10 @@ export async function createMerkleTree(paramsId: string, displayUI = false) {
     LeafDigest: "0x",
   });
 
-  if (displayUI) console.log(`\n🌳 Building Merkle tree with ${leaves.length} leaves...\n`);
-
   // Process each leaf and generate digest
   const leafDigests: `0x${string}`[] = [];
 
-  leaves.forEach((leaf) => {
+  leafs.forEach((leaf) => {
     // Pack addresses for display and hashing
     const packedAddresses = leaf.AddressArguments.map((addr) => addr.replace(/0x/gi, "").toLowerCase()).join("");
     leaf.PackedArgumentAddresses = packedAddresses;
@@ -289,31 +281,5 @@ export async function createMerkleTree(paramsId: string, displayUI = false) {
   const tree = generateMerkleTree(leafDigests);
   const root = tree[tree.length - 1][0];
 
-  if (displayUI) {
-    console.log(`\n✅ Merkle Root: ${root}`);
-    console.log(`   Tree Levels: ${tree.length}`);
-  }
-
-  // Update params - store in $metadata instead of ManagerModule
-  params.$metadata.ManageRoot = root;
-  params.$metadata.leafs = leaves;
-
-  // Write updated params back to file using utility
-  await writeParams(paramsId, params);
-
-  if (displayUI) {
-    console.log(`\n💾 Updated params file: ${paramsId}`);
-    console.log(`   - ManageRoot: ${root}`);
-    console.log(`   - Generated ${leaves.length} leaf configurations`);
-  }
-
-  return { ManageRoot: root, leafs: leaves };
-}
-
-// CLI execution
-// npx tsx scripts/createMerkleTree.ts localhost-usd
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const paramsPath = process.argv[2];
-  if (!paramsPath) throw new Error("Please provide the params file path as an argument");
-  await createMerkleTree(paramsPath, true);
+  return { root, leafs };
 }

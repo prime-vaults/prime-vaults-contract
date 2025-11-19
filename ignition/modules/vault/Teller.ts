@@ -1,6 +1,5 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-import PrimeRegistryModule from "../PrimeRegistry.js";
 import AccountantModule from "./Accountant.js";
 
 /**
@@ -8,8 +7,7 @@ import AccountantModule from "./Accountant.js";
  * Deploys TellerWithYieldStreaming for user deposits and withdrawals
  */
 export default buildModule("TellerModule", (m) => {
-  const { vault, accountant, rolesAuthority } = m.useModule(AccountantModule);
-  const { primeRBAC, primeRegistry } = m.useModule(PrimeRegistryModule);
+  const { vault, accountant, rolesAuthority, primeRBAC, primeRegistry } = m.useModule(AccountantModule);
 
   // Deploy Teller
   const teller = m.contract("TellerWithYieldStreaming", [primeRBAC, vault, accountant], {

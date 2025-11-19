@@ -5,22 +5,14 @@ import path from "path";
  * Global configuration interface
  */
 export interface GlobalConfig {
+  network: string;
   id: string;
   adminAddress: `0x${string}`;
-  wrapNative: `0x${string}`;
   stakingToken: `0x${string}`;
+  PrimeRBAC: `0x${string}`;
   PrimeStrategistAddress: `0x${string}`;
   DecoderAndSanitizerAddress: `0x${string}`;
   PrimeRegistryAddress: `0x${string}`;
-  ADMIN_ROLE: number;
-  MANAGER_ROLE: number;
-  MINTER_ROLE: number;
-  BORING_VAULT_ROLE: number;
-  STRATEGIST_ROLE: number;
-  BURNER_ROLE: number;
-  SOLVER_ROLE: number;
-  QUEUE_ROLE: number;
-  CAN_SOLVE_ROLE: number;
 }
 
 export interface Metadata {
@@ -29,10 +21,7 @@ export interface Metadata {
   AccountantAddress: `0x${string}`;
   TellerAddress: `0x${string}`;
   WithdrawerAddress: `0x${string}`;
-  ManagerAddress: `0x${string}`;
   RolesAuthorityAddress: `0x${string}`;
-  ManageRoot: `0x${string}`;
-  leafs: LeafConfig[];
 }
 
 /**
@@ -54,7 +43,7 @@ export interface LeafConfig {
  * Manager module interface
  */
 export interface ManagerModule {
-  ManageRoot: `0x${string}`;
+  manageRoot: `0x${string}`;
   leafs: LeafConfig[];
 }
 

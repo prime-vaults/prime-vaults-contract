@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {IStrategyBase, StrategyKind} from './interfaces/IStrategy.sol';
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IStrategyBase, StrategyKind} from "../interfaces/IStrategy.sol";
 
 /// @title VaultRegister
 /// @notice Registry that manages approved strategies for Vault contracts.
