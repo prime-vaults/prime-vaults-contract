@@ -11,6 +11,7 @@ export interface GlobalConfig {
   stakingToken: `0x${string}`;
   PrimeStrategistAddress: `0x${string}`;
   DecoderAndSanitizerAddress: `0x${string}`;
+  PrimeRegistryAddress: `0x${string}`;
   ADMIN_ROLE: number;
   MANAGER_ROLE: number;
   MINTER_ROLE: number;
@@ -28,7 +29,6 @@ export interface Metadata {
   TellerAddress: `0x${string}`;
   WithdrawerAddress: `0x${string}`;
   ManagerAddress: `0x${string}`;
-  PrimeRegistryAddress: `0x${string}`;
   RolesAuthorityAddress: `0x${string}`;
   ManageRoot: `0x${string}`;
   leafs: LeafConfig[];

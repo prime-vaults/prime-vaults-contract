@@ -1,6 +1,6 @@
 import { NetworkConnection } from "hardhat/types/network";
 
-import PrimeVaultModule from "../../ignition/modules/PrimeFactory.js";
+import PrimeFactoryModule from "../../ignition/modules/PrimeFactory.js";
 import { readParams, writeParams } from "../../ignition/parameters/utils.js";
 import { createMerkleTree } from "../createMerkleTree.js";
 
@@ -23,20 +23,20 @@ export default async function deployPrimeVault(
   await writeParams(parameterId, parameters);
 
   // Deploy all vault modules
-  const modules = await connection.ignition.deploy(PrimeVaultModule, {
+  const modules = await connection.ignition.deploy(PrimeFactoryModule, {
     parameters,
     displayUi,
   });
 
-  // Save deployed addresses to metadata
+  // Save deployed addresses
   parameters.$global.DecoderAndSanitizerAddress = modules.decoder.address;
+  parameters.$global.PrimeRegistryAddress = modules.primeRegistry.address;
   parameters.$metadata = {
     BoringVaultAddress: modules.vault.address,
     AccountantAddress: modules.accountant.address,
     TellerAddress: modules.teller.address,
     WithdrawerAddress: modules.withdrawer.address,
     ManagerAddress: modules.manager.address,
-    PrimeRegistryAddress: modules.primeRegistry.address,
     RolesAuthorityAddress: modules.rolesAuthority.address,
     ManageRoot: "0x",
     leafs: [],
