@@ -1,4 +1,17 @@
 {
-  "MockERC20Module#MockERC20": "0xe8D2A1E88c91DCd5433208d4152Cc4F399a7e91d",
-  "MockStrategistModule#MockStrategist": "0x18E317A7D70d8fBf8e6E893616b52390EbBdb629"
+  "MockERC20Module#MockERC20": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "MockStrategistModule#MockStrategist": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+  "PrimeRegistryModule#FullDecoderAndSanitizer": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+  "PrimeRegistryModule#PrimeRBAC": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+  "PrimeRegistryModule#PrimeRegistry": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+  "VaultModule#FullDecoderAndSanitizer": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+  "VaultModule#PrimeRBAC": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+  "VaultModule#PrimeRegistry": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+  "VaultModule#RolesAuthority": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+  "VaultModule#BoringVault": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+  "AccountantModule#AccountantWithYieldStreaming": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+  "DistributorModule#Distributor": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+  "TellerModule#TellerWithYieldStreaming": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+  "TellerModule#PrimeBufferHelper": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
+  "WithdrawerModule#DelayedWithdraw": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
 }

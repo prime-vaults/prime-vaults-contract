@@ -24,4 +24,4 @@
 .env.*
 !.env.example
 
-# /ignition/deployments
+/ignition/deployments/localhost*
