@@ -15,8 +15,6 @@
     "lint:fix": "eslint --fix '**/*.{pajs,ts,json}' && prettier --write . && solhint 'contracts/**/*.sol' --fix --noPrompt",
     "test": "pnpm run compile --force && hardhat test",
     "test-local": "hardhat test --network localhost",
-    "tasks": "tsx scripts/plugins/run.ts --dir tasks",
-    "deploy": "tsx scripts/plugins/run.ts --dir deploy",
     "contract-size": "tsx scripts/plugins/contract-size.ts"
   },
   "engines": {
