@@ -21,11 +21,11 @@ contract PrimeRegistry is PrimeAuth {
     //============================== STRUCTS ===============================
 
     struct VaultComponents {
+        address vault;
         address accountant;
         address teller;
         address manager;
         address withdrawer;
-        address rolesAuthority;
     }
 
     //============================== CONSTANTS ===============================
@@ -45,6 +45,11 @@ contract PrimeRegistry is PrimeAuth {
      * @notice Mapping of vault address to its components
      */
     mapping(address => VaultComponents) public vaults;
+
+    /**
+     * @notice Array of all registered vault addresses
+     */
+    address[] public vaultList;
 
     //============================== EVENTS ===============================
 
@@ -86,7 +91,8 @@ contract PrimeRegistry is PrimeAuth {
 
         rolesAuthority.setUserRole(address(vault), BORING_VAULT_ROLE, true);
 
-        vaults[address(vault)].rolesAuthority = address(rolesAuthority);
+        vaultList.push(address(vault));
+        vaults[address(vault)].vault = address(vault);
         emit VaultCreated(address(vault), address(vault.asset()), address(rolesAuthority));
     }
 
@@ -202,5 +208,20 @@ contract PrimeRegistry is PrimeAuth {
 
         vaults[address(withdrawer.boringVault())].withdrawer = address(withdrawer);
         emit WithdrawerRegistered(address(withdrawer), address(withdrawer.boringVault()));
+    }
+
+    //============================== VIEW FUNCTIONS ===============================
+
+    /**
+     * @notice Get list of all registered vaults with their components
+     * @return components Array of VaultComponents structs
+     */
+    function getVaults() external view returns (VaultComponents[] memory components) {
+        uint256 total = vaultList.length;
+        components = new VaultComponents[](total);
+        for (uint256 i = 0; i < total; i++) {
+            components[i] = vaults[vaultList[i]];
+        }
+        return components;
     }
 }
