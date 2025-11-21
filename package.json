@@ -5,7 +5,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "main": "./dist/sdk/index.js",
   "types": "./dist/sdk/index.d.ts",
@@ -30,7 +30,7 @@
     "test": "pnpm run compile --force && hardhat test",
     "test-local": "hardhat test --network localhost",
     "contract-size": "tsx scripts/plugins/contract-size.ts",
-    "postbuild": "cp -r ./artifacts ./dist"
+    "postbuild": "rm -rf ./dist/artifacts && cp -r ./artifacts ./dist/artifacts"
   },
   "engines": {
     "node": ">=18.16.0"
