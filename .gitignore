@@ -24,4 +24,7 @@
 .env.*
 !.env.example
 
+# Ignition build artifacts
+/ignition/deployments/localhost*
+
 
