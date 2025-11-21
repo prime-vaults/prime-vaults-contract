@@ -29,7 +29,8 @@
     "lint:fix": "eslint --fix '**/*.{pajs,ts,json}' && prettier --write . && solhint 'contracts/**/*.sol' --fix --noPrompt",
     "test": "pnpm run compile --force && hardhat test",
     "test-local": "hardhat test --network localhost",
-    "contract-size": "tsx scripts/plugins/contract-size.ts"
+    "contract-size": "tsx scripts/plugins/contract-size.ts",
+    "postbuild": "cp -r ./artifacts ./dist"
   },
   "engines": {
     "node": ">=18.16.0"
