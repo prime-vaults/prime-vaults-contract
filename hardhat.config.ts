@@ -7,6 +7,7 @@ import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import "dotenv/config";
 import type { HardhatUserConfig } from "hardhat/config";
 import { HttpNetworkAccountsUserConfig } from "hardhat/types/config";
+import { berachainBepolia } from "viem/chains";
 
 // Set your preferred authentication method
 //
@@ -84,7 +85,7 @@ const config: HardhatUserConfig = {
       type: "http",
       chainType: "l1",
       accounts,
-      url: process.env.RPC_URL!,
+      url: berachainBepolia.rpcUrls.default.http[0],
     },
   },
 };
