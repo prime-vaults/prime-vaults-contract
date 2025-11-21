@@ -35,22 +35,11 @@ export interface VaultParameters {
     name: string;
     symbol: string;
   };
-  AccountantModule: {
-    startingExchangeRate: string;
-    allowedExchangeRateChangeUpper: number;
-    allowedExchangeRateChangeLower: number;
-    minimumUpdateDelayInSeconds: number;
-    platformFee: number;
-    performanceFee: number;
-  };
-  WithdrawerModule: {
-    withdrawDelayInSeconds: number;
-    withdrawFee: number;
-  };
   ManagerModule: {
     manageRoot: `0x${string}`;
     leafs: Array<LeafConfig>;
   };
+  [key: string]: any;
 }
 
 export const parameters = {
