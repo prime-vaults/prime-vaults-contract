@@ -1,5 +1,6 @@
 {
   "$global": {
+    "chainId": 31337,
     "network": "localhost",
     "stakingToken": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
     "adminAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
@@ -30,71 +31,65 @@
     "withdrawFee": 0
   },
   "ManagerModule": {
-    "manageRoot": "0x6d96e58ef62a0762746617e612a40bb8f09e6477aa9dca6a901871be6d633876",
+    "manageRoot": "0xec56f57d7559da243cd14abd45de46b26c74cedd92b610423586c5841453e115",
     "leafs": [
       {
         "Description": "Approve Accountant to spend base asset (staking token)",
         "FunctionSignature": "approve(address,uint256)",
         "FunctionSelector": "0x095ea7b3",
-        "DecoderAndSanitizerAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+        "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
         "TargetAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
-        ],
-        "PackedArgumentAddresses": "b7f8bc63bbcad18155201308c8f3540b07f84f5e",
-        "LeafDigest": "0x69593bf8b3a3b3317357f70d94757af3b853cb1308a4254835a631f1dd229ea2"
+        "AddressArguments": ["0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"],
+        "PackedArgumentAddresses": "2279b7a0a67db372996a5fab50d91eaa73d2ebe6",
+        "LeafDigest": "0x99481a505994501fc66a2ad75cdd74577f9db004bdb05b425828ee43e8a5ed3e"
       },
       {
         "Description": "Approve PrimeStrategist to spend base asset (staking token)",
         "FunctionSignature": "approve(address,uint256)",
         "FunctionSelector": "0x095ea7b3",
-        "DecoderAndSanitizerAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+        "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
         "TargetAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
-        ],
+        "AddressArguments": ["0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"],
         "PackedArgumentAddresses": "e7f1725e7734ce288f8367e1bb143e90bb3f0512",
-        "LeafDigest": "0xe6b0e070efb366358c9821065d1e056f78d639c75e4673d586660936270b532c"
+        "LeafDigest": "0x5a80e53e0ae84046a4d3d6525c8d2e761f4d1359cb6948ddd3f25920061a2e6c"
       },
       {
         "Description": "Deposit base asset to PrimeStrategist",
         "FunctionSignature": "deposit(address,uint256)",
         "FunctionSelector": "0x47e7ef24",
-        "DecoderAndSanitizerAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+        "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
         "TargetAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-        ],
+        "AddressArguments": ["0x5FbDB2315678afecb367f032d93F642f64180aa3"],
         "PackedArgumentAddresses": "5fbdb2315678afecb367f032d93f642f64180aa3",
-        "LeafDigest": "0x722f21eac9c3b2c32e8bfc3b15075a1aa3f0cd036d5e96d8f50b75c5522457cf"
+        "LeafDigest": "0x5f42eaf13a52cf2ba5a3d0f8b00dca01a5529e4ce3e137ed7b93ca169f6a750c"
       },
       {
         "Description": "Withdraw from PrimeStrategist back to vault",
         "FunctionSignature": "withdraw(address,uint256,address)",
         "FunctionSelector": "0x69328dec",
-        "DecoderAndSanitizerAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+        "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
         "TargetAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
         "CanSendValue": false,
         "AddressArguments": [
           "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-          "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
+          "0x0165878A594ca255338adfa4d48449f69242Eb8F"
         ],
-        "PackedArgumentAddresses": "5fbdb2315678afecb367f032d93f642f64180aa38a791620dd6260079bf849dc5567adc3f2fdc318",
-        "LeafDigest": "0xa0d26dc771bd8aa77ddb81731b9a474f2d3cb97fc90b1dc97b94f430eb8e67ec"
+        "PackedArgumentAddresses": "5fbdb2315678afecb367f032d93f642f64180aa30165878a594ca255338adfa4d48449f69242eb8f",
+        "LeafDigest": "0x1619174d35ae0b6d0b30dbd6aedbcb964ecdac3ec9a81b3b89ae23c0507e6f3d"
       },
       {
         "Description": "Claim platform fees from Accountant",
         "FunctionSignature": "claimFees()",
         "FunctionSelector": "0xd294f093",
-        "DecoderAndSanitizerAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-        "TargetAddress": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+        "DecoderAndSanitizerAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+        "TargetAddress": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
         "CanSendValue": false,
         "AddressArguments": [],
         "PackedArgumentAddresses": "",
-        "LeafDigest": "0xfa0c9caa511ae2cc023a3275e7216d7893e30aff8323dedf63b6d41933792737"
+        "LeafDigest": "0xb414a9a47d7a6bbb0547b7a361d58b542176a6fa73267e0b4b695bcfeb2fd6f3"
       }
     ]
   }

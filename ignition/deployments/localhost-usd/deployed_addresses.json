@@ -13,5 +13,8 @@
   "DistributorModule#Distributor": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
   "TellerModule#TellerWithYieldStreaming": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
   "TellerModule#PrimeBufferHelper": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
-  "WithdrawerModule#DelayedWithdraw": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
+  "WithdrawerModule#DelayedWithdraw": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+  "ManagerModule#BoringVault": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+  "ManagerModule#PrimeRegistry": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+  "ManagerModule#ManagerWithMerkleVerification": "0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9"
 }

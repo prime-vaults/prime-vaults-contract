@@ -2,6 +2,14 @@
   "name": "hardhat-template-viem",
   "version": "1.0.0",
   "type": "module",
+  "main": "./dist/sdk/index.js",
+  "types": "./dist/sdk/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/sdk/index.d.ts",
+      "import": "./dist/sdk/index.js"
+    }
+  },
   "author": {
     "name": "Michael",
     "url": "https://github.com/michaelbera"
@@ -9,6 +17,7 @@
   "scripts": {
     "clean": "rm -rf ./artifacts ./cache ./coverage ./types ./coverage.json ./ignition/deployments",
     "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile",
+    "build": "tsc --project tsconfig.build.json",
     "lint": "$npm_execpath run lint:ts && $npm_execpath run lint:sol",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
     "lint:ts": "eslint --ignore-path ./.eslintignore --ext .js,.ts .",
@@ -47,6 +56,7 @@
     "viem": "^2.30.0"
   },
   "files": [
+    "dist",
     "contracts"
   ],
   "keywords": [
