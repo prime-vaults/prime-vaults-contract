@@ -22,15 +22,14 @@
   "scripts": {
     "clean": "rm -rf ./artifacts ./cache ./coverage ./types ./coverage.json ./ignition/deployments",
     "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile",
-    "build": "tsc --project tsconfig.build.json",
+    "build": "tsc --project tsconfig.build.json && rm -rf ./dist/artifacts && cp -r ./artifacts ./dist/artifacts",
     "lint": "$npm_execpath run lint:ts && $npm_execpath run lint:sol",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
     "lint:ts": "eslint --ignore-path ./.eslintignore --ext .js,.ts .",
     "lint:fix": "eslint --fix '**/*.{pajs,ts,json}' && prettier --write . && solhint 'contracts/**/*.sol' --fix --noPrompt",
     "test": "pnpm run compile --force && hardhat test",
     "test-local": "hardhat test --network localhost",
-    "contract-size": "tsx scripts/plugins/contract-size.ts",
-    "postbuild": "rm -rf ./dist/artifacts && cp -r ./artifacts ./dist/artifacts"
+    "contract-size": "tsx scripts/plugins/contract-size.ts"
   },
   "engines": {
     "node": ">=18.16.0"
@@ -62,8 +61,7 @@
     "viem": "^2.30.0"
   },
   "files": [
-    "dist",
-    "contracts"
+    "dist"
   ],
   "keywords": [
     "blockchain",
