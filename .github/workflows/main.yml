@@ -19,6 +19,8 @@ jobs:
           version: 8
       - name: Install dependencies
         run: pnpm install
+      - name: Compile contracts
+        run: pnpm compile
       - name: Build the SDK
         run: pnpm build
       - name: Publish the package
