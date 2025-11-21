@@ -2,7 +2,7 @@ name: Automatic Deployment
 
 on:
   push:
-    branches: [master]
+    branches: [next]
 
 jobs:
   build:
