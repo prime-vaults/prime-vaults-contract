@@ -1,5 +1,6 @@
 *
 !dist/**
+dist/artifacts/build-info
 !package.json
 !README.md
 !LICENSE
