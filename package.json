@@ -5,7 +5,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "0.0.5",
+  "version": "0.0.6",
   "type": "module",
   "main": "./dist/sdk/index.js",
   "types": "./dist/sdk/index.d.ts",
@@ -22,7 +22,7 @@
   "scripts": {
     "clean": "rm -rf ./artifacts ./cache ./coverage ./types ./coverage.json ./ignition/deployments",
     "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile",
-    "build": "tsc --project tsconfig.build.json && rm -rf ./dist/artifacts && cp -r ./artifacts ./dist/artifacts",
+    "build": "tsc --project tsconfig.build.json && rm -rf ./dist/artifacts && cp -r ./artifacts/contracts ./dist/artifacts/contracts",
     "lint": "$npm_execpath run lint:ts && $npm_execpath run lint:sol",
     "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
     "lint:ts": "eslint --ignore-path ./.eslintignore --ext .js,.ts .",
