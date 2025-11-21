@@ -1,21 +1,36 @@
 import localhostUsd from "../ignition/parameters/localhost-usd.json";
 
+export interface GlobalConfig {
+  chainId: number;
+  network: string;
+  adminAddress: `0x${string}`;
+  stakingToken: `0x${string}`;
+  PrimeRBAC: `0x${string}`;
+  PrimeStrategistAddress: `0x${string}`;
+  DecoderAndSanitizerAddress: `0x${string}`;
+  PrimeRegistryAddress: `0x${string}`;
+  //
+  BoringVaultAddress: `0x${string}`;
+  AccountantAddress: `0x${string}`;
+  TellerAddress: `0x${string}`;
+  WithdrawerAddress: `0x${string}`;
+  RolesAuthorityAddress: `0x${string}`;
+}
+
+export interface LeafConfig {
+  Description: string;
+  FunctionSignature: string;
+  FunctionSelector: `0x${string}`;
+  DecoderAndSanitizerAddress: `0x${string}`;
+  TargetAddress: `0x${string}`;
+  CanSendValue: boolean;
+  AddressArguments: `0x${string}`[];
+  PackedArgumentAddresses: string;
+  LeafDigest: `0x${string}`;
+}
+
 export interface VaultParameters {
-  $global: {
-    chainId: number;
-    network: string;
-    stakingToken: string;
-    adminAddress: string;
-    PrimeStrategistAddress: string;
-    DecoderAndSanitizerAddress: string;
-    PrimeRegistryAddress: string;
-    PrimeRBAC: string;
-    BoringVaultAddress: string;
-    AccountantAddress: string;
-    TellerAddress: string;
-    WithdrawerAddress: string;
-    RolesAuthorityAddress: string;
-  };
+  $global: GlobalConfig;
   VaultModule: {
     name: string;
     symbol: string;
@@ -33,18 +48,8 @@ export interface VaultParameters {
     withdrawFee: number;
   };
   ManagerModule: {
-    manageRoot: string;
-    leafs: Array<{
-      Description: string;
-      FunctionSignature: string;
-      FunctionSelector: string;
-      DecoderAndSanitizerAddress: string;
-      TargetAddress: string;
-      CanSendValue: boolean;
-      AddressArguments: string[];
-      PackedArgumentAddresses: string;
-      LeafDigest: string;
-    }>;
+    manageRoot: `0x${string}`;
+    leafs: Array<LeafConfig>;
   };
 }
 

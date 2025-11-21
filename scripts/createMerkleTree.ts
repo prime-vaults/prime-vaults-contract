@@ -1,6 +1,7 @@
 import { concat, keccak256, toFunctionSelector } from "viem";
 
-import { type LeafConfig, type ParamsJson, readParams } from "../ignition/parameters/utils.js";
+import { readParams } from "../ignition/parameters/utils.js";
+import { LeafConfig, VaultParameters } from "../sdk/parameters.js";
 
 /**
  * Generate leaf digest from leaf configuration
@@ -109,7 +110,7 @@ export function getProof(leafIndex: number, tree: `0x${string}`[][]): `0x${strin
  * ```
  */
 export function findLeaf(
-  params: ParamsJson,
+  params: VaultParameters,
   functionSignature: string,
   target?: string,
 ): { leaf: LeafConfig; index: number } | undefined {
@@ -200,7 +201,10 @@ export function readLeaf(
  *
  * @param paramsId - Params file ID (e.g., "localhost-usd")
  */
-export async function createMerkleTree(params: ParamsJson) {
+export async function createMerkleTree(params: VaultParameters): Promise<{
+  root: `0x${string}`;
+  leafs: LeafConfig[];
+}> {
   const { DecoderAndSanitizerAddress, stakingToken, PrimeStrategistAddress, AccountantAddress } = params.$global;
 
   // Create leaves array automatically

@@ -1,57 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-/**
- * Global configuration interface
- */
-export interface GlobalConfig {
-  network: string;
-  id: string;
-  adminAddress: `0x${string}`;
-  stakingToken: `0x${string}`;
-  PrimeRBAC: `0x${string}`;
-  PrimeStrategistAddress: `0x${string}`;
-  DecoderAndSanitizerAddress: `0x${string}`;
-  PrimeRegistryAddress: `0x${string}`;
-  //
-  BoringVaultAddress: `0x${string}`;
-  AccountantAddress: `0x${string}`;
-  TellerAddress: `0x${string}`;
-  WithdrawerAddress: `0x${string}`;
-  RolesAuthorityAddress: `0x${string}`;
-}
-
-/**
- * Leaf configuration interface
- */
-export interface LeafConfig {
-  Description: string;
-  FunctionSignature: string;
-  FunctionSelector: `0x${string}`;
-  DecoderAndSanitizerAddress: `0x${string}`;
-  TargetAddress: `0x${string}`;
-  CanSendValue: boolean;
-  AddressArguments: `0x${string}`[];
-  PackedArgumentAddresses: string;
-  LeafDigest: `0x${string}`;
-}
-
-/**
- * Manager module interface
- */
-export interface ManagerModule {
-  manageRoot: `0x${string}`;
-  leafs: LeafConfig[];
-}
-
-/**
- * Interface for parameter file structure
- */
-export interface ParamsJson {
-  $global: GlobalConfig;
-  ManagerModule?: ManagerModule; // Optional for backward compatibility
-  [key: string]: any;
-}
+import { VaultParameters } from "../../sdk/parameters.js";
 
 /**
  * Get the full path to a parameters file
@@ -74,7 +24,7 @@ export function getParamsPath(paramsId: string): string {
  * console.log(params.ManagerModule.ManageRoot);
  * ```
  */
-export function readParams(paramsId: string): ParamsJson {
+export function readParams(paramsId: string): VaultParameters {
   const filePath = getParamsPath(paramsId);
 
   if (!fs.existsSync(filePath)) {
@@ -114,7 +64,7 @@ export function readParams(paramsId: string): ParamsJson {
  * await writeParams("localhost-usd", params);
  * ```
  */
-export async function writeParams(paramsId: string, params: ParamsJson): Promise<void> {
+export async function writeParams(paramsId: string, params: VaultParameters): Promise<void> {
   const filePath = getParamsPath(paramsId);
 
   // Ensure directory exists
