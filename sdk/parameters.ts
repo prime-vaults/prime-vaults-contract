@@ -1,3 +1,4 @@
+import bepoliaUsd from "../ignition/parameters/bepolia-usd.json";
 import localhostUsd from "../ignition/parameters/localhost-usd.json";
 
 export interface GlobalConfig {
@@ -42,8 +43,5 @@ export interface VaultParameters {
   [key: string]: any;
 }
 
-export const parameters = {
-  localhostUsd: localhostUsd as VaultParameters,
-} as const;
-
-export type ParameterKey = keyof typeof parameters;
+export const BepoliaVaultUsd = bepoliaUsd as unknown as VaultParameters;
+export const LocalhostVaultUsd = localhostUsd as unknown as VaultParameters;

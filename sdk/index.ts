@@ -9,4 +9,4 @@ export {
   type WithdrawerType,
 } from "./abi.js";
 
-export { parameters, type ParameterKey, type VaultParameters } from "./parameters.js";
+export * from "./parameters.js";
