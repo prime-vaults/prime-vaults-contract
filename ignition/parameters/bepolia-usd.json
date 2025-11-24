@@ -11,7 +11,8 @@
     "BoringVaultAddress": "0x603FF9072a79Ae00E04E68c9fA2889c135a82666",
     "RolesAuthorityAddress": "0x8d04d39084C27d28Fda137ecb917a8070CfB4883",
     "AccountantAddress": "0xfe418265aafCe9C6f8d54CC046eBe2A52d1CD9Ec",
-    "TellerAddress": "0xBe039b49D16B6CA389dCD6Be5ce2dc7a15f0E9F7"
+    "TellerAddress": "0xBe039b49D16B6CA389dCD6Be5ce2dc7a15f0E9F7",
+    "DistributorAddress": "0x67a7f7609eA5BF23076074aB4f4069BC4501B29D"
   },
   "VaultModule": {
     "name": "Prime USD",

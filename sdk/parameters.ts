@@ -16,6 +16,7 @@ export interface GlobalConfig {
   TellerAddress: `0x${string}`;
   WithdrawerAddress: `0x${string}`;
   RolesAuthorityAddress: `0x${string}`;
+  DistributorAddress: `0x${string}`;
 }
 
 export interface LeafConfig {

@@ -32,7 +32,6 @@ export async function runHardhatCmd(script: string) {
     type: "text",
     name: "value",
     message: "Enter parameters ID:",
-    initial: "localhost-usd",
   });
 
   if (!parameters.value || parameters.value === undefined) {
