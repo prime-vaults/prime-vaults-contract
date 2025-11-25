@@ -28,8 +28,7 @@ export default async function deployPrimeVault(connection: NetworkConnection, pa
   return { withdrawer };
 }
 
-// pnpm hardhat run scripts/deploy/02.3_teller.ts --network <network>
-runHardhatCmd("scripts/deploy/02.3_teller.ts")
+runHardhatCmd("scripts/deploy/02.5_withdrawer.ts")
   .then(async (context) => {
     if (!context) return;
     await deployPrimeVault(context.connection, context.parameters, true);

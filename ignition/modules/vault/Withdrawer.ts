@@ -1,19 +1,23 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-import TellerModule from "./Teller.js";
-
 /**
  * Withdrawer Module
  * Deploys DelayedWithdraw for time-delayed withdrawal functionality
  */
 export default buildModule("WithdrawerModule", (m) => {
-  const { vault, accountant, teller, primeRegistry, primeRBAC } = m.useModule(TellerModule);
+  const primeRegistry = m.contractAt("PrimeRegistry", m.getParameter("PrimeRegistryAddress"));
 
   // Deploy DelayedWithdraw
   const withdrawer = m.contract(
     "DelayedWithdraw",
-    [primeRBAC, vault, accountant, teller, m.getParameter("adminAddress")],
-    { after: [teller] },
+    [
+      m.getParameter("PrimeRBAC"),
+      m.getParameter("BoringVaultAddress"),
+      m.getParameter("AccountantAddress"),
+      m.getParameter("TellerAddress"),
+      m.getParameter("adminAddress"),
+    ],
+    {},
   );
 
   // Register withdrawer and setup all permissions via PrimeRegistry
