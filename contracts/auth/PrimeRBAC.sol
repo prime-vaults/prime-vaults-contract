@@ -11,10 +11,15 @@ contract PrimeRBAC is AccessControlEnumerable {
     /// @notice at least one address must be assigned this role
     bytes32 public constant EMERGENCY_ADMIN_ROLE = keccak256("EMERGENCY_ADMIN_ROLE");
 
+    /// @dev used to perform routine operations
+    /// @notice at least one address must be assigned this role
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+
     constructor() {
         _grantRole(PROTOCOL_ADMIN_ROLE, msg.sender);
         _setRoleAdmin(PROTOCOL_ADMIN_ROLE, PROTOCOL_ADMIN_ROLE);
         _setRoleAdmin(EMERGENCY_ADMIN_ROLE, PROTOCOL_ADMIN_ROLE);
+        _setRoleAdmin(OPERATOR_ROLE, PROTOCOL_ADMIN_ROLE);
     }
 
     //////////////////////////////////////////////////////////////
@@ -35,5 +40,13 @@ contract PrimeRBAC is AccessControlEnumerable {
 
     function grantEmergencyAdminRole(address emergencyAdmin_) external {
         grantRole(EMERGENCY_ADMIN_ROLE, emergencyAdmin_);
+    }
+
+    function hasOperatorRole(address operator_) external view returns (bool) {
+        return hasRole(OPERATOR_ROLE, operator_);
+    }
+
+    function grantOperatorRole(address operator_) external {
+        grantRole(OPERATOR_ROLE, operator_);
     }
 }

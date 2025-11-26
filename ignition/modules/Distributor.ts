@@ -6,16 +6,13 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
  */
 const DistributorModule = buildModule("DistributorModule", (m) => {
   const primeRBAC = m.contractAt("PrimeRBAC", m.getParameter("PrimeRBAC"));
-  const vault = m.contractAt("BoringVault", m.getParameter("BoringVaultAddress"));
   const teller = m.contractAt("TellerWithYieldStreaming", m.getParameter("TellerAddress"));
 
-  const distributor = m.contract("Distributor", [primeRBAC, vault], {
-    after: [vault],
-  });
+  const distributor = m.contract("Distributor", [primeRBAC, teller]);
 
   // Connect distributor to teller
   m.call(teller, "setDistributor", [distributor], { id: "teller_setDistributor" });
-  return { distributor, vault, teller };
+  return { distributor, teller };
 });
 
 export default DistributorModule;

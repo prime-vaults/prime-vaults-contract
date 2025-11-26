@@ -53,4 +53,11 @@ abstract contract PrimeAuth is Auth {
         }
         _;
     }
+
+    modifier onlyOperator() {
+        if (!primeRBAC.hasOperatorRole(msg.sender)) {
+            revert Error.NOT_OPERATOR();
+        }
+        _;
+    }
 }

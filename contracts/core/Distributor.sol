@@ -8,6 +8,7 @@ import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
 import {BoringVault} from "./BoringVault.sol";
+import {TellerWithMultiAssetSupport} from "./TellerWithMultiAssetSupport.sol";
 
 /**
  * @title Distributor
@@ -36,6 +37,8 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
 
     /// @notice The vault contract (reads balances directly)
     ERC20 public immutable vault;
+
+    TellerWithMultiAssetSupport public immutable teller;
 
     /// @notice Mapping from reward token address to its reward data
     mapping(address => RewardData) public rewardData;
@@ -74,13 +77,14 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     /**
      * @notice Initializes the Distributor contract
      * @param _primeRBAC The PrimeRBAC contract for authentication
-     * @param _vault The vault contract (source of share balances)
+     * @param _teller The vault contract (source of share balances)
      */
     constructor(
         address _primeRBAC,
-        address _vault
-    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
-        vault = ERC20(_vault);
+        address _teller
+    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(TellerWithMultiAssetSupport(_teller).vault())).authority())) {
+        teller = TellerWithMultiAssetSupport(_teller);
+        vault = ERC20(teller.vault());
     }
 
     // ========================================= ADMIN FUNCTIONS =========================================
@@ -88,30 +92,14 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     /**
      * @notice Add a new reward token to the contract
      * @param _rewardsToken The address of the reward token
-     * @param _rewardsDistributor The address authorized to fund this reward
      * @param _rewardsDuration The duration over which rewards will be distributed
      * @dev Callable by OWNER_ROLE
      */
-    function addReward(
-        address _rewardsToken,
-        address _rewardsDistributor,
-        uint256 _rewardsDuration
-    ) external requiresAuth {
+    function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyOperator {
         if (rewardData[_rewardsToken].rewardsDuration != 0) revert Distributor__AlreadyAdded();
 
         rewardTokens.push(_rewardsToken);
-        rewardData[_rewardsToken].rewardsDistributor = _rewardsDistributor;
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
-    }
-
-    /**
-     * @notice Update the rewards distributor for a reward token
-     * @param _rewardsToken The reward token address
-     * @param _rewardsDistributor The new distributor address
-     * @dev Callable by OWNER_ROLE
-     */
-    function setRewardsDistributor(address _rewardsToken, address _rewardsDistributor) external requiresAuth {
-        rewardData[_rewardsToken].rewardsDistributor = _rewardsDistributor;
     }
 
     /**
@@ -121,11 +109,10 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @dev Can only be called after the current reward period has finished
      * @dev Callable by the rewards distributor
      */
-    function setRewardsDuration(address _rewardsToken, uint256 _rewardsDuration) external {
+    function setRewardsDuration(address _rewardsToken, uint256 _rewardsDuration) external onlyOperator {
         if (block.timestamp <= rewardData[_rewardsToken].periodFinish) {
             revert Distributor__RewardPeriodActive();
         }
-        if (rewardData[_rewardsToken].rewardsDistributor != msg.sender) revert Distributor__NotAuthorized();
         if (_rewardsDuration == 0) revert Distributor__ZeroDuration();
 
         rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
@@ -165,9 +152,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @dev Transfers reward tokens from caller to this contract
      * @dev Callable by the rewards distributor for this token
      */
-    function notifyRewardAmount(address _rewardsToken, uint256 reward) external updateReward(address(0)) {
-        if (rewardData[_rewardsToken].rewardsDistributor != msg.sender) revert Distributor__NotAuthorized();
-
+    function notifyRewardAmount(address _rewardsToken, uint256 reward) external onlyOperator updateReward(address(0)) {
         // Transfer reward tokens from distributor to this contract
         ERC20(_rewardsToken).safeTransferFrom(msg.sender, address(this), reward);
 
@@ -191,13 +176,13 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @notice BeforeUpdate hook - updates rewards BEFORE balance changes
      * @param from The sender address (address(0) for mint)
      * @param to The recipient address (address(0) for burn)
-     * @dev Called by vault BEFORE any balance change (mint/burn/transfer)
+     * @dev Called by Teller BEFORE any balance change (mint/burn/transfer)
      * @dev Must update rewards based on OLD balances before they change
-     * @dev Callable by vault only
+     * @dev Callable by Teller only
      */
-    function beforeUpdate(address from, address to, uint256 /* amount */, address /* operator */) external override {
-        if (msg.sender != address(vault)) revert Distributor__NotAuthorized();
+    function beforeUpdate(address from, address to, uint256 /* amount */, address /* operator */) public {
         if (paused) return; // Skip updates if paused
+        if (msg.sender != address(teller)) revert Distributor__NotAuthorized();
 
         // Update rewards for both parties BEFORE their balances change
         // address(0) means mint, skip sender update
@@ -340,5 +325,42 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     modifier notPaused() {
         if (paused) revert Distributor__Paused();
         _;
+    }
+
+    // =========================== VIEW HELPERS FOR FRONTEND ===========================
+
+    /**
+     * @notice Get all reward token addresses
+     */
+    function getRewardTokens() external view returns (address[] memory) {
+        return rewardTokens;
+    }
+
+    /**
+     * @notice Get full RewardData for a token
+     */
+    function getRewardData(
+        address token
+    )
+        external
+        view
+        returns (
+            address rewardsDistributor,
+            uint256 rewardsDuration,
+            uint256 periodFinish,
+            uint256 rewardRate,
+            uint256 lastUpdateTime,
+            uint256 rewardPerTokenStored
+        )
+    {
+        RewardData memory data = rewardData[token];
+        return (
+            data.rewardsDistributor,
+            data.rewardsDuration,
+            data.periodFinish,
+            data.rewardRate,
+            data.lastUpdateTime,
+            data.rewardPerTokenStored
+        );
     }
 }
