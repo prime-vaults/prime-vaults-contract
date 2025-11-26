@@ -25,7 +25,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     // ========================================= STRUCTS =========================================
 
     struct RewardData {
-        address rewardsDistributor;
+        address rewardsToken;
         uint256 rewardsDuration;
         uint256 periodFinish;
         uint256 rewardRate;
@@ -95,11 +95,18 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @param _rewardsDuration The duration over which rewards will be distributed
      * @dev Callable by OWNER_ROLE
      */
-    function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyOperator {
+    function addReward(address _rewardsToken, uint256 _rewardsDuration) external requiresAuth {
         if (rewardData[_rewardsToken].rewardsDuration != 0) revert Distributor__AlreadyAdded();
 
         rewardTokens.push(_rewardsToken);
-        rewardData[_rewardsToken].rewardsDuration = _rewardsDuration;
+        rewardData[_rewardsToken] = RewardData({
+            rewardsToken: _rewardsToken,
+            rewardsDuration: _rewardsDuration,
+            periodFinish: 0,
+            rewardRate: 0,
+            lastUpdateTime: 0,
+            rewardPerTokenStored: 0
+        });
     }
 
     /**
@@ -330,37 +337,13 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     // =========================== VIEW HELPERS FOR FRONTEND ===========================
 
     /**
-     * @notice Get all reward token addresses
+     * @notice Get all rewards tokens with full RewardData
      */
-    function getRewardTokens() external view returns (address[] memory) {
-        return rewardTokens;
-    }
-
-    /**
-     * @notice Get full RewardData for a token
-     */
-    function getRewardData(
-        address token
-    )
-        external
-        view
-        returns (
-            address rewardsDistributor,
-            uint256 rewardsDuration,
-            uint256 periodFinish,
-            uint256 rewardRate,
-            uint256 lastUpdateTime,
-            uint256 rewardPerTokenStored
-        )
-    {
-        RewardData memory data = rewardData[token];
-        return (
-            data.rewardsDistributor,
-            data.rewardsDuration,
-            data.periodFinish,
-            data.rewardRate,
-            data.lastUpdateTime,
-            data.rewardPerTokenStored
-        );
+    function getRewards() external view returns (RewardData[] memory) {
+        RewardData[] memory data = new RewardData[](rewardTokens.length);
+        for (uint256 i = 0; i < rewardTokens.length; i++) {
+            data[i] = rewardData[rewardTokens[i]];
+        }
+        return data;
     }
 }

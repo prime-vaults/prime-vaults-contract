@@ -428,4 +428,12 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
 
         state.feesOwedInBase += uint128(newFeesOwedInBase);
     }
+
+    // ========================================= GETTERS =========================================
+    /**
+     * @notice Get the current accountant state.
+     */
+    function getAccountantState() external view returns (AccountantState memory) {
+        return accountantState;
+    }
 }

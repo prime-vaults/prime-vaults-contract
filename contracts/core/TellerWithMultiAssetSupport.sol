@@ -590,4 +590,11 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
     function version() public pure virtual returns (string memory) {
         return "Base V0.1";
     }
+
+    /**
+     * @notice Get the current teller state.
+     */
+    function getTellerState() external view returns (TellerState memory) {
+        return tellerState;
+    }
 }

@@ -52,8 +52,8 @@ const config: HardhatUserConfig = {
       // Disable the optimizer when debugging
       // https://hardhat.org/hardhat-network/#solidity-optimizer-support
       optimizer: {
-        enabled: true,
-        runs: 50,
+        enabled: false,
+        runs: 1,
       },
       viaIR: true,
     },

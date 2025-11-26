@@ -28,6 +28,7 @@ export default async function deployWithdrawer(connection: NetworkConnection, pa
   return { withdrawer };
 }
 
+// pnpm hardhat run scripts/deploy/02.5_withdrawer.ts --network <network>
 runHardhatCmd("scripts/deploy/02.5_withdrawer.ts")
   .then(async (context) => {
     if (!context) return;

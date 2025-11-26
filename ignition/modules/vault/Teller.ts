@@ -16,13 +16,5 @@ export default buildModule("TellerModule", (m) => {
   });
   m.call(primeRegistry, "registerTeller", [teller], { id: "registerTeller" });
 
-  // Deploy PrimeBufferHelper
-  const primeBufferHelper = m.contract("PrimeBufferHelper", [m.getParameter("PrimeStrategistAddress"), vault], {
-    after: [teller],
-  });
-  // m.call(teller, "allowBufferHelper", [primeBufferHelper], { id: "teller_allowBufferHelper" });
-  // m.call(teller, "setWithdrawBufferHelper", [primeBufferHelper], { id: "teller_setWithdrawBufferHelper" });
-  // m.call(vault, "setBeforeUpdateHook", [teller], { id: "vault_setBeforeUpdateHook" });
-
-  return { teller, primeBufferHelper, accountant, vault, primeRegistry, primeRBAC };
+  return { teller, accountant, vault, primeRegistry, primeRBAC };
 });

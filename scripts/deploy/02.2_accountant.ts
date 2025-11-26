@@ -1,8 +1,6 @@
 import { NetworkConnection } from "hardhat/types/network";
 
 import AccountantModule from "../../ignition/modules/vault/Accountant.js";
-import TellerModule from "../../ignition/modules/vault/Teller.js";
-import WithdrawerModule from "../../ignition/modules/vault/Withdrawer.js";
 import { readParams, writeParams } from "../../ignition/parameters/utils.js";
 import { runHardhatCmd } from "../utils.js";
 
@@ -28,33 +26,11 @@ export default async function deployAccountant(connection: NetworkConnection, pa
   };
   await writeParams(parameterId, parameters);
 
-  const { teller } = await connection.ignition.deploy(TellerModule, {
-    parameters,
-    displayUi,
-    deploymentId: parameterId,
-  });
-  parameters.$global = {
-    ...parameters.$global,
-    TellerAddress: teller.address,
-  };
-  await writeParams(parameterId, parameters);
-
-  const { withdrawer } = await connection.ignition.deploy(WithdrawerModule, {
-    parameters,
-    displayUi,
-    deploymentId: parameterId,
-  });
-  parameters.$global = {
-    ...parameters.$global,
-    WithdrawerAddress: withdrawer.address,
-  };
-  await writeParams(parameterId, parameters);
-
-  return { accountant, teller, withdrawer };
+  return { accountant };
 }
 
-// pnpm hardhat run scripts/deploy/02.2_vaultComponents.ts --network <network>
-runHardhatCmd("scripts/deploy/02.2_vaultComponents.ts")
+// pnpm hardhat run scripts/deploy/02.2_accountant.ts --network <network>
+runHardhatCmd("scripts/deploy/02.2_accountant.ts")
   .then(async (context) => {
     if (!context) return;
     await deployAccountant(context.connection, context.parameters, true);

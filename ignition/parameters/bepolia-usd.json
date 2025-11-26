@@ -10,10 +10,10 @@
     "DecoderAndSanitizerAddress": "0x75F47f7b48aD1C3EDaa8a7860Ba093397bA06230",
     "BoringVaultAddress": "0x603FF9072a79Ae00E04E68c9fA2889c135a82666",
     "RolesAuthorityAddress": "0x8d04d39084C27d28Fda137ecb917a8070CfB4883",
-    "AccountantAddress": "0xfe418265aafCe9C6f8d54CC046eBe2A52d1CD9Ec",
-    "TellerAddress": "0xBe039b49D16B6CA389dCD6Be5ce2dc7a15f0E9F7",
-    "DistributorAddress": "0x6b6A7c191d79CF8d5722C0DC81f05d457b43A8Ec",
-    "WithdrawerAddress": "0x3f7eb64D4C27537856c08CfC80a11B3Ce8eF5E1f"
+    "AccountantAddress": "0xa44608cc9FF9e60ea7E6f7EDbcD79a78E3E9D6BC",
+    "TellerAddress": "0xe93b0693A7437BdE1D6611D83E89c4AA6F5d6B74",
+    "DistributorAddress": "0x78c4ECA39384Ab9b495211C9449B1F7a94d9197F",
+    "WithdrawerAddress": "0x97873d98EC19e470CeE62af8FB84ADaB47CA3ABC"
   },
   "VaultModule": {
     "name": "Prime USD",

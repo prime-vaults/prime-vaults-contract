@@ -27,7 +27,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @param outstandingShares The total number of shares that are currently outstanding for an asset.
      * @param withdrawFee The fee that is charged when a withdrawal is completed.
      */
-    struct WithdrawAsset {
+    struct WithdrawState {
         bool allowWithdraws;
         uint32 withdrawDelay;
         uint128 outstandingShares;
@@ -75,7 +75,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     /**
      * @notice The withdrawal settings for the asset.
      */
-    WithdrawAsset public withdrawAsset;
+    WithdrawState public withdrawState;
 
     /**
      * @notice The mapping of users to their withdrawal requests.
@@ -178,9 +178,9 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @dev Callable by MULTISIG_ROLE.
      */
     function stopWithdrawals() external requiresAuth {
-        if (!withdrawAsset.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
+        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
-        withdrawAsset.allowWithdraws = false;
+        withdrawState.allowWithdraws = false;
 
         emit WithdrawalsStopped(address(asset));
     }
@@ -192,10 +192,10 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     function setupWithdraw(uint32 withdrawDelay, uint16 withdrawFee) external onlyProtocolAdmin {
         if (withdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__WithdrawFeeTooHigh();
 
-        if (withdrawAsset.allowWithdraws) revert DelayedWithdraw__AlreadySetup();
-        withdrawAsset.allowWithdraws = true;
-        withdrawAsset.withdrawDelay = withdrawDelay;
-        withdrawAsset.withdrawFee = withdrawFee;
+        if (withdrawState.allowWithdraws) revert DelayedWithdraw__AlreadySetup();
+        withdrawState.allowWithdraws = true;
+        withdrawState.withdrawDelay = withdrawDelay;
+        withdrawState.withdrawFee = withdrawFee;
 
         emit SetupWithdrawalsInAsset(address(asset), withdrawDelay, withdrawFee);
     }
@@ -205,9 +205,9 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @dev Callable by MULTISIG_ROLE.
      */
     function changeWithdrawDelay(uint32 withdrawDelay) external requiresAuth {
-        if (!withdrawAsset.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
+        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
-        withdrawAsset.withdrawDelay = withdrawDelay;
+        withdrawState.withdrawDelay = withdrawDelay;
 
         emit WithdrawDelayUpdated(address(asset), withdrawDelay);
     }
@@ -217,11 +217,11 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @dev Callable by OWNER_ROLE.
      */
     function changeWithdrawFee(uint16 withdrawFee) external requiresAuth {
-        if (!withdrawAsset.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
+        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         if (withdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__WithdrawFeeTooHigh();
 
-        withdrawAsset.withdrawFee = withdrawFee;
+        withdrawState.withdrawFee = withdrawFee;
 
         emit WithdrawFeeUpdated(address(asset), withdrawFee);
     }
@@ -302,16 +302,16 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      */
     function requestWithdraw(uint96 shares, bool allowThirdPartyToComplete) external requiresAuth nonReentrant {
         if (isPaused) revert DelayedWithdraw__Paused();
-        if (!withdrawAsset.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
+        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         boringVault.safeTransferFrom(msg.sender, address(this), shares);
 
-        withdrawAsset.outstandingShares += shares;
+        withdrawState.outstandingShares += shares;
 
         WithdrawRequest storage req = withdrawRequests[msg.sender];
 
         req.shares += shares;
-        uint40 maturity = uint40(block.timestamp + withdrawAsset.withdrawDelay);
+        uint40 maturity = uint40(block.timestamp + withdrawState.withdrawDelay);
         req.maturity = maturity;
         req.exchangeRateAtTimeOfRequest = uint96(accountant.getRateSafe());
         req.allowThirdPartyToComplete = allowThirdPartyToComplete;
@@ -349,7 +349,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     function viewOutstandingDebt() public view returns (uint256 debt) {
         uint256 rate = accountant.getRateSafe();
 
-        debt = rate.mulDivDown(withdrawAsset.outstandingShares, ONE_SHARE);
+        debt = rate.mulDivDown(withdrawState.outstandingShares, ONE_SHARE);
     }
 
     // ========================================= INTERNAL FUNCTIONS =========================================
@@ -363,7 +363,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         WithdrawRequest storage req = withdrawRequests[account];
         uint96 shares = req.shares;
         if (shares == 0) revert DelayedWithdraw__NoSharesToWithdraw();
-        withdrawAsset.outstandingShares -= shares;
+        withdrawState.outstandingShares -= shares;
         req.shares = 0;
         boringVault.safeTransfer(account, shares);
 
@@ -374,7 +374,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @notice Internal helper function that implements shared logic for completing a user's withdrawal request.
      */
     function _completeWithdraw(address account, WithdrawRequest storage req) internal returns (uint256 assetsOut) {
-        if (!withdrawAsset.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
+        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         if (block.timestamp < req.maturity) revert DelayedWithdraw__WithdrawNotMatured();
         if (req.shares == 0) revert DelayedWithdraw__NoSharesToWithdraw();
@@ -382,11 +382,11 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         uint256 shares = req.shares;
 
         // Safe to cast shares to a uint128 since req.shares is constrained to be less than 2^96.
-        withdrawAsset.outstandingShares -= uint128(shares);
+        withdrawState.outstandingShares -= uint128(shares);
 
-        if (withdrawAsset.withdrawFee > 0) {
+        if (withdrawState.withdrawFee > 0) {
             // Handle withdraw fee.
-            uint256 fee = uint256(shares).mulDivDown(withdrawAsset.withdrawFee, 1e4);
+            uint256 fee = uint256(shares).mulDivDown(withdrawState.withdrawFee, 1e4);
             shares -= fee;
 
             // Transfer fee to feeAddress.
@@ -410,5 +410,11 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         teller.bulkWithdraw(shares, assetsOut, account);
 
         emit WithdrawCompleted(account, asset, shares, assetsOut);
+    }
+
+    //=========================================  VIEW FUNCTIONS =========================================
+
+    function getWithdrawState() external view returns (WithdrawState memory) {
+        return withdrawState;
     }
 }
