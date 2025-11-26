@@ -45,20 +45,15 @@ void describe("02_Reward", function () {
     });
 
     void it("Step 2: Admin adds reward token with 7 day duration", async function () {
-      const { mockERC20, distributor, deployer } = context;
+      const { mockERC20, distributor } = context;
 
       const rewardDuration = 7n * ONE_DAY_SECS;
 
       // Add reward token
-      await distributor.write.addReward([mockERC20.address, deployer.account.address, rewardDuration]);
+      await distributor.write.addReward([mockERC20.address, rewardDuration]);
 
       const rewardData = await distributor.read.rewardData([mockERC20.address]);
 
-      assert.equal(
-        rewardData[0].toLowerCase(),
-        deployer.account.address.toLowerCase(),
-        "Distributor should be deployer",
-      );
       assert.equal(rewardData[1], rewardDuration, "Duration should be 7 days");
     });
 
@@ -171,13 +166,13 @@ void describe("02_Reward", function () {
     });
 
     void it("Step 2: Admin sets up reward (7 tokens over 7 days)", async function () {
-      const { mockERC20, distributor, deployer } = context;
+      const { mockERC20, distributor } = context;
 
       const rewardDuration = 7n * ONE_DAY_SECS;
       const rewardAmount = 7n * ONE_TOKEN;
 
       // Add reward token
-      await distributor.write.addReward([mockERC20.address, deployer.account.address, rewardDuration]);
+      await distributor.write.addReward([mockERC20.address, rewardDuration]);
 
       // Approve and notify reward
       await mockERC20.write.approve([distributor.address, rewardAmount]);

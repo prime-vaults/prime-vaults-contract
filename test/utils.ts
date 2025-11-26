@@ -3,8 +3,13 @@ import { Account } from "viem";
 
 import deployMocks from "../scripts/deploy/00_mock.js";
 import deployPrimeRegistry from "../scripts/deploy/01_primeRegistry.js";
-import deployPrimeVault from "../scripts/deploy/02_primeVault.js";
+import deployBoringVault from "../scripts/deploy/02.1_boringVault.js";
+import deployAccountant from "../scripts/deploy/02.2_accountant.js";
+import deployTeller from "../scripts/deploy/02.3_teller.js";
+import deployTellerHelper from "../scripts/deploy/02.4_tellerHelper.js";
+import deployWithdrawer from "../scripts/deploy/02.5_withdrawer.js";
 import deployPrimeManager from "../scripts/deploy/03_vaultManager.js";
+import deployDistributor from "../scripts/deploy/04_distributor.js";
 
 export const ONE_DAY_SECS = 24n * 60n * 60n;
 export const ONE_TOKEN = 10n ** 18n;
@@ -26,18 +31,28 @@ export async function initializeTest() {
 
   // Deploy full system (vault + accountant + teller + manager)
   await deployPrimeRegistry(connection, PARAMETERS_ID, false);
-  const primeModules = await deployPrimeVault(connection, PARAMETERS_ID);
+  const boringVault = await deployBoringVault(connection, PARAMETERS_ID);
+  const accountant = await deployAccountant(connection, PARAMETERS_ID);
+  const teller = await deployTeller(connection, PARAMETERS_ID);
+  const tellerHelper = await deployTellerHelper(connection, PARAMETERS_ID);
+  const withdrawer = await deployWithdrawer(connection, PARAMETERS_ID);
   const managerModules = await deployPrimeManager(connection, PARAMETERS_ID);
+  const distributor = await deployDistributor(connection, PARAMETERS_ID);
 
   return {
+    ...mocks,
+    ...boringVault,
+    ...accountant,
+    ...teller,
+    ...tellerHelper,
+    ...withdrawer,
+    ...managerModules,
+    ...distributor,
     deployer,
     alice,
     bob,
     connection,
     networkHelpers: connection.networkHelpers,
-    ...mocks,
-    ...primeModules,
-    ...managerModules,
   };
 }
 

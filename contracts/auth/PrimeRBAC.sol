@@ -17,6 +17,8 @@ contract PrimeRBAC is AccessControlEnumerable {
 
     constructor() {
         _grantRole(PROTOCOL_ADMIN_ROLE, msg.sender);
+        _grantRole(EMERGENCY_ADMIN_ROLE, msg.sender);
+        _grantRole(OPERATOR_ROLE, msg.sender);
         _setRoleAdmin(PROTOCOL_ADMIN_ROLE, PROTOCOL_ADMIN_ROLE);
         _setRoleAdmin(EMERGENCY_ADMIN_ROLE, PROTOCOL_ADMIN_ROLE);
         _setRoleAdmin(OPERATOR_ROLE, PROTOCOL_ADMIN_ROLE);

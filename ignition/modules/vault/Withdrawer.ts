@@ -15,7 +15,7 @@ export default buildModule("WithdrawerModule", (m) => {
       m.getParameter("BoringVaultAddress"),
       m.getParameter("AccountantAddress"),
       m.getParameter("TellerAddress"),
-      m.getParameter("adminAddress"),
+      m.getParameter("RolesAuthorityAddress"), // Use payout address, not admin
     ],
     {},
   );

@@ -6,9 +6,9 @@ import { runHardhatCmd } from "../utils.js";
 
 /**
  * Deploy Prime Vault system
- * Deploys: Vault, Accountant, Teller, Withdrawer, Manager, Registry, RolesAuthority
+ * Deploys: Withdrawer
  */
-export default async function deployPrimeVault(connection: NetworkConnection, parameterId: string, displayUi = false) {
+export default async function deployWithdrawer(connection: NetworkConnection, parameterId: string, displayUi = false) {
   if (displayUi) console.log("\n🚀 Deploying Prime Vault system...\n");
 
   // Update parameters with required addresses
@@ -31,7 +31,7 @@ export default async function deployPrimeVault(connection: NetworkConnection, pa
 runHardhatCmd("scripts/deploy/02.5_withdrawer.ts")
   .then(async (context) => {
     if (!context) return;
-    await deployPrimeVault(context.connection, context.parameters, true);
+    await deployWithdrawer(context.connection, context.parameters, true);
   })
   .catch((error) => {
     console.error(error);
