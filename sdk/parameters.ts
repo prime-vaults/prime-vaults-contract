@@ -1,3 +1,4 @@
+import bepoliaBtc from "../ignition/parameters/bepolia-btc.json";
 import bepoliaUsd from "../ignition/parameters/bepolia-usd.json";
 import localhostUsd from "../ignition/parameters/localhost-usd.json";
 
@@ -45,4 +46,5 @@ export interface VaultParameters {
 }
 
 export const BepoliaVaultUsd = bepoliaUsd as unknown as VaultParameters;
+export const BepoliaVaultBtc = bepoliaBtc as unknown as VaultParameters;
 export const LocalhostVaultUsd = localhostUsd as unknown as VaultParameters;

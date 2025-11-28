@@ -1,7 +1,6 @@
 import { NetworkConnection } from "hardhat/types/network";
 
 import { runHardhatCmd } from "../utils.js";
-import deployPrimeRegistry from "./01_primeRegistry.js";
 import deployBoringVault from "./02.1_boringVault.js";
 import deployAccountant from "./02.2_accountant.js";
 import deployTeller from "./02.3_teller.js";
@@ -17,7 +16,6 @@ import deployDistributor from "./04_distributor.js";
 export default async function deployFull(connection: NetworkConnection, parameterId: string, displayUi = false) {
   // Update parameters with required addresses
 
-  const primeRegistry = await deployPrimeRegistry(connection, parameterId, displayUi);
   const boringVault = await deployBoringVault(connection, parameterId, displayUi);
   const accountant = await deployAccountant(connection, parameterId, displayUi);
   const teller = await deployTeller(connection, parameterId, displayUi);
@@ -34,7 +32,6 @@ export default async function deployFull(connection: NetworkConnection, paramete
     ...teller,
     ...accountant,
     ...boringVault,
-    ...primeRegistry,
   };
 }
 
