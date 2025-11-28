@@ -12,11 +12,10 @@ export default buildModule("ManagerModule", (m) => {
   // Deploy Manager
   const manager = m.contract("ManagerWithMerkleVerification", [m.getParameter("PrimeRBAC"), vault]);
 
-  m.call(manager, "setManageRoot", [adminAddress, m.getParameter("manageRoot")]);
-  m.call(primeRegistry, "registerManager", [manager], { id: "registerManager" });
-
+  const tx1 = m.call(manager, "setManageRoot", [adminAddress, m.getParameter("manageRoot")]);
+  const tx2 = m.call(primeRegistry, "registerManager", [manager], { after: [tx1] });
   // Grant STRATEGIST_ROLE to admin so they can call manageVaultWithMerkleVerification
-  m.call(primeRegistry, "grantStrategistRole", [adminAddress, vault], { id: "grant_admin_strategist_role" });
+  m.call(primeRegistry, "grantStrategistRole", [adminAddress, vault], { after: [tx2] });
 
   return { manager, vault };
 });

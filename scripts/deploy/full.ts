@@ -43,7 +43,7 @@ runHardhatCmd("scripts/deploy/full.ts")
   .then(async (context) => {
     if (!context) return;
     console.log("\n🚀 Deploying Prime Distributor module...\n");
-    await deployDistributor(context.connection, context.parameters, true);
+    await deployFull(context.connection, context.parameters, true);
   })
   .catch((error) => {
     console.error(error);

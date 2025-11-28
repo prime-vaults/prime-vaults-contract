@@ -12,9 +12,9 @@ export default buildModule("TellerHelper", (m) => {
   const primeBufferHelper = m.contract("PrimeBufferHelper", [m.getParameter("PrimeStrategistAddress"), vault], {
     after: [teller],
   });
-  m.call(teller, "allowBufferHelper", [primeBufferHelper], { id: "teller_allowBufferHelper" });
-  m.call(teller, "setWithdrawBufferHelper", [primeBufferHelper], { id: "teller_setWithdrawBufferHelper" });
-  m.call(vault, "setBeforeUpdateHook", [teller], { id: "vault_setBeforeUpdateHook" });
 
+  const tx0 = m.call(teller, "allowBufferHelper", [primeBufferHelper]);
+  const tx1 = m.call(teller, "setWithdrawBufferHelper", [primeBufferHelper], { after: [tx0] });
+  m.call(vault, "setBeforeUpdateHook", [teller], { after: [tx1] });
   return { primeBufferHelper };
 });

@@ -21,13 +21,11 @@ export default buildModule("WithdrawerModule", (m) => {
   );
 
   // Register withdrawer and setup all permissions via PrimeRegistry
-  m.call(primeRegistry, "registerWithdrawer", [withdrawer], {
-    id: "registerWithdrawer",
-  });
+  const tx1 = m.call(primeRegistry, "registerWithdrawer", [withdrawer]);
 
   // Setup withdrawal with delay and fee (no need to pass asset, it's derived from vault)
   m.call(withdrawer, "setupWithdraw", [m.getParameter("withdrawDelayInSeconds"), m.getParameter("withdrawFee")], {
-    id: "withdrawer_setupWithdraw",
+    after: [tx1],
   });
 
   return { withdrawer };

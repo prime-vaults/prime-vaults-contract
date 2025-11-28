@@ -7,12 +7,13 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 export default buildModule("PrimeRegistryModule", (m) => {
   // Deploy PrimeRBAC for role management across vaults
   const primeRBAC = m.contract("PrimeRBAC");
-
   // Deploy PrimeRegistry for vault tracking
   const primeRegistry = m.contract("PrimeRegistry", [primeRBAC], {
     after: [primeRBAC],
   });
-
-  const decoder = m.contract("FullDecoderAndSanitizer", []);
+  // Deploy FullDecoderAndSanitizer for input decoding and sanitization
+  const decoder = m.contract("FullDecoderAndSanitizer", [], {
+    after: [primeRegistry],
+  });
   return { primeRegistry, primeRBAC, decoder };
 });

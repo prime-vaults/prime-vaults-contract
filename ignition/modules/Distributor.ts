@@ -11,7 +11,7 @@ const DistributorModule = buildModule("DistributorModule", (m) => {
   const distributor = m.contract("Distributor", [primeRBAC, teller]);
 
   // Connect distributor to teller
-  m.call(teller, "setDistributor", [distributor], { id: "teller_setDistributor" });
+  m.call(teller, "setDistributor", [distributor]);
   return { distributor, teller };
 });
 
