@@ -85,7 +85,7 @@ const config: HardhatUserConfig = {
       type: "http",
       chainType: "l1",
       accounts,
-      url: berachainBepolia.rpcUrls.default.http[0],
+      url: process.env.RPC_URL || berachainBepolia.rpcUrls.default.http[0],
     },
   },
 };

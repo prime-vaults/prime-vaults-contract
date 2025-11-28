@@ -5,14 +5,14 @@
     "stakingToken": "0x312203a9df1b39824a826e4ceb266541d6e0feaa",
     "adminAddress": "0xcd2ab433521a1188eccc406f59cac6d1303c7c2c",
     "PrimeStrategistAddress": "0x979B11c59040745FEdEB3C262BCbE490287bDE8D",
-    "PrimeRBAC": "0x56a227F13b4c943777AaD272A430a3fFb290013f",
-    "PrimeRegistryAddress": "0x6f1bB7292F73E55EF56767ae4E4B4991a8633a17",
-    "DecoderAndSanitizerAddress": "0x75F47f7b48aD1C3EDaa8a7860Ba093397bA06230",
+    "PrimeRBAC": "0xF8989C04aBa6074ce9276067790aFeDf7C9d037A",
+    "PrimeRegistryAddress": "0x0abb615cdfe37AbE7dFcD950b33cD67725FBAf6B",
+    "DecoderAndSanitizerAddress": "0xEbE36100132FEB2202c987856bF3EeC545DBBc53",
     "BoringVaultAddress": "0x603FF9072a79Ae00E04E68c9fA2889c135a82666",
     "RolesAuthorityAddress": "0x8d04d39084C27d28Fda137ecb917a8070CfB4883",
     "AccountantAddress": "0xa44608cc9FF9e60ea7E6f7EDbcD79a78E3E9D6BC",
     "TellerAddress": "0xe93b0693A7437BdE1D6611D83E89c4AA6F5d6B74",
-    "DistributorAddress": "0x78c4ECA39384Ab9b495211C9449B1F7a94d9197F",
+    "DistributorAddress": "0x33ff6E4ABe1B24BE6b9e3543ea856BEFE5839420",
     "WithdrawerAddress": "0x97873d98EC19e470CeE62af8FB84ADaB47CA3ABC"
   },
   "VaultModule": {

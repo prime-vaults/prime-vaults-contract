@@ -102,7 +102,7 @@ contract PrimeBufferHelper is IBufferHelper {
             targets = new address[](1);
             targets[0] = primeStrategist;
             data = new bytes[](1);
-            data[0] = abi.encodeWithSignature("withdraw(address,uint256,address)", asset, amount - vaultBalance, vault);
+            data[0] = abi.encodeWithSignature("withdraw(address,uint256)", asset, amount - vaultBalance);
             values = new uint256[](1);
             values[0] = 0;
         }

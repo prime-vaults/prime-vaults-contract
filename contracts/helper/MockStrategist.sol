@@ -13,7 +13,7 @@ contract MockStrategist {
         ERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function withdraw(address asset, uint256 amount, address to) external {
-        ERC20(asset).safeTransfer(to, amount);
+    function withdraw(address asset, uint256 amount) external {
+        ERC20(asset).safeTransfer(msg.sender, amount);
     }
 }

@@ -20,6 +20,7 @@ export const DEPOSIT_AMOUNT = 100n * ONE_TOKEN;
 export async function initializeTest() {
   const connection = await network.connect();
   const [deployer, alice, bob] = await connection.viem.getWalletClients();
+  const client = await connection.viem.getPublicClient();
 
   // Deploy mocks
   const mocks = await deployMocks(connection, PARAMETERS_ID);
@@ -52,6 +53,7 @@ export async function initializeTest() {
     alice,
     bob,
     connection,
+    client,
     networkHelpers: connection.networkHelpers,
   };
 }
