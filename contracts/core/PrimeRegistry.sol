@@ -201,6 +201,7 @@ contract PrimeRegistry is PrimeAuth {
         // Set public capabilities for withdrawer user functions
         rolesAuthority.setPublicCapability(address(withdrawer), withdrawer.cancelWithdraw.selector, true);
         rolesAuthority.setPublicCapability(address(withdrawer), withdrawer.requestWithdraw.selector, true);
+        rolesAuthority.setPublicCapability(address(withdrawer), withdrawer.accelerateWithdraw.selector, true);
         rolesAuthority.setPublicCapability(address(withdrawer), withdrawer.completeWithdraw.selector, true);
         rolesAuthority.setPublicCapability(address(withdrawer), withdrawer.setAllowThirdPartyToComplete.selector, true);
 

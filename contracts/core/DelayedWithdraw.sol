@@ -26,12 +26,14 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @param withdrawDelay The delay in seconds before a requested withdrawal can be completed.
      * @param outstandingShares The total number of shares that are currently outstanding for an asset.
      * @param withdrawFee The fee that is charged when a withdrawal is completed.
+     * @param expeditedWithdrawFee The fee charged to accelerate withdrawal to 1 day (in basis points).
      */
     struct WithdrawState {
         bool allowWithdraws;
         uint32 withdrawDelay;
         uint128 outstandingShares;
         uint16 withdrawFee;
+        uint16 expeditedWithdrawFee;
     }
 
     /**
@@ -39,20 +41,27 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @param maturity The time at which the withdrawal can be completed.
      * @param shares The number of shares that are requested to be withdrawn.
      * @param exchangeRateAtTimeOfRequest The exchange rate at the time of the request.
+     * @param sharesFee The total fee in shares that will be charged.
      */
     struct WithdrawRequest {
         bool allowThirdPartyToComplete;
         uint40 maturity;
         uint96 shares;
         uint96 exchangeRateAtTimeOfRequest;
+        uint96 sharesFee;
     }
 
     // ========================================= CONSTANTS =========================================
 
     /**
-     * @notice The largest withdraw fee that can be set.
+     * @notice The largest withdraw fee that can be set. (max 20%).
      */
     uint16 internal constant MAX_WITHDRAW_FEE = 0.2e4;
+
+    /**
+     * @notice The expedited withdraw delay - 1 day in seconds.
+     */
+    uint32 internal constant EXPEDITED_WITHDRAW_DELAY = 1 days;
 
     // ========================================= STATE =========================================
 
@@ -94,6 +103,10 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     error DelayedWithdraw__Paused();
     error DelayedWithdraw__CallerNotBoringVault();
     error DelayedWithdraw__CannotWithdrawBoringToken();
+    error DelayedWithdraw__ExpeditedWithdrawFeeTooHigh();
+    error DelayedWithdraw__ExpeditedWithdrawNotAvailable();
+    error DelayedWithdraw__WithdrawPending();
+    error DelayedWithdraw__NoWithdrawToAccelerate();
 
     //============================== EVENTS ===============================
 
@@ -109,6 +122,8 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     event Paused();
     event Unpaused();
     event PullFundsFromVaultUpdated(bool _pullFundsFromVault);
+    event ExpeditedWithdrawFeeUpdated(uint16 newFee);
+    event WithdrawAccelerated(address indexed account, ERC20 indexed asset, uint40 newMaturity, uint96 accelerationFee);
 
     //============================== IMMUTABLES ===============================
 
@@ -189,13 +204,19 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @notice Sets up the withdrawal settings.
      * @dev Callable by OWNER_ROLE.
      */
-    function setupWithdraw(uint32 withdrawDelay, uint16 withdrawFee) external onlyProtocolAdmin {
+    function setupWithdraw(
+        uint32 withdrawDelay,
+        uint16 withdrawFee,
+        uint16 expeditedWithdrawFee
+    ) external onlyProtocolAdmin {
         if (withdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__WithdrawFeeTooHigh();
+        if (expeditedWithdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__ExpeditedWithdrawFeeTooHigh();
 
         if (withdrawState.allowWithdraws) revert DelayedWithdraw__AlreadySetup();
         withdrawState.allowWithdraws = true;
         withdrawState.withdrawDelay = withdrawDelay;
         withdrawState.withdrawFee = withdrawFee;
+        withdrawState.expeditedWithdrawFee = expeditedWithdrawFee;
 
         emit SetupWithdrawalsInAsset(address(asset), withdrawDelay, withdrawFee);
     }
@@ -235,6 +256,20 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         feeAddress = _feeAddress;
 
         emit FeeAddressSet(_feeAddress);
+    }
+
+    /**
+     * @notice Sets the expedited withdraw fee.
+     * @dev Callable by OWNER_ROLE.
+     * @param _expeditedWithdrawFee Fee in basis points (e.g., 500 = 5%).
+     */
+    function changeExpeditedWithdrawFee(uint16 _expeditedWithdrawFee) external onlyProtocolAdmin {
+        if (_expeditedWithdrawFee > MAX_WITHDRAW_FEE) {
+            revert DelayedWithdraw__ExpeditedWithdrawFeeTooHigh();
+        }
+        withdrawState.expeditedWithdrawFee = _expeditedWithdrawFee;
+
+        emit ExpeditedWithdrawFeeUpdated(_expeditedWithdrawFee);
     }
 
     /**
@@ -304,19 +339,51 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         if (isPaused) revert DelayedWithdraw__Paused();
         if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
+        WithdrawRequest storage req = withdrawRequests[msg.sender];
+        if (req.shares > 0) revert DelayedWithdraw__WithdrawPending();
+
         boringVault.safeTransferFrom(msg.sender, address(this), shares);
 
         withdrawState.outstandingShares += shares;
 
-        WithdrawRequest storage req = withdrawRequests[msg.sender];
-
-        req.shares += shares;
+        req.shares = shares;
         uint40 maturity = uint40(block.timestamp + withdrawState.withdrawDelay);
         req.maturity = maturity;
         req.exchangeRateAtTimeOfRequest = uint96(accountant.getRateSafe());
         req.allowThirdPartyToComplete = allowThirdPartyToComplete;
 
+        // Calculate and store fee at time of request
+        uint256 fee = uint256(shares).mulDivDown(withdrawState.withdrawFee, 1e4);
+        req.sharesFee = uint96(fee);
+
         emit WithdrawRequested(msg.sender, asset, shares, maturity);
+    }
+
+    /**
+     * @notice Accelerates a pending withdrawal to 1 day by paying an additional fee.
+     * @dev User must have an existing pending withdrawal. The acceleration fee is added to existing fees.
+     * @dev Publicly callable.
+     */
+    function accelerateWithdraw() external requiresAuth nonReentrant {
+        if (isPaused) revert DelayedWithdraw__Paused();
+        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
+        if (withdrawState.expeditedWithdrawFee == 0) revert DelayedWithdraw__ExpeditedWithdrawNotAvailable();
+        if (withdrawState.withdrawDelay <= EXPEDITED_WITHDRAW_DELAY) {
+            revert DelayedWithdraw__ExpeditedWithdrawNotAvailable();
+        }
+
+        WithdrawRequest storage req = withdrawRequests[msg.sender];
+        if (req.shares == 0) revert DelayedWithdraw__NoWithdrawToAccelerate();
+
+        // Calculate acceleration fee and add to existing sharesFee
+        uint256 accelerationFee = uint256(req.shares).mulDivDown(withdrawState.expeditedWithdrawFee, 1e4);
+        req.sharesFee += uint96(accelerationFee);
+
+        // Set new maturity to 1 day from now
+        uint40 newMaturity = uint40(block.timestamp + EXPEDITED_WITHDRAW_DELAY);
+        req.maturity = newMaturity;
+
+        emit WithdrawAccelerated(msg.sender, asset, newMaturity, uint96(accelerationFee));
     }
 
     /**
@@ -380,16 +447,14 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         if (req.shares == 0) revert DelayedWithdraw__NoSharesToWithdraw();
 
         uint256 shares = req.shares;
+        uint256 fee = req.sharesFee;
 
         // Safe to cast shares to a uint128 since req.shares is constrained to be less than 2^96.
         withdrawState.outstandingShares -= uint128(shares);
 
-        if (withdrawState.withdrawFee > 0) {
-            // Handle withdraw fee.
-            uint256 fee = uint256(shares).mulDivDown(withdrawState.withdrawFee, 1e4);
+        // Deduct fee from shares and transfer to fee address
+        if (fee > 0) {
             shares -= fee;
-
-            // Transfer fee to feeAddress.
             boringVault.safeTransfer(feeAddress, fee);
         }
 
@@ -397,6 +462,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         assetsOut = shares.mulDivDown(req.exchangeRateAtTimeOfRequest, ONE_SHARE);
 
         req.shares = 0;
+        req.sharesFee = 0;
 
         // if (pullFundsFromVault) {
         //     // Burn shares and transfer assets to user.
@@ -416,5 +482,9 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
 
     function getWithdrawState() external view returns (WithdrawState memory) {
         return withdrawState;
+    }
+
+    function getWithdrawRequest(address account) external view returns (WithdrawRequest memory) {
+        return withdrawRequests[account];
     }
 }

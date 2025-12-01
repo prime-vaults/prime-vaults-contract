@@ -1,5 +1,5 @@
-import { maxUint128 } from "viem";
+import { maxUint112 } from "viem";
 
 export const ONE_DAY_SECS = 86400n;
 
-export const MAX_DEPOSIT_CAP = maxUint128;
+export const MAX_DEPOSIT_CAP = maxUint112;

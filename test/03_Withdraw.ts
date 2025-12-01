@@ -26,8 +26,8 @@ void describe("03_Withdraw", function () {
    *  - Alice approves withdrawer to spend shares.
    *  - Withdrawer holds Alice's shares.
    *
-   * Step 5 (After 1 day → T1):
-   *  - Wait for withdrawal delay period (1 day).
+   * Step 5 (After 3 days → T3):
+   *  - Wait for withdrawal delay period (3 days).
    *
    * Step 6:
    *  - Alice completes withdrawal.
@@ -150,7 +150,7 @@ void describe("03_Withdraw", function () {
     void it("Step 5: Wait 1 day for withdrawal delay", async function () {
       const { networkHelpers } = context;
 
-      await networkHelpers.time.increase(24 * 60 * 60);
+      await networkHelpers.time.increase(3 * 24 * 60 * 60);
     });
 
     void it("Step 6: Alice completes withdrawal (auto pulls from PrimeStrategist)", async function () {
@@ -168,6 +168,142 @@ void describe("03_Withdraw", function () {
 
       assert.equal(userBalanceAfter - userBalanceBefore, DEPOSIT_AMOUNT, "User should receive deposited amount");
       assert.ok(strategistBalanceAfter < strategistBalanceBefore, "Strategist balance should decrease");
+    });
+  });
+
+  /**
+   * Scenario: Accelerated withdrawal flow (reduce wait time from normal to 1 day).
+   *
+   * Step 1 (At T0):
+   *  - Bob deposits 100 tokens to vault.
+   *  - Bob receives 100 shares.
+   *
+   * Step 2:
+   *  - Admin sets expedited withdraw fee to 5% (500 basis points).
+   *
+   * Step 3:
+   *  - Bob requests normal withdrawal of 100 shares.
+   *  - Maturity set to current time + normal delay (1 day in test).
+   *
+   * Step 4:
+   *  - Bob accelerates his withdrawal to 1 day by paying 5% fee.
+   *  - Acceleration fee is added to existing normal withdrawal fee.
+   *  - New maturity set to current time + 1 day.
+   *
+   * Step 5 (After 1 day → T1):
+   *  - Wait for accelerated withdrawal delay (1 day).
+   *
+   * Step 6:
+   *  - Bob completes withdrawal.
+   *  - Total fee (normal + acceleration) is deducted from shares.
+   *  - Bob receives tokens minus fees.
+   *
+   * Expected outcome:
+   *  - Bob successfully accelerates withdrawal to 1 day.
+   *  - Total fee (normal + acceleration) is charged.
+   *  - Fee address receives the fee shares.
+   */
+  void describe("Accelerated Withdrawal Flow", function () {
+    let context: Awaited<ReturnType<typeof initializeTest>>;
+
+    before(async function () {
+      context = await initializeTest();
+    });
+
+    void it("Step 1: Bob deposits 100 tokens", async function () {
+      const { bob } = context;
+
+      const result = await depositTokens(context, DEPOSIT_AMOUNT, bob.account);
+      assert.equal(result.shares, DEPOSIT_AMOUNT, "Shares should equal deposit amount");
+    });
+
+    void it("Step 2: Admin sets expedited withdraw fee to 5%", async function () {
+      const { withdrawer, deployer } = context;
+
+      // Set expedited fee to 5% (500 basis points)
+      await withdrawer.write.changeExpeditedWithdrawFee([500], {
+        account: deployer.account,
+      });
+
+      const withdrawState = await withdrawer.read.getWithdrawState();
+      assert.equal(withdrawState.expeditedWithdrawFee, 500, "Expedited fee should be 5%");
+    });
+
+    void it("Step 3: Bob requests normal withdrawal", async function () {
+      const { vault, withdrawer, bob } = context;
+
+      const userShares = await vault.read.balanceOf([bob.account.address]);
+
+      await vault.write.approve([withdrawer.address, userShares], { account: bob.account });
+      await withdrawer.write.requestWithdraw([userShares, false], {
+        account: bob.account,
+      });
+
+      const withdrawRequest = await withdrawer.read.withdrawRequests([bob.account.address]);
+      assert.equal(withdrawRequest[2], userShares, "Request should contain user's shares");
+    });
+
+    void it("Step 4: Bob accelerates his withdrawal to 1 day", async function () {
+      const { withdrawer, bob } = context;
+
+      const withdrawRequestBefore = await withdrawer.read.getWithdrawRequest([bob.account.address]);
+      const feeBeforeAcceleration = withdrawRequestBefore.sharesFee;
+
+      await withdrawer.write.accelerateWithdraw({ account: bob.account });
+
+      const withdrawRequest = await withdrawer.read.getWithdrawRequest([bob.account.address]);
+      const feeAfterAcceleration = withdrawRequest.sharesFee;
+
+      // Verify acceleration fee was added (5% of shares)
+      const userShares = withdrawRequest.shares;
+      const expectedAdditionalFee = (userShares * 500n) / 10000n;
+      assert.equal(
+        feeAfterAcceleration - feeBeforeAcceleration,
+        expectedAdditionalFee,
+        "Acceleration fee should be added",
+      );
+    });
+
+    void it("Step 5: Wait 1 day for accelerated withdrawal delay", async function () {
+      const { networkHelpers } = context;
+      await networkHelpers.time.increase(24 * 60 * 60);
+    });
+
+    void it("Step 6: Bob completes withdrawal with total fee deducted", async function () {
+      const { withdrawer, mockERC20, bob, vault } = context;
+
+      const userBalanceBefore = await mockERC20.read.balanceOf([bob.account.address]);
+      const feeAddress = await withdrawer.read.feeAddress();
+      const feeAddressBalanceBefore = await vault.read.balanceOf([feeAddress]);
+
+      const withdrawRequest = await withdrawer.read.getWithdrawRequest([bob.account.address]);
+      const totalShares = withdrawRequest.shares;
+      const totalFee = withdrawRequest.sharesFee;
+
+      await withdrawer.write.completeWithdraw([bob.account.address], {
+        account: bob.account,
+      });
+
+      const userBalanceAfter = await mockERC20.read.balanceOf([bob.account.address]);
+      const feeAddressBalanceAfter = await vault.read.balanceOf([feeAddress]);
+
+      // User should receive tokens for (shares - fee)
+      const expectedUserTokens = totalShares - totalFee;
+      const actualUserTokens = userBalanceAfter - userBalanceBefore;
+
+      // Allow small rounding difference
+      const diff =
+        actualUserTokens > expectedUserTokens
+          ? actualUserTokens - expectedUserTokens
+          : expectedUserTokens - actualUserTokens;
+      assert.ok(diff <= 1n, "User should receive approximately shares minus total fee");
+
+      // Fee address should receive the total fee (normal + acceleration)
+      assert.equal(
+        feeAddressBalanceAfter - feeAddressBalanceBefore,
+        totalFee,
+        "Fee address should receive total fee shares",
+      );
     });
   });
 });
