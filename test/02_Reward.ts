@@ -291,8 +291,8 @@ void describe("02_Reward", function () {
       const sharesBefore = await vault.read.balanceOf([alice.account.address]);
       const earnedBefore = await distributor.read.earned([alice.account.address, mockERC20.address]);
 
-      // Compound rewards - should claim and re-deposit into vault
-      await distributor.write.compoundReward([alice.account.address, mockERC20.address]);
+      // Alice compounds her own rewards (no fee)
+      await distributor.write.compoundReward([alice.account.address, mockERC20.address], { account: alice.account });
 
       const sharesAfter = await vault.read.balanceOf([alice.account.address]);
       const earnedAfter = await distributor.read.earned([alice.account.address, mockERC20.address]);
@@ -304,6 +304,61 @@ void describe("02_Reward", function () {
 
       // Earned should be reset to 0
       assert.equal(earnedAfter, 0n, "Alice earned should be 0 after compounding");
+    });
+
+    void it("Step 10: Bob enables third-party compounding", async function () {
+      const { distributor, bob } = context;
+
+      // Bob allows third-party compounding
+      await distributor.write.setAllowThirdPartyCompound([true], { account: bob.account });
+
+      const allowed = await distributor.read.allowThirdPartyCompound([bob.account.address]);
+      assert.equal(allowed, true, "Bob should allow third-party compounding");
+    });
+
+    void it("Step 11: Admin sets 10% compound fee", async function () {
+      const { distributor } = context;
+
+      // Set compound fee to 10% (1000 basis points)
+      await distributor.write.setCompoundFee([1000n]);
+
+      const fee = await distributor.read.compoundFee();
+      assert.equal(fee, 1000n, "Compound fee should be 10%");
+    });
+
+    void it("Step 12: Wait 1 day, deployer compounds for Bob (with 10% fee)", async function () {
+      const { mockERC20, distributor, vault, bob, networkHelpers } = context;
+
+      // Fast forward 1 day
+      await networkHelpers.time.increase(Number(ONE_DAY_SECS));
+
+      const earnedBefore = await distributor.read.earned([bob.account.address, mockERC20.address]);
+      const sharesBefore = await vault.read.balanceOf([bob.account.address]);
+      const deployerBalanceBefore = await mockERC20.read.balanceOf([
+        "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      ]);
+
+      // Deployer compounds for Bob (third-party compound)
+      await distributor.write.compoundReward([bob.account.address, mockERC20.address]);
+
+      const sharesAfter = await vault.read.balanceOf([bob.account.address]);
+      const earnedAfter = await distributor.read.earned([bob.account.address, mockERC20.address]);
+      const deployerBalanceAfter = await mockERC20.read.balanceOf(["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"]);
+
+      // Calculate expected fee (10% of earned)
+      const expectedFee = (earnedBefore * 1000n) / 10000n;
+      const expectedCompound = earnedBefore - expectedFee;
+
+      // Verify deployer received fee
+      const deployerFee = deployerBalanceAfter - deployerBalanceBefore;
+      assertApproxEqual(deployerFee, expectedFee, "Deployer should receive 10% fee");
+
+      // Verify Bob received shares (90% of earned)
+      const sharesGained = sharesAfter - sharesBefore;
+      assertApproxEqual(sharesGained, expectedCompound, "Bob should receive shares from 90% of earned");
+
+      // Earned should be reset to 0
+      assert.equal(earnedAfter, 0n, "Bob earned should be 0 after compounding");
     });
   });
 });

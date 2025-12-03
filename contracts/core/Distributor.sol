@@ -55,6 +55,15 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     /// @notice Whether the contract is paused
     bool public paused;
 
+    /// @notice Compound fee percentage (in basis points, 10000 = 100%)
+    uint256 public compoundFee;
+
+    /// @notice Maximum compound fee (20%)
+    uint256 public constant MAX_COMPOUND_FEE = 2000; // 20%
+
+    /// @notice Mapping of user address to whether they allow third-party compounding
+    mapping(address => bool) public allowThirdPartyCompound;
+
     // ========================================= EVENTS =========================================
 
     event RewardAdded(uint256 reward);
@@ -62,7 +71,15 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     event RewardsDurationUpdated(address token, uint256 newDuration);
     event Recovered(address token, uint256 amount);
     event PausedUpdated(bool isPaused);
-    event CompoundReward(address indexed account, address indexed rewardToken, uint256 rewardAmount, uint256 shares);
+    event CompoundReward(
+        address indexed account,
+        address indexed rewardToken,
+        uint256 rewardAmount,
+        uint256 shares,
+        uint256 fee
+    );
+    event CompoundFeeUpdated(uint256 newFee);
+    event ThirdPartyCompoundAllowed(address indexed user, bool allowed);
 
     // ========================================= ERRORS =========================================
 
@@ -72,6 +89,8 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     error Distributor__ZeroDuration();
     error Distributor__CannotWithdrawRewardToken();
     error Distributor__Paused();
+    error Distributor__CompoundFeeExceedsMaximum();
+    error Distributor__ThirdPartyCompoundNotAllowed();
 
     // ========================================= CONSTRUCTOR =========================================
 
@@ -135,6 +154,18 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     function setPaused(bool _paused) external requiresAuth {
         paused = _paused;
         emit PausedUpdated(_paused);
+    }
+
+    /**
+     * @notice Set the compound fee percentage
+     * @param _compoundFee The new compound fee in basis points (10000 = 100%)
+     * @dev Callable by OWNER_ROLE
+     * @dev Maximum fee is 20% (2000 basis points)
+     */
+    function setCompoundFee(uint256 _compoundFee) external requiresAuth {
+        if (_compoundFee > MAX_COMPOUND_FEE) revert Distributor__CompoundFeeExceedsMaximum();
+        compoundFee = _compoundFee;
+        emit CompoundFeeUpdated(_compoundFee);
     }
 
     /**
@@ -240,19 +271,54 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     }
 
     /**
+     * @notice Allow or disallow third-party compounding
+     * @param _allowed Whether to allow third parties to compound rewards for the user
+     * @dev Publicly callable by anyone for their own account
+     */
+    function setAllowThirdPartyCompound(bool _allowed) external {
+        allowThirdPartyCompound[msg.sender] = _allowed;
+        emit ThirdPartyCompoundAllowed(msg.sender, _allowed);
+    }
+
+    /**
      * @notice Compounds a specific reward token by claiming and re-depositing it.
-     * @dev Claims rewards to the Teller contract for automatic re-deposit.
+     * @dev Can be called by the user themselves (no fee) or by third parties (with fee if enabled).
      * @dev Only works with tokens that can be deposited into the vault (typically the base asset).
      * @param _account The account to compound rewards for
      * @param _rewardToken The reward token to compound
      */
     function compoundReward(address _account, address _rewardToken) external updateReward(_account) {
+        // Check authorization: user can compound for themselves, or third party if allowed
+        if (msg.sender != _account) {
+            if (!allowThirdPartyCompound[_account]) {
+                revert Distributor__ThirdPartyCompoundNotAllowed();
+            }
+        }
+
         uint256 rewardAmount = rewards[_account][_rewardToken];
         if (rewardAmount > 0) {
             rewards[_account][_rewardToken] = 0;
-            ERC20(_rewardToken).safeApprove(address(vault), rewardAmount);
-            uint256 shares = teller.deposit(rewardAmount, 0, _account);
-            emit CompoundReward(_account, _rewardToken, rewardAmount, shares);
+
+            uint256 fee = 0;
+            uint256 amountToCompound = rewardAmount;
+
+            // Charge fee if third party is calling and fee is set
+            if (msg.sender != _account && compoundFee > 0) {
+                fee = (rewardAmount * compoundFee) / 1e4;
+                amountToCompound = rewardAmount - fee;
+
+                // Transfer fee to caller
+                if (fee > 0) {
+                    ERC20(_rewardToken).safeTransfer(msg.sender, fee);
+                }
+            }
+
+            // Compound remaining amount
+            if (amountToCompound > 0) {
+                ERC20(_rewardToken).safeApprove(address(vault), amountToCompound);
+                uint256 shares = teller.deposit(amountToCompound, 0, _account);
+                emit CompoundReward(_account, _rewardToken, amountToCompound, shares, fee);
+            }
         }
     }
 
