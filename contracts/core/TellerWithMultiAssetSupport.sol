@@ -103,8 +103,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
         uint256 depositAmount,
         uint256 shareAmount,
         uint256 depositTimestamp,
-        uint256 shareLockPeriodAtTimeOfDeposit,
-        address indexed referralAddress
+        uint256 shareLockPeriodAtTimeOfDeposit
     );
     event BulkDeposit(address indexed asset, uint256 depositAmount);
     event BulkWithdraw(address indexed asset, uint256 shareAmount);
@@ -119,6 +118,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
     event AllowPermissionedOperator(address indexed operator);
     event DenyPermissionedOperator(address indexed operator);
     event DepositCapSet(uint112 cap);
+    event CompoundReward(address indexed account, uint256 amount, uint256 shares);
 
     //============================== IMMUTABLES ===============================
 
@@ -413,30 +413,12 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
     function deposit(
         uint256 depositAmount,
         uint256 minimumMint,
-        address referralAddress
+        address to
     ) external virtual requiresAuth nonReentrant returns (uint256 shares) {
+        if (to == address(0)) to = msg.sender;
         _beforeDeposit();
-        shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, msg.sender);
-        _afterPublicDeposit(msg.sender, depositAmount, shares, tellerState.shareLockPeriod, referralAddress);
-    }
-
-    /**
-     * @notice Allows users to deposit into BoringVault using permit.
-     * @dev Publicly callable.
-     */
-    function depositWithPermit(
-        uint256 depositAmount,
-        uint256 minimumMint,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s,
-        address referralAddress
-    ) external virtual requiresAuth nonReentrant returns (uint256 shares) {
-        _beforeDeposit();
-        _handlePermit(depositAmount, deadline, v, r, s);
-        shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, msg.sender);
-        _afterPublicDeposit(msg.sender, depositAmount, shares, tellerState.shareLockPeriod, referralAddress);
+        shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, to);
+        _afterPublicDeposit(to, depositAmount, shares, tellerState.shareLockPeriod);
     }
 
     /**
@@ -539,8 +521,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
         address user,
         uint256 depositAmount,
         uint256 shares,
-        uint256 currentShareLockPeriod,
-        address referralAddress
+        uint256 currentShareLockPeriod
     ) internal {
         // Only set share unlock time if share lock period is greater than 0.
         if (currentShareLockPeriod > 0) {
@@ -552,8 +533,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
             depositAmount,
             shares,
             block.timestamp,
-            currentShareLockPeriod,
-            referralAddress
+            currentShareLockPeriod
         );
     }
 

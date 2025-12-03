@@ -58,10 +58,11 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     // ========================================= EVENTS =========================================
 
     event RewardAdded(uint256 reward);
-    event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward);
+    event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward, address to);
     event RewardsDurationUpdated(address token, uint256 newDuration);
     event Recovered(address token, uint256 amount);
     event PausedUpdated(bool isPaused);
+    event CompoundReward(address indexed account, address indexed rewardToken, uint256 rewardAmount, uint256 shares);
 
     // ========================================= ERRORS =========================================
 
@@ -203,20 +204,55 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     }
 
     // ========================================= USER FUNCTIONS =========================================
-    /**
-     * @notice Claim accumulated rewards for specific tokens
-     * @dev No staking required - rewards are based on vault share balance
-     */
-    function claimRewards(address[] memory _rewardTokens) public nonReentrant updateReward(msg.sender) {
-        for (uint256 i = 0; i < _rewardTokens.length; i++) {
-            address rwToken = _rewardTokens[i];
-            uint256 reward = rewards[msg.sender][rwToken];
 
-            if (reward > 0) {
-                rewards[msg.sender][rwToken] = 0;
-                ERC20(rwToken).safeTransfer(msg.sender, reward);
-                emit RewardPaid(msg.sender, rwToken, reward);
-            }
+    /**
+     * @notice Claim accumulated rewards for a single token
+     * @dev No staking required - rewards are based on vault share balance
+     * @param _account The account to claim rewards for
+     * @param _rewardToken The reward token address to claim
+     * @param _to The address to send claimed rewards to
+     * @return rewardAmount The amount of reward token claimed
+     */
+    function claimReward(
+        address _account,
+        address _rewardToken,
+        address _to
+    ) public updateReward(_account) returns (uint256 rewardAmount) {
+        rewardAmount = rewards[_account][_rewardToken];
+        if (rewardAmount > 0) {
+            rewards[_account][_rewardToken] = 0;
+            ERC20(_rewardToken).safeTransfer(_to, rewardAmount);
+            emit RewardPaid(_account, _rewardToken, rewardAmount, _to);
+        }
+    }
+
+    /**
+     * @notice Claim accumulated rewards for multiple tokens
+     * @dev No staking required - rewards are based on vault share balance
+     * @param _rewardTokens Array of reward token addresses to claim
+     * @return rewardsOut Array of amounts claimed for each reward token
+     */
+    function claimRewards(address[] memory _rewardTokens) public returns (uint256[] memory rewardsOut) {
+        rewardsOut = new uint256[](_rewardTokens.length);
+        for (uint256 i = 0; i < _rewardTokens.length; i++) {
+            rewardsOut[i] = claimReward(msg.sender, _rewardTokens[i], msg.sender);
+        }
+    }
+
+    /**
+     * @notice Compounds a specific reward token by claiming and re-depositing it.
+     * @dev Claims rewards to the Teller contract for automatic re-deposit.
+     * @dev Only works with tokens that can be deposited into the vault (typically the base asset).
+     * @param _account The account to compound rewards for
+     * @param _rewardToken The reward token to compound
+     */
+    function compoundReward(address _account, address _rewardToken) external updateReward(_account) {
+        uint256 rewardAmount = rewards[_account][_rewardToken];
+        if (rewardAmount > 0) {
+            rewards[_account][_rewardToken] = 0;
+            ERC20(_rewardToken).safeApprove(address(vault), rewardAmount);
+            uint256 shares = teller.deposit(rewardAmount, 0, _account);
+            emit CompoundReward(_account, _rewardToken, rewardAmount, shares);
         }
     }
 

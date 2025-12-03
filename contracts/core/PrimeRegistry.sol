@@ -138,7 +138,6 @@ contract PrimeRegistry is PrimeAuth {
         rolesAuthority.setPublicCapability(address(teller), teller.deposit.selector, true);
 
         // Set role capabilities for Teller functions
-        rolesAuthority.setRoleCapability(MINTER_ROLE, address(teller), teller.depositWithPermit.selector, true);
         rolesAuthority.setRoleCapability(BURNER_ROLE, address(teller), teller.withdraw.selector, true);
         rolesAuthority.setRoleCapability(BURNER_ROLE, address(teller), teller.bulkWithdraw.selector, true);
 

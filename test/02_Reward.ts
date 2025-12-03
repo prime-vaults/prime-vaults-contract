@@ -284,5 +284,26 @@ void describe("02_Reward", function () {
       const dailyReward = ONE_TOKEN; // 1 token per day
       assertApproxEqual(totalEarned, dailyReward, "Total earned should equal daily reward (1 token)");
     });
+
+    void it("Step 9: Alice compounds rewards (auto-reinvest)", async function () {
+      const { mockERC20, distributor, vault, alice } = context;
+
+      const sharesBefore = await vault.read.balanceOf([alice.account.address]);
+      const earnedBefore = await distributor.read.earned([alice.account.address, mockERC20.address]);
+
+      // Compound rewards - should claim and re-deposit into vault
+      await distributor.write.compoundReward([alice.account.address, mockERC20.address]);
+
+      const sharesAfter = await vault.read.balanceOf([alice.account.address]);
+      const earnedAfter = await distributor.read.earned([alice.account.address, mockERC20.address]);
+
+      // Alice should receive additional shares from compounding
+      const sharesGained = sharesAfter - sharesBefore;
+      assert.ok(sharesGained > 0n, "Alice should receive shares from compounding");
+      assertApproxEqual(sharesGained, earnedBefore, "Shares gained should equal earned rewards (0.5 tokens)");
+
+      // Earned should be reset to 0
+      assert.equal(earnedAfter, 0n, "Alice earned should be 0 after compounding");
+    });
   });
 });
