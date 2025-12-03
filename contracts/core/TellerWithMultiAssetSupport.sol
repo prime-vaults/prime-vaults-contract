@@ -445,6 +445,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
         uint256 minimumAssets,
         address to
     ) external virtual requiresAuth nonReentrant returns (uint256 assetsOut) {
+        _getAccountant().updateExchangeRate();
         assetsOut = _withdraw(shareAmount, minimumAssets, to);
         emit BulkWithdraw(address(asset), shareAmount);
     }
@@ -458,6 +459,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
         uint256 minimumAssets,
         address to
     ) external virtual requiresAuth nonReentrant returns (uint256 assetsOut) {
+        _getAccountant().updateExchangeRate();
         assetsOut = _withdraw(shareAmount, minimumAssets, to);
         emit Withdraw(address(asset), shareAmount);
     }
@@ -473,6 +475,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
         address from,
         address to
     ) internal virtual returns (uint256 shares) {
+        _getAccountant().updateExchangeRate();
         _handleDenyList(from, to, msg.sender);
         TellerState storage state = tellerState;
         if (depositAmount == 0) revert TellerWithMultiAssetSupport__ZeroAssets();
@@ -504,6 +507,13 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
         if (assetsOut < minimumAssets) revert TellerWithMultiAssetSupport__MinimumAssetsNotMet();
         _beforeWithdraw(assetsOut);
         vault.exit(to, assetsOut, msg.sender, shareAmount);
+    }
+
+    /**
+     * @notice Helper function to cast from base accountant type to yield streaming accountant
+     */
+    function _getAccountant() internal view returns (AccountantWithRateProviders) {
+        return AccountantWithRateProviders(address(accountant));
     }
 
     /**

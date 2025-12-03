@@ -6,7 +6,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
  */
 const DistributorModule = buildModule("DistributorModule", (m) => {
   const primeRBAC = m.contractAt("PrimeRBAC", m.getParameter("PrimeRBAC"));
-  const teller = m.contractAt("TellerWithYieldStreaming", m.getParameter("TellerAddress"));
+  const teller = m.contractAt("TellerWithBuffer", m.getParameter("TellerAddress"));
 
   const distributor = m.contract("Distributor", [primeRBAC, teller]);
 

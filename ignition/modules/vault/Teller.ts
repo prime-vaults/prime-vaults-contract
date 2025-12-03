@@ -2,7 +2,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 /**
  * Teller Module
- * Deploys TellerWithYieldStreaming for user deposits and withdrawals
+ * Deploys TellerWithBuffer for user deposits and withdrawals
  */
 export default buildModule("TellerModule", (m) => {
   const primeRegistry = m.contractAt("PrimeRegistry", m.getParameter("PrimeRegistryAddress"));
@@ -11,7 +11,7 @@ export default buildModule("TellerModule", (m) => {
   const accountant = m.contractAt("AccountantWithRateProviders", m.getParameter("AccountantAddress"));
 
   // Deploy Teller
-  const teller = m.contract("TellerWithYieldStreaming", [primeRBAC, vault, accountant], {
+  const teller = m.contract("TellerWithBuffer", [primeRBAC, vault, accountant], {
     after: [accountant],
   });
   m.call(primeRegistry, "registerTeller", [teller], { id: "registerTeller" });

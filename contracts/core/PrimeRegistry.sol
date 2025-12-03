@@ -6,7 +6,7 @@ import {RolesAuthority} from "solmate/src/auth/authorities/RolesAuthority.sol";
 import {Authority} from "solmate/src/auth/Auth.sol";
 import {BoringVault} from "./BoringVault.sol";
 import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
-import {TellerWithYieldStreaming} from "./TellerWithYieldStreaming.sol";
+import {TellerWithBuffer} from "./TellerWithBuffer.sol";
 import {ManagerWithMerkleVerification} from "./ManagerWithMerkleVerification.sol";
 import {DelayedWithdraw} from "./DelayedWithdraw.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
@@ -122,9 +122,9 @@ contract PrimeRegistry is PrimeAuth {
 
     /**
      * @notice Register and setup permissions for a teller
-     * @param teller The TellerWithYieldStreaming to register
+     * @param teller The TellerWithBuffer to register
      */
-    function registerTeller(TellerWithYieldStreaming teller) public onlyProtocolAdmin {
+    function registerTeller(TellerWithBuffer teller) public onlyProtocolAdmin {
         Authority authority = teller.authority();
         RolesAuthority rolesAuthority = RolesAuthority(address(authority));
 

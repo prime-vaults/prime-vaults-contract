@@ -2,11 +2,11 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 /**
  * Teller Module
- * Deploys TellerWithYieldStreaming for user deposits and withdrawals
+ * Deploys TellerWithBuffer for user deposits and withdrawals
  */
 export default buildModule("TellerHelper", (m) => {
   const vault = m.contractAt("BoringVault", m.getParameter("BoringVaultAddress"));
-  const teller = m.contractAt("TellerWithYieldStreaming", m.getParameter("TellerAddress"));
+  const teller = m.contractAt("TellerWithBuffer", m.getParameter("TellerAddress"));
 
   // Deploy PrimeBufferHelper
   const primeBufferHelper = m.contract("PrimeBufferHelper", [m.getParameter("PrimeStrategistAddress"), vault], {
