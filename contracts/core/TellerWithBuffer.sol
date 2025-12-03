@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {TellerWithMultiAssetSupport, ERC20} from "./TellerWithMultiAssetSupport.sol";
+import {Teller, ERC20} from "./Teller.sol";
 import {IBufferHelper} from "../interfaces/IBufferHelper.sol";
 
 /**
@@ -11,7 +11,7 @@ import {IBufferHelper} from "../interfaces/IBufferHelper.sol";
  * @dev Extends TellerWithMultiAssetSupport to add automatic yield and withdrawal buffer capabilities.
  * The buffer helpers can trigger additional vault management calls during these operations.
  */
-contract TellerWithBuffer is TellerWithMultiAssetSupport {
+contract TellerWithBuffer is Teller {
     //============================== STRUCTS ===============================
     struct BufferHelpers {
         IBufferHelper depositBufferHelper;
@@ -38,11 +38,7 @@ contract TellerWithBuffer is TellerWithMultiAssetSupport {
      * @param _vault The vault contract address this teller will interact with
      * @param _accountant The accountant contract address associated with the vault
      */
-    constructor(
-        address _primeRBAC,
-        address _vault,
-        address _accountant
-    ) TellerWithMultiAssetSupport(_primeRBAC, _vault, _accountant) {}
+    constructor(address _primeRBAC, address _vault, address _accountant) Teller(_primeRBAC, _vault, _accountant) {}
 
     /**
      * @notice Executes buffer management after a deposit operation

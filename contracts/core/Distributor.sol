@@ -8,7 +8,7 @@ import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
 import {BoringVault} from "./BoringVault.sol";
-import {TellerWithMultiAssetSupport} from "./TellerWithMultiAssetSupport.sol";
+import {Teller} from "./Teller.sol";
 
 /**
  * @title Distributor
@@ -38,7 +38,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     /// @notice The vault contract (reads balances directly)
     ERC20 public immutable vault;
 
-    TellerWithMultiAssetSupport public immutable teller;
+    Teller public immutable teller;
 
     /// @notice Mapping from reward token address to its reward data
     mapping(address => RewardData) public rewardData;
@@ -102,8 +102,8 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     constructor(
         address _primeRBAC,
         address _teller
-    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(TellerWithMultiAssetSupport(_teller).vault())).authority())) {
-        teller = TellerWithMultiAssetSupport(_teller);
+    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(Teller(_teller).vault())).authority())) {
+        teller = Teller(_teller);
         vault = ERC20(teller.vault());
     }
 

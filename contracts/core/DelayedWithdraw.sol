@@ -5,7 +5,7 @@ import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {WETH} from "solmate/src/tokens/WETH.sol";
 import {BoringVault} from "./BoringVault.sol";
 import {AccountantProviders} from "./AccountantProviders.sol";
-import {TellerWithMultiAssetSupport} from "./TellerWithMultiAssetSupport.sol";
+import {Teller} from "./Teller.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 
@@ -135,7 +135,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     /**
      * @notice The teller contract that users are depositing to.
      */
-    TellerWithMultiAssetSupport internal immutable teller;
+    Teller internal immutable teller;
 
     /**
      * @notice The BoringVault contract that users are withdrawing from.
@@ -160,7 +160,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         address _payoutAddress
     ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
         accountant = AccountantProviders(_accountant);
-        teller = TellerWithMultiAssetSupport(_teller);
+        teller = Teller(_teller);
         boringVault = BoringVault(payable(_vault));
         asset = ERC20(address(boringVault.asset()));
         ONE_SHARE = 10 ** boringVault.decimals();

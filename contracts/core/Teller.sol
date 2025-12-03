@@ -13,7 +13,7 @@ import {Distributor} from "./Distributor.sol";
 
 import "../auth/PrimeAuth.sol";
 
-contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable {
+contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
@@ -77,19 +77,19 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
 
     //============================== ERRORS ===============================
 
-    error TellerWithMultiAssetSupport__ShareLockPeriodTooLong();
-    error TellerWithMultiAssetSupport__SharesAreLocked();
-    error TellerWithMultiAssetSupport__ZeroAssets();
-    error TellerWithMultiAssetSupport__MinimumMintNotMet();
-    error TellerWithMultiAssetSupport__MinimumAssetsNotMet();
-    error TellerWithMultiAssetSupport__PermitFailedAndAllowanceTooLow();
-    error TellerWithMultiAssetSupport__ZeroShares();
-    error TellerWithMultiAssetSupport__DualDeposit();
-    error TellerWithMultiAssetSupport__Paused();
-    error TellerWithMultiAssetSupport__TransferDenied(address from, address to, address operator);
-    error TellerWithMultiAssetSupport__DepositExceedsCap(uint256 attemptedDeposit, uint256 depositCap);
-    error TellerWithMultiAssetSupport__DepositsNotAllowed();
-    error TellerWithMultiAssetSupport__WithdrawsNotAllowed();
+    error Teller__ShareLockPeriodTooLong();
+    error Teller__SharesAreLocked();
+    error Teller__ZeroAssets();
+    error Teller__MinimumMintNotMet();
+    error Teller__MinimumAssetsNotMet();
+    error Teller__PermitFailedAndAllowanceTooLow();
+    error Teller__ZeroShares();
+    error Teller__DualDeposit();
+    error Teller__Paused();
+    error Teller__TransferDenied(address from, address to, address operator);
+    error Teller__DepositExceedsCap(uint256 attemptedDeposit, uint256 depositCap);
+    error Teller__DepositsNotAllowed();
+    error Teller__WithdrawsNotAllowed();
 
     //============================== EVENTS ===============================
 
@@ -213,7 +213,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
      * @dev Callable by OWNER_ROLE.
      */
     function setShareLockPeriod(uint64 _shareLockPeriod) external requiresAuth {
-        if (_shareLockPeriod > MAX_SHARE_LOCK_PERIOD) revert TellerWithMultiAssetSupport__ShareLockPeriodTooLong();
+        if (_shareLockPeriod > MAX_SHARE_LOCK_PERIOD) revert Teller__ShareLockPeriodTooLong();
         tellerState.shareLockPeriod = _shareLockPeriod;
     }
 
@@ -358,11 +358,11 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
         if (from != address(0)) {
             // Check if from is denied
             if (beforeTransferData[from].denyFrom) {
-                revert TellerWithMultiAssetSupport__TransferDenied(from, to, operator);
+                revert Teller__TransferDenied(from, to, operator);
             }
             // Check if shares are locked
             if (beforeTransferData[from].shareUnlockTime > block.timestamp) {
-                revert TellerWithMultiAssetSupport__SharesAreLocked();
+                revert Teller__SharesAreLocked();
             }
         }
 
@@ -370,19 +370,19 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
         if (to != address(0)) {
             // Check if to is denied
             if (beforeTransferData[to].denyTo) {
-                revert TellerWithMultiAssetSupport__TransferDenied(from, to, operator);
+                revert Teller__TransferDenied(from, to, operator);
             }
         }
 
         // Always check operator (unless it's address(0))
         if (operator != address(0) && beforeTransferData[operator].denyOperator) {
-            revert TellerWithMultiAssetSupport__TransferDenied(from, to, operator);
+            revert Teller__TransferDenied(from, to, operator);
         }
 
         // Check permissioned transfers (only for transfers, not mint/burn)
         if (from != address(0) && to != address(0)) {
             if (tellerState.permissionedTransfers && !beforeTransferData[operator].permissionedOperator) {
-                revert TellerWithMultiAssetSupport__TransferDenied(from, to, operator);
+                revert Teller__TransferDenied(from, to, operator);
             }
         }
     }
@@ -400,7 +400,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
             beforeTransferData[to].denyTo ||
             beforeTransferData[operator].denyOperator
         ) {
-            revert TellerWithMultiAssetSupport__TransferDenied(from, to, operator);
+            revert Teller__TransferDenied(from, to, operator);
         }
     }
 
@@ -478,13 +478,13 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
         _getAccountant().updateExchangeRate();
         _handleDenyList(from, to, msg.sender);
         TellerState storage state = tellerState;
-        if (depositAmount == 0) revert TellerWithMultiAssetSupport__ZeroAssets();
+        if (depositAmount == 0) revert Teller__ZeroAssets();
         shares = depositAmount.mulDivDown(ONE_SHARE, accountant.getRate());
-        if (shares < minimumMint) revert TellerWithMultiAssetSupport__MinimumMintNotMet();
+        if (shares < minimumMint) revert Teller__MinimumMintNotMet();
         if (state.depositCap != type(uint112).max) {
             uint256 totalSharesAfterDeposit = shares + vault.totalSupply();
             if (totalSharesAfterDeposit > state.depositCap)
-                revert TellerWithMultiAssetSupport__DepositExceedsCap(totalSharesAfterDeposit, state.depositCap);
+                revert Teller__DepositExceedsCap(totalSharesAfterDeposit, state.depositCap);
         }
         vault.enter(from, depositAmount, to, shares);
         _afterDeposit(depositAmount);
@@ -499,12 +499,12 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
         address to
     ) internal virtual returns (uint256 assetsOut) {
         TellerState storage state = tellerState;
-        if (state.isPaused) revert TellerWithMultiAssetSupport__Paused();
-        if (!state.allowWithdraws) revert TellerWithMultiAssetSupport__WithdrawsNotAllowed();
+        if (state.isPaused) revert Teller__Paused();
+        if (!state.allowWithdraws) revert Teller__WithdrawsNotAllowed();
 
-        if (shareAmount == 0) revert TellerWithMultiAssetSupport__ZeroShares();
+        if (shareAmount == 0) revert Teller__ZeroShares();
         assetsOut = shareAmount.mulDivDown(accountant.getRate(), ONE_SHARE);
-        if (assetsOut < minimumAssets) revert TellerWithMultiAssetSupport__MinimumAssetsNotMet();
+        if (assetsOut < minimumAssets) revert Teller__MinimumAssetsNotMet();
         _beforeWithdraw(assetsOut);
         vault.exit(to, assetsOut, msg.sender, shareAmount);
     }
@@ -521,8 +521,8 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
      */
     function _beforeDeposit() internal view {
         TellerState storage state = tellerState;
-        if (state.isPaused) revert TellerWithMultiAssetSupport__Paused();
-        if (!state.allowDeposits) revert TellerWithMultiAssetSupport__DepositsNotAllowed();
+        if (state.isPaused) revert Teller__Paused();
+        if (!state.allowDeposits) revert Teller__DepositsNotAllowed();
     }
 
     /**
@@ -554,7 +554,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
     function _handlePermit(uint256 depositAmount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) internal {
         try asset.permit(msg.sender, address(vault), depositAmount, deadline, v, r, s) {} catch {
             if (asset.allowance(msg.sender, address(vault)) < depositAmount) {
-                revert TellerWithMultiAssetSupport__PermitFailedAndAllowanceTooLow();
+                revert Teller__PermitFailedAndAllowanceTooLow();
             }
         }
     }
