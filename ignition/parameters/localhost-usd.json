@@ -20,7 +20,7 @@
     "symbol": "pUSD"
   },
   "AccountantModule": {
-    "platformFee": 150
+    "platformFee": 0
   },
   "WithdrawerModule": {
     "withdrawDelayInSeconds": 259200,

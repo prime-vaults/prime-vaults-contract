@@ -87,7 +87,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
     error TellerWithMultiAssetSupport__DualDeposit();
     error TellerWithMultiAssetSupport__Paused();
     error TellerWithMultiAssetSupport__TransferDenied(address from, address to, address operator);
-    error TellerWithMultiAssetSupport__DepositExceedsCap();
+    error TellerWithMultiAssetSupport__DepositExceedsCap(uint256 attemptedDeposit, uint256 depositCap);
     error TellerWithMultiAssetSupport__DepositsNotAllowed();
     error TellerWithMultiAssetSupport__WithdrawsNotAllowed();
 
@@ -479,8 +479,9 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
         shares = depositAmount.mulDivDown(ONE_SHARE, accountant.getRate());
         if (shares < minimumMint) revert TellerWithMultiAssetSupport__MinimumMintNotMet();
         if (state.depositCap != type(uint112).max) {
-            if (shares + vault.totalSupply() > state.depositCap)
-                revert TellerWithMultiAssetSupport__DepositExceedsCap();
+            uint256 totalSharesAfterDeposit = shares + vault.totalSupply();
+            if (totalSharesAfterDeposit > state.depositCap)
+                revert TellerWithMultiAssetSupport__DepositExceedsCap(totalSharesAfterDeposit, state.depositCap);
         }
         vault.enter(from, depositAmount, to, shares);
         _afterDeposit(depositAmount);

@@ -8,14 +8,17 @@ import { DEPOSIT_AMOUNT, depositTokens, initializeTest } from "./utils.js";
 void describe("04_ClaimFees", function () {
   /**
    * Scenario: Manager claims protocol fees via Merkle verification.
-   * Note: With AccountantWithRateProviders, fees must be manually set via exchange rate updates.
-   * This test is simplified compared to the yield streaming version.
+   * Platform fee is set to 10% annually.
    */
   void describe("Manager Claims Fees via Merkle", function () {
     let context: Awaited<ReturnType<typeof initializeTest>>;
 
     before(async function () {
       context = await initializeTest();
+
+      // Set platform fee to 10% (1000 bps)
+      const { accountant, deployer } = context;
+      await accountant.write.updatePlatformFee([1000], { account: deployer.account });
     });
 
     void it("Step 1: Alice deposits 100 tokens", async function () {
@@ -86,13 +89,11 @@ void describe("04_ClaimFees", function () {
       assert.ok(feesOwedBefore > 0n, "Should have accumulated platform fees");
 
       // Calculate expected platform fee:
-      // platformFee = 150 bps = 1.5% annual
+      // platformFee = 1000 bps = 10% annual
       // time passed = 1 day
       // assets = 100 tokens
-      // expectedFee = 100 * 0.015 * (1/365) ≈ 0.00410958...
-      const expectedFeeApprox = (DEPOSIT_AMOUNT * 150n * 86400n) / (10000n * 365n * 86400n);
-      console.log(`Fees owed before claim: ${feesOwedBefore}`);
-      console.log(`Expected fee (approx): ${expectedFeeApprox}`);
+      // expectedFee = 100 * 0.10 * (1/365) ≈ 0.0274...
+      const expectedFeeApprox = (DEPOSIT_AMOUNT * 1000n * 86400n) / (10000n * 365n * 86400n);
 
       // Get payout address balance before
       const payoutAddress = accountantStateBefore.payoutAddress;
