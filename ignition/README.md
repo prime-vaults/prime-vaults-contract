@@ -17,12 +17,12 @@ This directory contains Hardhat Ignition modules for deploying the Prime Vaults 
    - Dependencies: PrimeRegistry
 
 3. **Accountant.ts**
-   - Deploys: `AccountantWithYieldStreaming`
+   - Deploys: `AccountantProviders`
    - Purpose: Exchange rate and fee management
    - Dependencies: Vault
 
 4. **Teller.ts**
-   - Deploys: `TellerWithYieldStreaming`
+   - Deploys: `TellerWithBuffer`
    - Purpose: User deposits and withdrawals
    - Dependencies: Accountant
 

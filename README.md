@@ -100,18 +100,18 @@ _The foundation of the vault system_
 
 ---
 
-### 2. **TellerWithMultiAssetSupport**
+### 2. **Teller**
 
 _User-facing deposit/withdrawal interface_
 
 - **Purpose**: Facilitates user interactions with the vault
 - **Size**: ~18 KB
 - **Key Features**:
-  - Single asset support (despite the name - legacy from multi-asset refactor)
+  - Single asset support
   - Share lock periods to prevent flashloan attacks
   - Deposit caps for risk management
-  - Native ETH wrapping support
   - Permit-based deposits (gasless approvals)
+  - Deny lists and permissioned transfers for compliance
 
 **State Management**:
 
@@ -161,20 +161,7 @@ struct BufferHelpers {
 
 ---
 
-### 4. **TellerWithYieldStreaming**
-
-_Optimized for yield distribution vaults_
-
-- **Purpose**: Updates exchange rates before every deposit/withdrawal
-- **Size**: ~21 KB
-- **Key Behavior**:
-  - Calls `accountant.updateExchangeRate()` before user actions
-  - Ensures users get latest yield-adjusted share prices
-  - Triggers before transfer hooks for compliance
-
----
-
-### 5. **AccountantWithRateProviders**
+### 4. **AccountantProviders**
 
 _Exchange rate and fee management_
 
@@ -182,10 +169,10 @@ _Exchange rate and fee management_
 - **Size**: ~12 KB
 - **Core Responsibilities**:
   - Maintains exchange rate (vault shares → underlying assets)
-  - Rate limiting: Minimum delay between updates
-  - Bound limiting: Max deviation per update
-  - Pauses vault if anomalies detected
-  - Calculates platform fees and performance fees
+  - Calculates platform fees based on time and assets
+  - Manages fee accrual and distribution
+  - Pauses vault if needed
+  - Updates exchange rate to reflect fees owed
 
 **State Structure**:
 
@@ -424,21 +411,20 @@ function setup(
 
 ### Permission Matrix
 
-| Function                  | Role Required             | Contract                     |
-| ------------------------- | ------------------------- | ---------------------------- |
-| `deposit()`               | PUBLIC                    | TellerWithYieldStreaming     |
-| `depositWithPermit()`     | PUBLIC                    | TellerWithYieldStreaming     |
-| `withdraw()`              | PUBLIC                    | TellerWithYieldStreaming     |
-| `bulkDeposit()`           | SOLVER_ROLE               | TellerWithMultiAssetSupport  |
-| `bulkWithdraw()`          | SOLVER_ROLE               | TellerWithMultiAssetSupport  |
-| `enter()`                 | MINTER_ROLE               | BoringVault                  |
-| `exit()`                  | BURNER_ROLE               | BoringVault                  |
-| `manage()`                | MANAGER_ROLE              | BoringVault                  |
-| `updateExchangeRate()`    | UPDATE_EXCHANGE_RATE_ROLE | AccountantWithRateProviders  |
-| `vestYield()`             | STRATEGIST_ROLE           | AccountantWithYieldStreaming |
-| `claimFees()`             | BORING_VAULT_ROLE         | AccountantWithRateProviders  |
-| `pause()`                 | ADMIN_ROLE                | Teller/Accountant            |
-| `setBeforeTransferHook()` | OWNER                     | BoringVault                  |
+| Function                  | Role Required             | Contract            |
+| ------------------------- | ------------------------- | ------------------- |
+| `deposit()`               | PUBLIC                    | Teller              |
+| `depositWithPermit()`     | PUBLIC                    | Teller              |
+| `withdraw()`              | PUBLIC                    | Teller              |
+| `bulkDeposit()`           | SOLVER_ROLE               | Teller              |
+| `bulkWithdraw()`          | SOLVER_ROLE               | Teller              |
+| `enter()`                 | MINTER_ROLE               | BoringVault         |
+| `exit()`                  | BURNER_ROLE               | BoringVault         |
+| `manage()`                | MANAGER_ROLE              | BoringVault         |
+| `updateExchangeRate()`    | UPDATE_EXCHANGE_RATE_ROLE | AccountantProviders |
+| `claimFees()`             | BORING_VAULT_ROLE         | AccountantProviders |
+| `pause()`                 | ADMIN_ROLE                | Teller/Accountant   |
+| `setBeforeTransferHook()` | OWNER                     | BoringVault         |
 
 ### Role Assignment
 
@@ -463,34 +449,37 @@ rolesAuthority.setUserRole(vault, BORING_VAULT_ROLE, true);
 contracts/
 ├── core/
 │   ├── BoringVault.sol                    # Minimal vault core (~16 KB)
-│   ├── TellerWithMultiAssetSupport.sol    # Base teller (~18 KB)
+│   ├── Teller.sol                         # Base teller (~18 KB)
 │   ├── TellerWithBuffer.sol               # Buffer integration (~20 KB)
-│   ├── TellerWithYieldStreaming.sol       # Yield-optimized teller (~21 KB)
-│   ├── AccountantWithRateProviders.sol    # Exchange rate manager (~12 KB)
-│   ├── AccountantWithYieldStreaming.sol   # Yield streaming (~18 KB)
+│   ├── AccountantProviders.sol            # Exchange rate manager (~12 KB)
 │   ├── DelayedWithdraw.sol                # Delayed withdrawal system
-│   └── PrimeVaultFactory.sol              # Setup helper (~6 KB)
+│   ├── Distributor.sol                    # Reward distribution
+│   └── PrimeRegistry.sol                  # Registry and RBAC setup
 │
 ├── auth/
-│   └── RolesAuthority.sol                 # RBAC wrapper (~6 KB)
+│   ├── PrimeAuth.sol                      # Base auth contract
+│   ├── PrimeRBAC.sol                      # RBAC implementation
+│   └── RolesAuthority.sol                 # Role authority (~6 KB)
 │
 ├── helper/
 │   ├── MockERC20.sol                      # Testing token
-│   └── PrimeStrategyV1BufferHelper.sol    # Example buffer helper (~5 KB)
+│   └── PrimeBufferHelper.sol              # Buffer helper (~5 KB)
 │
 └── interfaces/
     ├── IBufferHelper.sol                  # Buffer helper interface
     ├── IBaseVault.sol                     # Vault interface
     ├── IRateProvider.sol                  # Rate provider interface
     └── hooks/
-        └── BeforeTransferHook.sol         # Transfer hook interface
+        └── IBeforeUpdateHook.sol          # Transfer hook interface
 
 ignition/modules/                          # Hardhat Ignition deployment
-├── Vault.ts                               # Deploy BoringVault
-├── Accountant.ts                          # Deploy AccountantWithYieldStreaming
-├── Teller.ts                              # Deploy TellerWithYieldStreaming
-├── RolesAuthority.ts                      # Deploy RolesAuthority
-└── PrimeVaultFactory.ts                   # Deploy PrimeVaultFactory
+├── vault/
+│   ├── Vault.ts                           # Deploy BoringVault
+│   ├── Accountant.ts                      # Deploy AccountantProviders
+│   ├── Teller.ts                          # Deploy TellerWithBuffer
+│   └── TellerHelper.ts                    # Deploy PrimeBufferHelper
+├── PrimeRegistry.ts                       # Deploy PrimeRegistry
+└── Distributor.ts                         # Deploy Distributor
 
 test/
 └── Staking.ts                             # Integration tests
@@ -565,16 +554,16 @@ pnpm run deploy --network localhost -f 03 # Teller
 
 All contracts are under the 24 KB Ethereum contract size limit:
 
-| Contract                     | Size     | % of Limit |
-| ---------------------------- | -------- | ---------- |
-| TellerWithYieldStreaming     | 21.30 KB | 86.6%      |
-| TellerWithBuffer             | 20.54 KB | 83.5%      |
-| AccountantWithYieldStreaming | 18.39 KB | 74.7%      |
-| TellerWithMultiAssetSupport  | 18.32 KB | 74.4%      |
-| BoringVault                  | 15.99 KB | 65.0%      |
-| AccountantWithRateProviders  | 11.92 KB | 48.5%      |
-| RolesAuthority               | 5.73 KB  | 23.3%      |
-| PrimeVaultFactory            | 5.69 KB  | 23.1%      |
+| Contract            | Size     | % of Limit |
+| ------------------- | -------- | ---------- |
+| TellerWithBuffer    | 20.54 KB | 83.5%      |
+| Teller              | 18.32 KB | 74.4%      |
+| BoringVault         | 15.99 KB | 65.0%      |
+| AccountantProviders | 11.92 KB | 48.5%      |
+| Distributor         | ~10 KB   | ~40%       |
+| DelayedWithdraw     | ~8 KB    | ~33%       |
+| PrimeRegistry       | ~6 KB    | ~25%       |
+| RolesAuthority      | 5.73 KB  | 23.3%      |
 
 ---
 
@@ -584,11 +573,11 @@ All contracts are under the 24 KB Ethereum contract size limit:
 
 1. **Minimal Attack Surface**: Core vault contract is only ~100 lines
 2. **Role-Based Access**: Granular permissions prevent unauthorized actions
-3. **Rate Limiting**: Exchange rate updates are time-limited and bound-limited
-4. **Share Lock Periods**: Prevents flashloan attacks and MEV
-5. **TWAS Validation**: Yield vests must be reasonable relative to supply
-6. **Pausability**: Emergency pause functionality for Teller and Accountant
-7. **Reentrancy Protection**: All external calls use ReentrancyGuard
+3. **Share Lock Periods**: Prevents flashloan attacks and MEV
+4. **Pausability**: Emergency pause functionality for Teller and Accountant
+5. **Reentrancy Protection**: All external calls use ReentrancyGuard
+6. **Fee Management**: Platform fees tracked and claimed separately
+7. **Merkle Verification**: Manager actions verified through Merkle proofs
 8. **Transfer Hooks**: Custom transfer restrictions for compliance
 
 ### Architecture Benefits

@@ -10,9 +10,9 @@
 
 ## Architecture & Data Flow
 
-- **Deposit/Withdraw:** Users interact with Teller contracts (`TellerWithYieldStreaming`, etc.), which route funds to
-  vaults and manage yield accrual.
-- **Accountant:** Handles exchange rates, platform/performance fees, and yield streaming.
+- **Deposit/Withdraw:** Users interact with Teller contracts (`TellerWithBuffer`, `Teller`), which route funds to vaults
+  and manage yield accrual.
+- **Accountant:** Handles exchange rates, platform/performance fees (AccountantProviders).
 - **Manager:** Executes strategies, optionally with Merkle verification for secure permissioning.
 - **Registry:** Tracks all vault deployments and role-based access control (RBAC).
 - **DelayedWithdraw:** Implements time-locked withdrawals for added security.
