@@ -7,6 +7,8 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {MerkleProofLib} from "solmate/src/utils/MerkleProofLib.sol";
 import {BoringVault} from "./BoringVault.sol";
 import {IPausable} from "../interfaces/IPausable.sol";
+import {IManagerErrors} from "../interfaces/IManagerErrors.sol";
+import {IManagerEvents} from "../interfaces/IManagerEvents.sol";
 
 import "../auth/PrimeAuth.sol";
 
@@ -17,7 +19,7 @@ import "../auth/PrimeAuth.sol";
  * @dev Each strategist can have their own Merkle root defining allowed operations
  *      Merkle tree leaves are: keccak256(abi.encodePacked(decoderAndSanitizer, target, valueIsNonZero, selector, argumentAddresses...))
  */
-contract ManagerWithMerkleVerification is PrimeAuth, IPausable {
+contract ManagerWithMerkleVerification is PrimeAuth, IPausable, IManagerErrors, IManagerEvents {
     using FixedPointMathLib for uint256;
     using Address for address;
 
@@ -38,23 +40,6 @@ contract ManagerWithMerkleVerification is PrimeAuth, IPausable {
      * @notice Pauses manageVaultWithMerkleVerification calls
      */
     bool public isPaused;
-
-    // ========================================= EVENTS =========================================
-
-    event ManageRootUpdated(address indexed strategist, bytes32 oldRoot, bytes32 newRoot);
-    event BoringVaultManaged(uint256 callsMade);
-    event Paused();
-    event Unpaused();
-
-    // ========================================= ERRORS =========================================
-
-    error ManagerWithMerkleVerification__InvalidManageProofLength();
-    error ManagerWithMerkleVerification__InvalidTargetDataLength();
-    error ManagerWithMerkleVerification__InvalidValuesLength();
-    error ManagerWithMerkleVerification__InvalidDecodersAndSanitizersLength();
-    error ManagerWithMerkleVerification__FailedToVerifyManageProof(address target, bytes targetData, uint256 value);
-    error ManagerWithMerkleVerification__Paused();
-    error ManagerWithMerkleVerification__TotalSupplyMustRemainConstant();
 
     // ========================================= CONSTRUCTOR =========================================
 

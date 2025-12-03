@@ -11,10 +11,12 @@ import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {IPausable} from "../interfaces/IPausable.sol";
+import {IDelayedWithdrawErrors} from "../interfaces/IDelayedWithdrawErrors.sol";
+import {IDelayedWithdrawEvents} from "../interfaces/IDelayedWithdrawEvents.sol";
 
 import "../auth/PrimeAuth.sol";
 
-contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
+contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable, IDelayedWithdrawErrors, IDelayedWithdrawEvents {
     using SafeTransferLib for BoringVault;
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
@@ -90,40 +92,6 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
      * @notice The mapping of users to their withdrawal requests.
      */
     mapping(address => WithdrawRequest) public withdrawRequests;
-
-    //============================== ERRORS ===============================
-
-    error DelayedWithdraw__WithdrawFeeTooHigh();
-    error DelayedWithdraw__AlreadySetup();
-    error DelayedWithdraw__WithdrawsNotAllowed();
-    error DelayedWithdraw__WithdrawNotMatured();
-    error DelayedWithdraw__NoSharesToWithdraw();
-    error DelayedWithdraw__BadAddress();
-    error DelayedWithdraw__ThirdPartyCompletionNotAllowed();
-    error DelayedWithdraw__Paused();
-    error DelayedWithdraw__CallerNotBoringVault();
-    error DelayedWithdraw__CannotWithdrawBoringToken();
-    error DelayedWithdraw__ExpeditedWithdrawFeeTooHigh();
-    error DelayedWithdraw__ExpeditedWithdrawNotAvailable();
-    error DelayedWithdraw__WithdrawPending();
-    error DelayedWithdraw__NoWithdrawToAccelerate();
-
-    //============================== EVENTS ===============================
-
-    event WithdrawRequested(address indexed account, ERC20 indexed asset, uint96 shares, uint40 maturity);
-    event WithdrawCancelled(address indexed account, ERC20 indexed asset, uint96 shares);
-    event WithdrawCompleted(address indexed account, ERC20 indexed asset, uint256 shares, uint256 assets);
-    event FeeAddressSet(address newFeeAddress);
-    event SetupWithdrawalsInAsset(address indexed asset, uint64 withdrawDelay, uint16 withdrawFee);
-    event WithdrawDelayUpdated(address indexed asset, uint32 newWithdrawDelay);
-    event WithdrawFeeUpdated(address indexed asset, uint16 newWithdrawFee);
-    event WithdrawalsStopped(address indexed asset);
-    event ThirdPartyCompletionChanged(address indexed account, ERC20 indexed asset, bool allowed);
-    event Paused();
-    event Unpaused();
-    event PullFundsFromVaultUpdated(bool _pullFundsFromVault);
-    event ExpeditedWithdrawFeeUpdated(uint16 newFee);
-    event WithdrawAccelerated(address indexed account, ERC20 indexed asset, uint40 newMaturity, uint96 accelerationFee);
 
     //============================== IMMUTABLES ===============================
 

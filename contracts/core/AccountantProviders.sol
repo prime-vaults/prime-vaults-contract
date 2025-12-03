@@ -7,10 +7,12 @@ import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {BoringVault} from "./BoringVault.sol";
 import {IPausable} from "../interfaces/IPausable.sol";
+import {IAccountantErrors} from "../interfaces/IAccountantErrors.sol";
+import {IAccountantEvents} from "../interfaces/IAccountantEvents.sol";
 
 import {PrimeAuth} from "../auth/PrimeAuth.sol";
 
-contract AccountantProviders is PrimeAuth, IRateProvider, IPausable {
+contract AccountantProviders is PrimeAuth, IRateProvider, IPausable, IAccountantErrors, IAccountantEvents {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
@@ -41,22 +43,6 @@ contract AccountantProviders is PrimeAuth, IRateProvider, IPausable {
      * @notice Store the accountant state in 3 packed slots.
      */
     AccountantState public accountantState;
-
-    //============================== ERRORS ===============================
-
-    error AccountantProviders__PlatformFeeTooLarge();
-    error AccountantProviders__Paused();
-    error AccountantProviders__ZeroFeesOwed();
-    error AccountantProviders__OnlyCallableByBoringVault();
-
-    //============================== EVENTS ===============================
-
-    event Paused();
-    event Unpaused();
-    event PlatformFeeUpdated(uint16 oldFee, uint16 newFee);
-    event PayoutAddressUpdated(address oldPayout, address newPayout);
-    event ExchangeRateUpdated(uint96 oldRate, uint96 newRate, uint64 currentTime);
-    event FeesClaimed(address indexed feeAsset, uint256 amount);
 
     //============================== IMMUTABLES ===============================
 
