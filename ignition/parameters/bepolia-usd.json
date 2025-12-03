@@ -20,12 +20,7 @@
     "symbol": "pUSD"
   },
   "AccountantModule": {
-    "startingExchangeRate": "1000000000000000000",
-    "allowedExchangeRateChangeUpper": 10010,
-    "allowedExchangeRateChangeLower": 9990,
-    "minimumUpdateDelayInSeconds": 1,
-    "platformFee": 150,
-    "performanceFee": 0
+    "platformFee": 150
   },
   "WithdrawerModule": {
     "withdrawDelayInSeconds": 86400,
@@ -41,9 +36,7 @@
         "DecoderAndSanitizerAddress": "0x721449d2162a495f39C86b4F4193F137061366E9",
         "TargetAddress": "0x312203a9df1b39824a826e4ceb266541d6e0feaa",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0xF755EcE04C9cF16954E08a0CEF887b1CAC88E489"
-        ],
+        "AddressArguments": ["0xF755EcE04C9cF16954E08a0CEF887b1CAC88E489"],
         "PackedArgumentAddresses": "f755ece04c9cf16954e08a0cef887b1cac88e489",
         "LeafDigest": "0x5bbc4015251af4aee222d0ddb1aca42d5ffeeea090843793bc6cef393be95518"
       },
@@ -54,9 +47,7 @@
         "DecoderAndSanitizerAddress": "0x721449d2162a495f39C86b4F4193F137061366E9",
         "TargetAddress": "0x312203a9df1b39824a826e4ceb266541d6e0feaa",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x979B11c59040745FEdEB3C262BCbE490287bDE8D"
-        ],
+        "AddressArguments": ["0x979B11c59040745FEdEB3C262BCbE490287bDE8D"],
         "PackedArgumentAddresses": "979b11c59040745fedeb3c262bcbe490287bde8d",
         "LeafDigest": "0xe0b35e8fb7f5ecd1118d910dc686dcb1f1b7a2e125fd3e99f56fa875bbb8288c"
       },
@@ -67,9 +58,7 @@
         "DecoderAndSanitizerAddress": "0x721449d2162a495f39C86b4F4193F137061366E9",
         "TargetAddress": "0x979B11c59040745FEdEB3C262BCbE490287bDE8D",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x312203a9df1b39824a826e4ceb266541d6e0feaa"
-        ],
+        "AddressArguments": ["0x312203a9df1b39824a826e4ceb266541d6e0feaa"],
         "PackedArgumentAddresses": "312203a9df1b39824a826e4ceb266541d6e0feaa",
         "LeafDigest": "0xa1296b204260e40c6dec6b7e49191f6ca0f2820f5875c1a67a9d454cdfa130ad"
       },

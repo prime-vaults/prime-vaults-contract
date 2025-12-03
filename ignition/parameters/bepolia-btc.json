@@ -20,12 +20,7 @@
     "symbol": "pBTC"
   },
   "AccountantModule": {
-    "startingExchangeRate": "1000000000000000000",
-    "allowedExchangeRateChangeUpper": 10010,
-    "allowedExchangeRateChangeLower": 9990,
-    "minimumUpdateDelayInSeconds": 1,
-    "platformFee": 150,
-    "performanceFee": 0
+    "platformFee": 150
   },
   "WithdrawerModule": {
     "withdrawDelayInSeconds": 86400,
@@ -41,9 +36,7 @@
         "DecoderAndSanitizerAddress": "0xe249192EdAba21484C04416510212588574F194d",
         "TargetAddress": "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x8a24f9255d03D0A5c65BaF962B7D64407F9CAa0E"
-        ],
+        "AddressArguments": ["0x8a24f9255d03D0A5c65BaF962B7D64407F9CAa0E"],
         "PackedArgumentAddresses": "8a24f9255d03d0a5c65baf962b7d64407f9caa0e",
         "LeafDigest": "0x336868ba8b0c3dae4874be6282463a82a3584abdb9e6b3cfa973bfa18e239a5c"
       },
@@ -54,9 +47,7 @@
         "DecoderAndSanitizerAddress": "0xe249192EdAba21484C04416510212588574F194d",
         "TargetAddress": "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x979B11c59040745FEdEB3C262BCbE490287bDE8D"
-        ],
+        "AddressArguments": ["0x979B11c59040745FEdEB3C262BCbE490287bDE8D"],
         "PackedArgumentAddresses": "979b11c59040745fedeb3c262bcbe490287bde8d",
         "LeafDigest": "0xcef060461db9eda7076de3dc5d12b210fc18947f4a15331fa3dfcc11b7364025"
       },
@@ -67,9 +58,7 @@
         "DecoderAndSanitizerAddress": "0xe249192EdAba21484C04416510212588574F194d",
         "TargetAddress": "0x979B11c59040745FEdEB3C262BCbE490287bDE8D",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469"
-        ],
+        "AddressArguments": ["0xde9decc3a84cf9cd197ca51ec998a475cc4e8469"],
         "PackedArgumentAddresses": "de9decc3a84cf9cd197ca51ec998a475cc4e8469",
         "LeafDigest": "0x4829f835fa92f156280fa76f7ee1dd5b8f1e2753a2c0bc4e4f31a9719f81ed4a"
       },

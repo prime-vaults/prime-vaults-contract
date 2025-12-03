@@ -5,7 +5,7 @@ import {PrimeAuth} from "../auth/PrimeAuth.sol";
 import {RolesAuthority} from "solmate/src/auth/authorities/RolesAuthority.sol";
 import {Authority} from "solmate/src/auth/Auth.sol";
 import {BoringVault} from "./BoringVault.sol";
-import {AccountantWithYieldStreaming} from "./AccountantWithYieldStreaming.sol";
+import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
 import {TellerWithYieldStreaming} from "./TellerWithYieldStreaming.sol";
 import {ManagerWithMerkleVerification} from "./ManagerWithMerkleVerification.sol";
 import {DelayedWithdraw} from "./DelayedWithdraw.sol";
@@ -98,19 +98,13 @@ contract PrimeRegistry is PrimeAuth {
 
     /**
      * @notice Register and setup permissions for an accountant
-     * @param accountant The AccountantWithYieldStreaming to register
+     * @param accountant The AccountantWithRateProviders to register
      */
-    function registerAccountant(AccountantWithYieldStreaming accountant) public onlyProtocolAdmin {
+    function registerAccountant(AccountantWithRateProviders accountant) public onlyProtocolAdmin {
         Authority authority = accountant.authority();
         RolesAuthority rolesAuthority = RolesAuthority(address(authority));
 
         // Set role capabilities for Accountant functions
-        rolesAuthority.setRoleCapability(
-            MINTER_ROLE,
-            address(accountant),
-            accountant.setFirstDepositTimestamp.selector,
-            true
-        );
         rolesAuthority.setRoleCapability(
             STRATEGIST_ROLE,
             address(accountant),

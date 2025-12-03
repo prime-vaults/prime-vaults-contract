@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {TellerWithBuffer, ERC20} from "./TellerWithBuffer.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
-import {AccountantWithYieldStreaming} from "./AccountantWithYieldStreaming.sol";
+import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 
 contract TellerWithYieldStreaming is TellerWithBuffer {
@@ -41,9 +41,6 @@ contract TellerWithYieldStreaming is TellerWithBuffer {
     ) internal override returns (uint256 shares) {
         //update vested yield before deposit
         _getAccountant().updateExchangeRate();
-        if (vault.totalSupply() == 0) {
-            _getAccountant().setFirstDepositTimestamp();
-        }
         shares = super._erc20Deposit(depositAmount, minimumMint, from, to);
     }
 
@@ -64,8 +61,8 @@ contract TellerWithYieldStreaming is TellerWithBuffer {
     /**
      * @notice Helper function to cast from base accountant type to yield streaming accountant
      */
-    function _getAccountant() internal view returns (AccountantWithYieldStreaming) {
-        return AccountantWithYieldStreaming(address(accountant));
+    function _getAccountant() internal view returns (AccountantWithRateProviders) {
+        return AccountantWithRateProviders(address(accountant));
     }
 
     /**

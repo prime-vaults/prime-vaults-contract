@@ -334,9 +334,7 @@ void describe("02_Reward", function () {
 
       const earnedBefore = await distributor.read.earned([bob.account.address, mockERC20.address]);
       const sharesBefore = await vault.read.balanceOf([bob.account.address]);
-      const deployerBalanceBefore = await mockERC20.read.balanceOf([
-        "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-      ]);
+      const deployerBalanceBefore = await mockERC20.read.balanceOf(["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"]);
 
       // Deployer compounds for Bob (third-party compound)
       await distributor.write.compoundReward([bob.account.address, mockERC20.address]);

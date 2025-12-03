@@ -8,7 +8,7 @@ export default buildModule("TellerModule", (m) => {
   const primeRegistry = m.contractAt("PrimeRegistry", m.getParameter("PrimeRegistryAddress"));
   const primeRBAC = m.contractAt("PrimeRBAC", m.getParameter("PrimeRBAC"));
   const vault = m.contractAt("BoringVault", m.getParameter("BoringVaultAddress"));
-  const accountant = m.contractAt("AccountantWithYieldStreaming", m.getParameter("AccountantAddress"));
+  const accountant = m.contractAt("AccountantWithRateProviders", m.getParameter("AccountantAddress"));
 
   // Deploy Teller
   const teller = m.contract("TellerWithYieldStreaming", [primeRBAC, vault, accountant], {

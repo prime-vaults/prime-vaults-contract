@@ -8,29 +8,8 @@ import { DEPOSIT_AMOUNT, depositTokens, initializeTest } from "./utils.js";
 void describe("04_ClaimFees", function () {
   /**
    * Scenario: Manager claims protocol fees via Merkle verification.
-   *
-   * Step 1 (At T0):
-   *  - Alice deposits 100 tokens.
-   *  - Vault holds 100 tokens.
-   *
-   * Step 2 (After 2 days → T2):
-   *  - Accountant updates exchange rate (initial).
-   *  - Wait 2 days.
-   *  - Accountant updates exchange rate again.
-   *  - Fees are generated based on vault performance.
-   *
-   * Step 3:
-   *  - Manager approves Accountant to spend base asset via Merkle verification.
-   *  - Required for accountant to collect fees.
-   *
-   * Step 4:
-   *  - Manager claims fees via Merkle verification.
-   *  - Uses manageVaultWithMerkleVerification for security.
-   *  - Accountant collects accumulated fees.
-   *
-   * Expected outcome:
-   *  - Protocol fees are successfully claimed by manager.
-   *  - Merkle verification ensures authorized operations only.
+   * Note: With AccountantWithRateProviders, fees must be manually set via exchange rate updates.
+   * This test is simplified compared to the yield streaming version.
    */
   void describe("Manager Claims Fees via Merkle", function () {
     let context: Awaited<ReturnType<typeof initializeTest>>;
@@ -47,14 +26,18 @@ void describe("04_ClaimFees", function () {
     });
 
     void it("Step 2: Generate fees by updating exchange rate", async function () {
-      const { accountant, networkHelpers } = context;
+      const { accountant, networkHelpers, deployer } = context;
 
-      await accountant.write.updateExchangeRate();
+      // Wait some time (1 day)
+      await networkHelpers.time.increase(24 * 60 * 60);
 
-      // Wait 2 days for fees to accrue
-      await networkHelpers.time.increase(2 * 24 * 60 * 60);
+      // Update exchange rate as strategist to accumulate platform fees
+      await accountant.write.updateExchangeRate({ account: deployer.account });
 
-      await accountant.write.updateExchangeRate();
+      // Check that fees were accumulated
+      const accountantState = await accountant.read.getAccountantState();
+      console.log(`Fees owed after update: ${accountantState.feesOwedInBase}`);
+      assert.ok(accountantState.feesOwedInBase > 0n, "Should have accumulated fees after 1 day");
     });
 
     void it("Step 3: Approve Accountant to spend base asset", async function () {
@@ -90,7 +73,30 @@ void describe("04_ClaimFees", function () {
     });
 
     void it("Step 4: Claim fees via Manager with Merkle verification", async function () {
-      const { manager } = context;
+      const { manager, accountant, mockERC20 } = context;
+
+      // Unpause accountant if it was paused
+      const accountantStateBefore = await accountant.read.getAccountantState();
+      if (accountantStateBefore.isPaused) {
+        await accountant.write.unpause();
+      }
+
+      // Check fees owed before claiming
+      const feesOwedBefore = accountantStateBefore.feesOwedInBase;
+      assert.ok(feesOwedBefore > 0n, "Should have accumulated platform fees");
+
+      // Calculate expected platform fee:
+      // platformFee = 150 bps = 1.5% annual
+      // time passed = 1 day
+      // assets = 100 tokens
+      // expectedFee = 100 * 0.015 * (1/365) ≈ 0.00410958...
+      const expectedFeeApprox = (DEPOSIT_AMOUNT * 150n * 86400n) / (10000n * 365n * 86400n);
+      console.log(`Fees owed before claim: ${feesOwedBefore}`);
+      console.log(`Expected fee (approx): ${expectedFeeApprox}`);
+
+      // Get payout address balance before
+      const payoutAddress = accountantStateBefore.payoutAddress;
+      const payoutBalanceBefore = await mockERC20.read.balanceOf([payoutAddress]);
 
       const claimFeesData = readLeaf("localhost-usd", { FunctionSignature: "claimFees()" });
       assert.ok(claimFeesData, "ClaimFees leaf not found");
@@ -116,6 +122,23 @@ void describe("04_ClaimFees", function () {
         [claimFeesCalldata],
         [0n],
       ]);
+
+      // Verify fees were claimed
+      const accountantStateAfter = await accountant.read.getAccountantState();
+      assert.equal(accountantStateAfter.feesOwedInBase, 0n, "Fees owed should be zero after claim");
+
+      // Verify payout address received the fees
+      const payoutBalanceAfter = await mockERC20.read.balanceOf([payoutAddress]);
+      const actualFeesReceived = payoutBalanceAfter - payoutBalanceBefore;
+
+      // claimFees() calls updateExchangeRate() internally, which may add a tiny bit more fees
+      // due to the time elapsed since Step 2, so we check it's at least what we saw before
+      assert.ok(
+        actualFeesReceived >= feesOwedBefore,
+        `Payout address should receive at least ${feesOwedBefore}, got ${actualFeesReceived}`,
+      );
+
+      console.log(`Successfully claimed ${actualFeesReceived} in platform fees (expected at least ${feesOwedBefore})`);
     });
   });
 });

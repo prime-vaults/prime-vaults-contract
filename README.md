@@ -194,20 +194,16 @@ struct AccountantState {
   address payoutAddress; // Where fees are sent
   uint128 feesOwedInBase; // Pending fee amount
   uint128 totalSharesLastUpdate; // Share supply snapshot
-  uint96 exchangeRate; // Current rate (18 decimals)
-  uint16 allowedExchangeRateChangeUpper; // Max increase (bps)
-  uint16 allowedExchangeRateChangeLower; // Max decrease (bps)
+  uint96 exchangeRate; // Current rate (starts at 1:1)
   uint64 lastUpdateTimestamp; // Last update time
   bool isPaused; // Pause state
-  uint24 minimumUpdateDelayInSeconds; // Rate limit
   uint16 platformFee; // Annual platform fee (bps)
-  uint16 performanceFee; // Performance fee (bps)
 }
 ```
 
 **Fee Calculation**:
 
-- **Platform Fee**: `(minAssets * platformFee * timeDelta) / (1e4 * 365 days)`
+- **Platform Fee**: `(assets * platformFee * timeDelta) / (1e4 * 365 days)`
 - **Performance Fee**: `(yieldEarned * performanceFee) / 1e4`
 
 ---

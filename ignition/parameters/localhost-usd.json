@@ -20,12 +20,7 @@
     "symbol": "pUSD"
   },
   "AccountantModule": {
-    "startingExchangeRate": "1000000000000000000",
-    "allowedExchangeRateChangeUpper": 10010,
-    "allowedExchangeRateChangeLower": 9990,
-    "minimumUpdateDelayInSeconds": 1,
-    "platformFee": 150,
-    "performanceFee": 0
+    "platformFee": 150
   },
   "WithdrawerModule": {
     "withdrawDelayInSeconds": 259200,
