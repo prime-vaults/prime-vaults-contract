@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {WETH} from "solmate/src/tokens/WETH.sol";
 import {BoringVault} from "./BoringVault.sol";
-import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
+import {AccountantProviders} from "./AccountantProviders.sol";
 import {TellerWithMultiAssetSupport} from "./TellerWithMultiAssetSupport.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
@@ -130,7 +130,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
     /**
      * @notice The accountant contract that is used to get the exchange rate of assets.
      */
-    AccountantWithRateProviders internal immutable accountant;
+    AccountantProviders internal immutable accountant;
 
     /**
      * @notice The teller contract that users are depositing to.
@@ -159,7 +159,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable {
         address _teller,
         address _payoutAddress
     ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
-        accountant = AccountantWithRateProviders(_accountant);
+        accountant = AccountantProviders(_accountant);
         teller = TellerWithMultiAssetSupport(_teller);
         boringVault = BoringVault(payable(_vault));
         asset = ERC20(address(boringVault.asset()));

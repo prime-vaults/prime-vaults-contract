@@ -10,7 +10,7 @@ import {IPausable} from "../interfaces/IPausable.sol";
 
 import {PrimeAuth} from "../auth/PrimeAuth.sol";
 
-contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
+contract AccountantProviders is PrimeAuth, IRateProvider, IPausable {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
@@ -44,10 +44,10 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
 
     //============================== ERRORS ===============================
 
-    error AccountantWithRateProviders__PlatformFeeTooLarge();
-    error AccountantWithRateProviders__Paused();
-    error AccountantWithRateProviders__ZeroFeesOwed();
-    error AccountantWithRateProviders__OnlyCallableByBoringVault();
+    error AccountantProviders__PlatformFeeTooLarge();
+    error AccountantProviders__Paused();
+    error AccountantProviders__ZeroFeesOwed();
+    error AccountantProviders__OnlyCallableByBoringVault();
 
     //============================== EVENTS ===============================
 
@@ -128,7 +128,7 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
      * @dev Callable by OWNER_ROLE.
      */
     function updatePlatformFee(uint16 platformFee) external onlyProtocolAdmin {
-        if (platformFee > 0.2e4) revert AccountantWithRateProviders__PlatformFeeTooLarge();
+        if (platformFee > 0.2e4) revert AccountantProviders__PlatformFeeTooLarge();
         uint16 oldFee = accountantState.platformFee;
         accountantState.platformFee = platformFee;
         emit PlatformFeeUpdated(oldFee, platformFee);
@@ -153,7 +153,7 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
      */
     function updateExchangeRate() public virtual requiresAuth {
         AccountantState storage state = accountantState;
-        if (state.isPaused) revert AccountantWithRateProviders__Paused();
+        if (state.isPaused) revert AccountantProviders__Paused();
 
         uint64 currentTime = uint64(block.timestamp);
         uint96 oldExchangeRate = state.exchangeRate;
@@ -190,13 +190,13 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
      * @dev Fees are always paid in base asset.
      */
     function claimFees() external {
-        if (msg.sender != address(vault)) revert AccountantWithRateProviders__OnlyCallableByBoringVault();
+        if (msg.sender != address(vault)) revert AccountantProviders__OnlyCallableByBoringVault();
 
         AccountantState storage state = accountantState;
-        if (state.isPaused) revert AccountantWithRateProviders__Paused();
+        if (state.isPaused) revert AccountantProviders__Paused();
 
         this.updateExchangeRate();
-        if (state.feesOwedInBase == 0) revert AccountantWithRateProviders__ZeroFeesOwed();
+        if (state.feesOwedInBase == 0) revert AccountantProviders__ZeroFeesOwed();
 
         uint256 feesOwed = state.feesOwedInBase;
 
@@ -223,7 +223,7 @@ contract AccountantWithRateProviders is PrimeAuth, IRateProvider, IPausable {
      * @dev Revert if paused.
      */
     function getRateSafe() external view virtual returns (uint256 rate) {
-        if (accountantState.isPaused) revert AccountantWithRateProviders__Paused();
+        if (accountantState.isPaused) revert AccountantProviders__Paused();
         rate = getRate();
     }
 

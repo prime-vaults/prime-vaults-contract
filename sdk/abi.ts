@@ -1,5 +1,5 @@
-import AccountantJson from "../artifacts/contracts/core/AccountantWithRateProviders.sol/AccountantWithRateProviders.json";
-import type { AccountantWithRateProviders$Type } from "../artifacts/contracts/core/AccountantWithRateProviders.sol/artifacts.d.ts";
+import AccountantJson from "../artifacts/contracts/core/AccountantProviders.sol/AccountantProviders.json";
+import type { AccountantProviders$Type } from "../artifacts/contracts/core/AccountantProviders.sol/artifacts.d.ts";
 import BoringVaultJson from "../artifacts/contracts/core/BoringVault.sol/BoringVault.json";
 import type { BoringVault$Type } from "../artifacts/contracts/core/BoringVault.sol/artifacts.d.ts";
 import WithdrawerJson from "../artifacts/contracts/core/DelayedWithdraw.sol/DelayedWithdraw.json";
@@ -11,7 +11,7 @@ import type { ManagerWithMerkleVerification$Type } from "../artifacts/contracts/
 import TellerJson from "../artifacts/contracts/core/TellerWithMultiAssetSupport.sol/TellerWithMultiAssetSupport.json";
 import type { TellerWithMultiAssetSupport$Type } from "../artifacts/contracts/core/TellerWithMultiAssetSupport.sol/artifacts.d.ts";
 
-export type AccountantType = AccountantWithRateProviders$Type;
+export type AccountantType = AccountantProviders$Type;
 export type BoringVaultType = BoringVault$Type;
 export type TellerType = TellerWithMultiAssetSupport$Type;
 export type WithdrawerType = DelayedWithdraw$Type;

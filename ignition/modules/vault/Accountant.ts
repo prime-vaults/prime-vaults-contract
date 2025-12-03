@@ -2,7 +2,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 /**
  * Accountant Module
- * Deploys AccountantWithRateProviders for exchange rate and fee management
+ * Deploys AccountantProviders for exchange rate and fee management
  */
 export default buildModule("AccountantModule", (m) => {
   const primeRegistry = m.contractAt("PrimeRegistry", m.getParameter("PrimeRegistryAddress"));
@@ -10,7 +10,7 @@ export default buildModule("AccountantModule", (m) => {
 
   // Deploy Accountant
   const accountant = m.contract(
-    "AccountantWithRateProviders",
+    "AccountantProviders",
     [primeRBAC, m.getParameter("BoringVaultAddress"), m.getParameter("adminAddress"), m.getParameter("platformFee")],
     { after: [] },
   );

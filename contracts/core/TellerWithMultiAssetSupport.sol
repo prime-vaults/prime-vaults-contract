@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {BoringVault} from "./BoringVault.sol";
-import {AccountantWithRateProviders} from "./AccountantWithRateProviders.sol";
+import {AccountantProviders} from "./AccountantProviders.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
@@ -128,9 +128,9 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
     BoringVault public immutable vault;
 
     /**
-     * @notice The AccountantWithRateProviders this contract is working with.
+     * @notice The AccountantProviders this contract is working with.
      */
-    AccountantWithRateProviders public immutable accountant;
+    AccountantProviders public immutable accountant;
 
     /**
      * @notice The Distributor contract for reward distribution (optional).
@@ -149,7 +149,7 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
     ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
         vault = BoringVault(payable(_vault));
         ONE_SHARE = 10 ** vault.decimals();
-        accountant = AccountantWithRateProviders(_accountant);
+        accountant = AccountantProviders(_accountant);
         asset = vault.asset();
         tellerState = TellerState({
             isPaused: false,
@@ -512,8 +512,8 @@ contract TellerWithMultiAssetSupport is PrimeAuth, IBeforeUpdateHook, Reentrancy
     /**
      * @notice Helper function to cast from base accountant type to yield streaming accountant
      */
-    function _getAccountant() internal view returns (AccountantWithRateProviders) {
-        return AccountantWithRateProviders(address(accountant));
+    function _getAccountant() internal view returns (AccountantProviders) {
+        return AccountantProviders(address(accountant));
     }
 
     /**
