@@ -468,7 +468,6 @@ contracts/
 └── interfaces/
     ├── IBufferHelper.sol                  # Buffer helper interface
     ├── IBaseVault.sol                     # Vault interface
-    ├── IRateProvider.sol                  # Rate provider interface
     └── hooks/
         └── IBeforeUpdateHook.sol          # Transfer hook interface
 
