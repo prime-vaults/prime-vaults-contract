@@ -4,31 +4,43 @@ import { toFunctionSelector } from "viem";
 import { ROLES } from "../../constants.js";
 
 /**
- * Accountant Module
- * Deploys AccountantProviders for exchange rate and fee management
+ * Accountant Module - Deploy AccountantProviders with role configuration
+ *
+ * Sequential execution order:
+ * 1. Deploy AccountantProviders
+ * 2. Grant STRATEGIST role capability for updateExchangeRate()
+ * 3. Assign roles to Accountant contract (MINTER, ADMIN, STRATEGIST)
  */
 export default buildModule("AccountantModule", (m) => {
   const primeRBAC = m.contractAt("PrimeRBAC", m.getParameter("PrimeRBAC"));
   const rolesAuthority = m.contractAt("RolesAuthority", m.getParameter("RolesAuthorityAddress"));
 
-  // Deploy Accountant
+  // Deploy AccountantProviders
   const accountant = m.contract(
     "AccountantProviders",
     [primeRBAC, m.getParameter("BoringVaultAddress"), m.getParameter("adminAddress"), m.getParameter("platformFee")],
     { after: [] },
   );
 
-  // Set role capabilities for Accountant functions
-  m.call(rolesAuthority, "setRoleCapability", [ROLES.STRATEGIST, accountant, toFunctionSelector("updateExchangeRate()"), true], {
-    id: "setRoleCapability_updateExchangeRate",
+  // Set role capabilities and assignments sequentially
+  const tx1 = m.call(rolesAuthority, "setRoleCapability", [ROLES.STRATEGIST, accountant, toFunctionSelector("updateExchangeRate()"), true], {
+    id: "cap_update",
+    after: [accountant],
   });
 
-  m.call(rolesAuthority, "setUserRole", [accountant, ROLES.MINTER, true], { id: "setUserRole_MINTER_Accountant" });
+  const tx2 = m.call(rolesAuthority, "setUserRole", [accountant, ROLES.MINTER, true], {
+    id: "role_minter",
+    after: [tx1],
+  });
 
-  m.call(rolesAuthority, "setUserRole", [accountant, ROLES.ADMIN, true], { id: "setUserRole_ADMIN_Accountant" });
+  const tx3 = m.call(rolesAuthority, "setUserRole", [accountant, ROLES.ADMIN, true], {
+    id: "role_admin",
+    after: [tx2],
+  });
 
   m.call(rolesAuthority, "setUserRole", [accountant, ROLES.STRATEGIST, true], {
-    id: "setUserRole_STRATEGIST_Accountant",
+    id: "role_strategist",
+    after: [tx3],
   });
 
   return { accountant, primeRBAC };

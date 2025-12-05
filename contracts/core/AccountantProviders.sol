@@ -15,16 +15,17 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
-    // ========================================= STRUCTS =========================================
+    /* ========================================= STRUCTS ========================================= */
 
     /**
-     * @param payoutAddress the address `claimFees` sends fees to
-     * @param feesOwedInBase total pending fees owed in terms of base
-     * @param totalSharesLastUpdate total amount of shares the last exchange rate update
-     * @param exchangeRate the current exchange rate in terms of base
-     * @param lastUpdateTimestamp the block timestamp of the last exchange rate update
-     * @param isPaused whether or not this contract is paused
-     * @param platformFee the platform fee
+     * @notice Packed accountant state (3 storage slots)
+     * @param payoutAddress Address to receive claimed fees
+     * @param feesOwedInBase Accumulated fees pending claim (in base asset)
+     * @param totalSharesLastUpdate Total vault shares at last update
+     * @param exchangeRate Current share price (base asset per share)
+     * @param lastUpdateTimestamp Last exchange rate update timestamp
+     * @param isPaused Contract pause status
+     * @param platformFee Annual fee rate in basis points (e.g., 1000 = 10%)
      */
     struct AccountantState {
         address payoutAddress;
@@ -36,36 +37,32 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
         uint16 platformFee;
     }
 
-    // ========================================= STATE =========================================
+    /* ========================================= STATE ========================================= */
 
-    /**
-     * @notice Store the accountant state in 3 packed slots.
-     */
+    /** @notice Accountant state stored in 3 packed storage slots */
     AccountantState public accountantState;
 
-    //============================== IMMUTABLES ===============================
+    /* ========================================= IMMUTABLES ========================================= */
 
-    /**
-     * @notice The base asset rates are provided in.
-     */
+    /** @notice Base asset for exchange rate and fee calculations */
     ERC20 public immutable base;
 
-    /**
-     * @notice The decimals rates are provided in.
-     */
+    /** @notice Decimals for exchange rate precision */
     uint8 public immutable decimals;
 
-    /**
-     * @notice The BoringVault this accountant is working with.
-     *         Used to determine share supply for fee calculation.
-     */
+    /** @notice BoringVault contract for share supply queries */
     BoringVault public immutable vault;
 
-    /**
-     * @notice One share of the BoringVault.
-     */
+    /** @notice One share unit (10^decimals) */
     uint256 internal immutable ONE_SHARE;
 
+    /**
+     * @notice Initialize accountant with vault and fee configuration
+     * @param _primeRBAC PrimeRBAC contract for protocol-level roles
+     * @param _vault BoringVault address
+     * @param _payoutAddress Address to receive claimed fees
+     * @param platformFee Initial platform fee in basis points
+     */
     constructor(
         address _primeRBAC,
         address _vault,
@@ -87,11 +84,11 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
         });
     }
 
-    // ========================================= ADMIN FUNCTIONS =========================================
+    /* ========================================= ADMIN FUNCTIONS ========================================= */
+
     /**
-     * @notice Pause this contract, which prevents future calls to `updateExchangeRate`, and any safe rate
-     *         calls will revert.
-     * @dev Callable by MULTISIG_ROLE.
+     * @notice Pause contract (blocks updateExchangeRate and getRateSafe)
+     * @dev Restricted to EMERGENCY_ADMIN_ROLE
      */
     function pause() external onlyEmergencyAdmin {
         accountantState.isPaused = true;
@@ -99,9 +96,8 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
     }
 
     /**
-     * @notice Unpause this contract, which allows future calls to `updateExchangeRate`, and any safe rate
-     *         calls will stop reverting.
-     * @dev Callable by MULTISIG_ROLE.
+     * @notice Unpause contract (re-enables updateExchangeRate and getRateSafe)
+     * @dev Restricted to EMERGENCY_ADMIN_ROLE
      */
     function unpause() external onlyEmergencyAdmin {
         accountantState.isPaused = false;
@@ -109,8 +105,9 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
     }
 
     /**
-     * @notice Update the platform fee to a new value.
-     * @dev Callable by OWNER_ROLE.
+     * @notice Update platform fee (max 20% = 2000 bps)
+     * @dev Restricted to PROTOCOL_ADMIN_ROLE
+     * @param platformFee New annual fee rate in basis points
      */
     function updatePlatformFee(uint16 platformFee) external onlyProtocolAdmin {
         if (platformFee > 0.2e4) revert AccountantProviders__PlatformFeeTooLarge();
@@ -120,8 +117,9 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
     }
 
     /**
-     * @notice Update the payout address fees are sent to.
-     * @dev Callable by OWNER_ROLE.
+     * @notice Update fee recipient address
+     * @dev Restricted to PROTOCOL_ADMIN_ROLE
+     * @param payoutAddress New fee recipient
      */
     function updatePayoutAddress(address payoutAddress) external onlyProtocolAdmin {
         address oldPayout = accountantState.payoutAddress;
@@ -129,12 +127,13 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
         emit PayoutAddressUpdated(oldPayout, payoutAddress);
     }
 
-    // ========================================= UPDATE EXCHANGE RATE/FEES FUNCTIONS =========================================
+    /* ========================================= EXCHANGE RATE & FEES ========================================= */
 
     /**
-     * @notice Updates this contract to calculate fees and adjust exchange rate.
-     * @dev Calculates platform fees and reduces exchange rate to reflect fees owed.
-     * @dev Callable by UPDATE_EXCHANGE_RATE_ROLE.
+     * @notice Update exchange rate and accrue platform fees
+     * @dev Calculates time-based fees and reduces exchange rate accordingly
+     * @dev Formula: newRate = (totalAssets - feesOwed) / totalShares
+     * @dev Restricted to STRATEGIST_ROLE (via requiresAuth)
      */
     function updateExchangeRate() public virtual requiresAuth {
         AccountantState storage state = accountantState;
@@ -169,10 +168,10 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
     }
 
     /**
-     * @notice Claim pending fees.
-     * @dev This function must be called by the BoringVault.
-     * @dev Automatically calls updateExchangeRate() to ensure fees are up to date.
-     * @dev Fees are always paid in base asset.
+     * @notice Claim accumulated fees and transfer to payout address
+     * @dev MUST be called via BoringVault.manage() (msg.sender == vault)
+     * @dev Auto-updates exchange rate before claiming
+     * @dev Vault must have approved this contract to spend base asset
      */
     function claimFees() external {
         if (msg.sender != address(vault)) revert AccountantProviders__OnlyCallableByBoringVault();
@@ -194,28 +193,28 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
         emit FeesClaimed(address(base), feesOwed);
     }
 
-    // ========================================= VIEW FUNCTIONS =========================================
+    /* ========================================= VIEW FUNCTIONS ========================================= */
 
-    /**
-     * @notice Get this BoringVault's current rate in the base.
-     */
+    /** @notice Get current exchange rate (base asset per share) */
     function getRate() public view virtual returns (uint256 rate) {
         rate = accountantState.exchangeRate;
     }
 
     /**
-     * @notice Get this BoringVault's current rate in the base.
-     * @dev Revert if paused.
+     * @notice Get current exchange rate (reverts if paused)
+     * @dev Use this for critical operations that should fail when paused
      */
     function getRateSafe() external view virtual returns (uint256 rate) {
         if (accountantState.isPaused) revert AccountantProviders__Paused();
         rate = getRate();
     }
 
-    // ========================================= INTERNAL HELPER FUNCTIONS =========================================
+    /* ========================================= INTERNAL HELPERS ========================================= */
 
     /**
-     * @notice Calculate platform fees.
+     * @notice Calculate platform fees based on time elapsed and share supply
+     * @dev Formula: fees = (shares * exchangeRate * platformFee * timeDelta) / (10000 * 365 days)
+     * @dev Uses max(currentShares, lastShares) to prevent fee evasion via withdrawals
      */
     function _calculatePlatformFee(
         uint128 totalSharesLastUpdate,
@@ -240,10 +239,9 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
         }
     }
 
-    // ========================================= GETTERS =========================================
-    /**
-     * @notice Get the current accountant state.
-     */
+    /* ========================================= GETTERS ========================================= */
+
+    /** @notice Get full accountant state (all 3 packed slots) */
     function getAccountantState() external view returns (AccountantState memory) {
         return accountantState;
     }
