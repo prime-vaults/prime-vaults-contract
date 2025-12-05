@@ -10,12 +10,11 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
-import {IDelayedWithdrawErrors} from "../interfaces/IDelayedWithdrawErrors.sol";
-import {IDelayedWithdrawEvents} from "../interfaces/IDelayedWithdrawEvents.sol";
+import {IDelayedWithdraw} from "../interfaces/IDelayedWithdrawEvents.sol";
 
 import "../auth/PrimeAuth.sol";
 
-contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdrawErrors, IDelayedWithdrawEvents {
+contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
     using SafeTransferLib for BoringVault;
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;

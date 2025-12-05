@@ -6,8 +6,7 @@ import {Auth, Authority} from "solmate/src/auth/Auth.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {MerkleProofLib} from "solmate/src/utils/MerkleProofLib.sol";
 import {BoringVault} from "./BoringVault.sol";
-import {IManagerErrors} from "../interfaces/IManagerErrors.sol";
-import {IManagerEvents} from "../interfaces/IManagerEvents.sol";
+import {IManager} from "../interfaces/IManagerEvents.sol";
 
 import "../auth/PrimeAuth.sol";
 
@@ -18,7 +17,7 @@ import "../auth/PrimeAuth.sol";
  * @dev Each strategist can have their own Merkle root defining allowed operations
  *      Merkle tree leaves are: keccak256(abi.encodePacked(decoderAndSanitizer, target, valueIsNonZero, selector, argumentAddresses...))
  */
-contract ManagerWithMerkleVerification is PrimeAuth, IManagerErrors, IManagerEvents {
+contract ManagerWithMerkleVerification is PrimeAuth, IManager {
     using FixedPointMathLib for uint256;
     using Address for address;
 

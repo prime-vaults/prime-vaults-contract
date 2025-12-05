@@ -5,12 +5,11 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {BoringVault} from "./BoringVault.sol";
-import {IAccountantErrors} from "../interfaces/IAccountantErrors.sol";
-import {IAccountantEvents} from "../interfaces/IAccountantEvents.sol";
+import {IAccountant} from "../interfaces/IAccountantEvents.sol";
 
 import {PrimeAuth} from "../auth/PrimeAuth.sol";
 
-contract AccountantProviders is PrimeAuth, IAccountantErrors, IAccountantEvents {
+contract AccountantProviders is PrimeAuth, IAccountant {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 

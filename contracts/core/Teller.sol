@@ -9,12 +9,11 @@ import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {Distributor} from "./Distributor.sol";
-import {ITellerErrors} from "../interfaces/ITellerErrors.sol";
-import {ITellerEvents} from "../interfaces/ITellerEvents.sol";
+import {ITeller} from "../interfaces/ITellerEvents.sol";
 
 import "../auth/PrimeAuth.sol";
 
-contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITellerErrors, ITellerEvents {
+contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
