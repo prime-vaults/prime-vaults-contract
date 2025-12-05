@@ -4,8 +4,13 @@ import { toFunctionSelector } from "viem";
 import { ROLES } from "../../constants.js";
 
 /**
- * Withdrawer Module
- * Deploys DelayedWithdraw for time-delayed withdrawal functionality
+ * Withdrawer Module - Deploy DelayedWithdraw with time-delayed withdrawals
+ *
+ * Sequential execution order:
+ * 1. Deploy DelayedWithdraw contract
+ * 2. Setup withdrawal parameters (delay, fees)
+ * 3. Set public capabilities (user functions)
+ * 4. Assign BURNER role to withdrawer
  */
 export default buildModule("WithdrawerModule", (m) => {
   const rolesAuthority = m.contractAt("RolesAuthority", m.getParameter("RolesAuthorityAddress"));
@@ -18,38 +23,47 @@ export default buildModule("WithdrawerModule", (m) => {
       m.getParameter("BoringVaultAddress"),
       m.getParameter("AccountantAddress"),
       m.getParameter("TellerAddress"),
-      m.getParameter("RolesAuthorityAddress"), // Use payout address, not admin
+      m.getParameter("RolesAuthorityAddress"),
     ],
     {},
   );
 
-  // Setup withdrawal with delay, normal fee, and expedited fee
-  m.call(withdrawer, "setupWithdraw", [m.getParameter("withdrawDelayInSeconds"), m.getParameter("withdrawFee"), m.getParameter("expeditedWithdrawFee")], {
-    after: [withdrawer],
+  // Setup withdrawal parameters
+  const tx1 = m.call(
+    withdrawer,
+    "setupWithdraw",
+    [m.getParameter("withdrawDelayInSeconds"), m.getParameter("withdrawFee"), m.getParameter("expeditedWithdrawFee")],
+    { id: "setup", after: [withdrawer] },
+  );
+
+  // Set public capabilities sequentially
+  const tx2 = m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("cancelWithdraw()"), true], { id: "cap_cancel", after: [tx1] });
+
+  const tx3 = m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("requestWithdraw(uint96,bool)"), true], {
+    id: "cap_request",
+    after: [tx2],
   });
 
-  // Set public capabilities for withdrawer user functions
-  m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("cancelWithdraw()"), true], {
-    id: "setPublicCapability_cancelWithdraw",
+  const tx4 = m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("accelerateWithdraw()"), true], {
+    id: "cap_accelerate",
+    after: [tx3],
   });
 
-  m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("requestWithdraw(uint96,bool)"), true], {
-    id: "setPublicCapability_requestWithdraw",
+  const tx5 = m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("completeWithdraw(address)"), true], {
+    id: "cap_complete",
+    after: [tx4],
   });
 
-  m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("accelerateWithdraw()"), true], {
-    id: "setPublicCapability_accelerateWithdraw",
+  const tx6 = m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("setAllowThirdPartyToComplete(bool)"), true], {
+    id: "cap_3rdparty",
+    after: [tx5],
   });
 
-  m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("completeWithdraw(address)"), true], {
-    id: "setPublicCapability_completeWithdraw",
+  // Assign BURNER role
+  m.call(rolesAuthority, "setUserRole", [withdrawer, ROLES.BURNER, true], {
+    id: "role_burner",
+    after: [tx6],
   });
-
-  m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("setAllowThirdPartyToComplete(bool)"), true], {
-    id: "setPublicCapability_setAllowThirdPartyToComplete",
-  });
-
-  m.call(rolesAuthority, "setUserRole", [withdrawer, ROLES.BURNER, true], { id: "setUserRole_BURNER_Withdrawer" });
 
   return { withdrawer };
 });
