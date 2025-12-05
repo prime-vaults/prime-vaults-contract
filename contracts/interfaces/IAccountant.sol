@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IPausableEvents} from "./IPausableEvents.sol";
-
-interface IAccountant is IPausableEvents {
+interface IAccountant {
     /* ========================================= ERRORS ========================================= */
     error AccountantProviders__PlatformFeeTooLarge();
     error AccountantProviders__Paused();

@@ -6,7 +6,6 @@ import {IPrimeRBAC} from "../interfaces/IPrimeRBAC.sol";
 import {PrimeRBAC} from "./PrimeRBAC.sol";
 import {Auth, Authority} from "solmate/src/auth/Auth.sol";
 import {IPausable} from "../interfaces/IPausable.sol";
-import {IPausableEvents} from "../interfaces/IPausableEvents.sol";
 
 /**
  * @title PrimeAuth
@@ -14,7 +13,7 @@ import {IPausableEvents} from "../interfaces/IPausableEvents.sol";
  * @notice Abstract contract providing authentication functionality integrated with PrimeRBAC
  * @dev Extends Solmate's Auth contract and provides protocol admin role checking via PrimeRBAC
  */
-abstract contract PrimeAuth is Auth, IPausable, IPausableEvents {
+abstract contract PrimeAuth is Auth, IPausable {
     /* ========================================= STATE ========================================= */
 
     /** @notice PrimeRBAC contract for protocol-level role management */

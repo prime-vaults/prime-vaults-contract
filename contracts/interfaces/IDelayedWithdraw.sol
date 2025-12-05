@@ -2,9 +2,8 @@
 pragma solidity ^0.8.30;
 
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
-import {IPausableEvents} from "./IPausableEvents.sol";
 
-interface IDelayedWithdraw is IPausableEvents {
+interface IDelayedWithdraw {
     /* ========================================= ERRORS ========================================= */
     error DelayedWithdraw__WithdrawsNotAllowed();
     error DelayedWithdraw__BadAddress();

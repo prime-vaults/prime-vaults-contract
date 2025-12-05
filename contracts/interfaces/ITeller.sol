@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IPausableEvents} from "./IPausableEvents.sol";
-
-interface ITeller is IPausableEvents {
+interface ITeller {
     /* ========================================= ERRORS ========================================= */
     error Teller__ShareLockPeriodTooLong();
     error Teller__SharesAreLocked();

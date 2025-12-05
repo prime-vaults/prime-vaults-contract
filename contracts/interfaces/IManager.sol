@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IPausableEvents} from "./IPausableEvents.sol";
-
-interface IManager is IPausableEvents {
+interface IManager {
     /* ========================================= ERRORS ========================================= */
     error ManagerWithMerkleVerification__Paused();
     error ManagerWithMerkleVerification__InvalidManageProofLength();
