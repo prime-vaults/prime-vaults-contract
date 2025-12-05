@@ -8,11 +8,7 @@ import { runHardhatCmd } from "../utils.js";
  * Deploy Prime Registry Module
  * Deploys: PrimeRBAC, PrimeRegistry, FullDecoderAndSanitizer
  */
-export default async function deployPrimeRegistry(
-  connection: NetworkConnection,
-  parameterId: string,
-  displayUi = false,
-) {
+export default async function deployPrimeRegistry(connection: NetworkConnection, parameterId: string, displayUi = false) {
   const modules = await connection.ignition.deploy(PrimeRegistryModule, {
     displayUi,
     deploymentId: parameterId,
@@ -22,14 +18,12 @@ export default async function deployPrimeRegistry(
   const parameters = readParams(parameterId);
   parameters.$global.adminAddress = deployer.account.address;
   parameters.$global.PrimeRBAC = modules.primeRBAC.address;
-  parameters.$global.PrimeRegistryAddress = modules.primeRegistry.address;
   parameters.$global.DecoderAndSanitizerAddress = modules.decoder.address;
   await writeParams(parameterId, parameters);
 
   if (displayUi) {
     console.table({
       PrimeRBAC: modules.primeRBAC.address,
-      PrimeRegistry: modules.primeRegistry.address,
       DecoderAndSanitizer: modules.decoder.address,
     });
   }

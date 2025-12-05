@@ -4,17 +4,15 @@ pragma solidity ^0.8.30;
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
-import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
 
-import {PrimeAuth} from "../auth/PrimeAuth.sol";
+import {RolesAuthority} from "../auth/RolesAuthority.sol";
 
-contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
+contract BoringVault is ERC20, RolesAuthority, ERC721Holder, ERC1155Holder {
     using Address for address;
     using SafeTransferLib for ERC20;
-    using FixedPointMathLib for uint256;
 
     // ========================================= STATE =========================================
 
@@ -40,12 +38,11 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
     //============================== CONSTRUCTOR ===============================
 
     constructor(
-        address _primeRBAC,
         address _authority,
         string memory _name,
         string memory _symbol,
         address _asset
-    ) ERC20(_name, _symbol, ERC20(_asset).decimals()) PrimeAuth(_primeRBAC, _authority) {
+    ) ERC20(_name, _symbol, ERC20(_asset).decimals()) RolesAuthority(_authority) {
         asset = ERC20(_asset);
     }
 
@@ -126,7 +123,7 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
      * @notice If set to zero address, the hook is disabled.
      * @dev Callable by OWNER_ROLE.
      */
-    function setBeforeUpdateHook(address _hook) external onlyProtocolAdmin {
+    function setBeforeUpdateHook(address _hook) external requiresAuth {
         beforeUpdateHook = IBeforeUpdateHook(_hook);
     }
 

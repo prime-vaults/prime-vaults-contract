@@ -10,5 +10,5 @@ import {Authority} from "solmate/src/auth/Auth.sol";
  * @notice Wrapper for Solmate's RolesAuthority contract
  */
 contract RolesAuthority is SolmateRolesAuthority {
-    constructor(address _owner) SolmateRolesAuthority(_owner, Authority(address(0))) {}
+    constructor(address _auth) SolmateRolesAuthority(msg.sender, Authority(_auth)) {}
 }
