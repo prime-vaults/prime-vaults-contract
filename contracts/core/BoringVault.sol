@@ -14,29 +14,33 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
     using Address for address;
     using SafeTransferLib for ERC20;
 
-    // ========================================= STATE =========================================
+    /* ========================================= STATE ========================================= */
 
-    /**
-     * @notice The underlying asset token for this vault
-     */
+    /** @notice Underlying asset token (e.g., USDC, WETH) */
     ERC20 public immutable asset;
 
-    /**
-     * @notice Contract responsible for implementing `beforeUpdate`.
-     */
+    /** @notice Optional hook called before balance changes (mint/burn/transfer) */
     IBeforeUpdateHook public beforeUpdateHook;
 
-    //============================== EVENTS ===============================
+    /* ========================================= EVENTS ========================================= */
 
     event Enter(address indexed from, address indexed asset, uint256 amount, address indexed to, uint256 shares);
     event Exit(address indexed to, address indexed asset, uint256 amount, address indexed from, uint256 shares);
 
-    //============================== ERRORS ===============================
+    /* ========================================= ERRORS ========================================= */
 
     error BoringVault__InvalidAsset();
 
-    //============================== CONSTRUCTOR ===============================
+    /* ========================================= CONSTRUCTOR ========================================= */
 
+    /**
+     * @notice Initialize vault with asset and access control
+     * @param _primeRBAC PrimeRBAC contract for protocol-level roles
+     * @param _authority RolesAuthority for vault-specific RBAC
+     * @param _name Vault share token name
+     * @param _symbol Vault share token symbol
+     * @param _asset Underlying asset address
+     */
     constructor(
         address _primeRBAC,
         address _authority,
@@ -47,19 +51,27 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
         asset = ERC20(_asset);
     }
 
-    //============================== MANAGE ===============================
+    /* ========================================= MANAGE ========================================= */
 
     /**
-     * @notice Allows manager to make an arbitrary function call from this contract.
-     * @dev Callable by MANAGER_ROLE.
+     * @notice Execute arbitrary call to DeFi protocols (e.g., Aave deposit, Uniswap swap)
+     * @dev Restricted to MANAGER_ROLE. Must be validated by decoder/sanitizer
+     * @param target Contract address to call
+     * @param data Encoded function call
+     * @param value ETH amount to send
+     * @return result Return data from call
      */
     function manage(address target, bytes calldata data, uint256 value) external requiresAuth returns (bytes memory result) {
         result = target.functionCallWithValue(data, value);
     }
 
     /**
-     * @notice Allows manager to make arbitrary function calls from this contract.
-     * @dev Callable by MANAGER_ROLE.
+     * @notice Execute multiple calls atomically
+     * @dev Restricted to MANAGER_ROLE. All calls must succeed or entire transaction reverts
+     * @param targets Array of contract addresses
+     * @param data Array of encoded function calls
+     * @param values Array of ETH amounts
+     * @return results Array of return data
      */
     function bulkManage(address[] calldata targets, bytes[] calldata data, uint256[] calldata values) external requiresAuth returns (bytes[] memory results) {
         uint256 targetsLength = targets.length;
@@ -69,12 +81,16 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
         }
     }
 
-    //============================== ENTER ===============================
+    /* ========================================= DEPOSIT ========================================= */
 
     /**
-     * @notice Allows minter to mint shares, in exchange for assets.
-     * @dev If assetAmount is zero, no assets are transferred in.
-     * @dev Callable by MINTER_ROLE.
+     * @notice Mint vault shares when user deposits assets
+     * @dev Restricted to MINTER_ROLE (typically Teller contract)
+     * @dev Hook is called BEFORE minting to update rewards with old balances
+     * @param from Address to pull assets from (must have approved vault)
+     * @param assetAmount Amount of assets to deposit (0 = no transfer)
+     * @param to Address to receive shares
+     * @param shareAmount Amount of shares to mint
      */
     function enter(address from, uint256 assetAmount, address to, uint256 shareAmount) external requiresAuth {
         // Transfer assets in
@@ -89,12 +105,16 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
         emit Enter(from, address(asset), assetAmount, to, shareAmount);
     }
 
-    //============================== EXIT ===============================
+    /* ========================================= WITHDRAWAL ========================================= */
 
     /**
-     * @notice Allows burner to burn shares, in exchange for assets.
-     * @dev If assetAmount is zero, no assets are transferred out.
-     * @dev Callable by BURNER_ROLE.
+     * @notice Burn vault shares when user withdraws assets
+     * @dev Restricted to BURNER_ROLE (typically Teller contract)
+     * @dev Hook is called BEFORE burning to update rewards with old balances
+     * @param to Address to send assets to
+     * @param assetAmount Amount of assets to withdraw (0 = no transfer)
+     * @param from Address to burn shares from
+     * @param shareAmount Amount of shares to burn
      */
     function exit(address to, uint256 assetAmount, address from, uint256 shareAmount) external requiresAuth {
         // Update rewards BEFORE burning (with old balances)
@@ -109,35 +129,44 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
         emit Exit(to, address(asset), assetAmount, from, shareAmount);
     }
 
-    //============================== BEFORE UPDATE HOOK ===============================
+    /* ========================================= HOOKS ========================================= */
 
     /**
-     * @notice Sets the before update hook (e.g., Distributor).
-     * @notice If set to zero address, the hook is disabled.
-     * @dev Callable by PROTOCOL_ADMIN_ROLE.
+     * @notice Configure hook called before balance changes (optional)
+     * @dev Restricted to PROTOCOL_ADMIN_ROLE. Set to address(0) to disable
+     * @dev Common use case: Distributor contract for reward tracking
+     * @param _hook Address implementing IBeforeUpdateHook interface
      */
     function setBeforeUpdateHook(address _hook) external onlyProtocolAdmin {
         beforeUpdateHook = IBeforeUpdateHook(_hook);
     }
 
     /**
-     * @notice Call `beforeUpdate` hook BEFORE balance changes.
+     * @notice Internal: Invoke hook before balance changes (if configured)
+     * @dev Hook failure causes transaction revert
+     * @param from Source address (address(0) for minting)
+     * @param to Destination address (address(0) for burning)
+     * @param amount Share amount being transferred
+     * @param operator Transaction initiator (msg.sender)
      */
     function _callBeforeUpdate(address from, address to, uint256 amount, address operator) internal {
         if (address(beforeUpdateHook) != address(0)) beforeUpdateHook.beforeUpdate(from, to, amount, operator);
     }
 
+    /** @notice ERC20 transfer with hook call */
     function transfer(address to, uint256 amount) public override returns (bool) {
         _callBeforeUpdate(msg.sender, to, amount, msg.sender);
         return super.transfer(to, amount);
     }
 
+    /** @notice ERC20 transferFrom with hook call */
     function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
         _callBeforeUpdate(from, to, amount, msg.sender);
         return super.transferFrom(from, to, amount);
     }
 
-    //============================== RECEIVE ===============================
+    /* ========================================= RECEIVE ========================================= */
 
+    /** @notice Accept ETH for gas refunds or native token strategies */
     receive() external payable {}
 }
