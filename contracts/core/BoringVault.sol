@@ -8,9 +8,9 @@ import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
 
-import {RolesAuthority} from "../auth/RolesAuthority.sol";
+import {PrimeAuth} from "../auth/PrimeAuth.sol";
 
-contract BoringVault is ERC20, RolesAuthority, ERC721Holder, ERC1155Holder {
+contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
     using Address for address;
     using SafeTransferLib for ERC20;
 
@@ -38,11 +38,12 @@ contract BoringVault is ERC20, RolesAuthority, ERC721Holder, ERC1155Holder {
     //============================== CONSTRUCTOR ===============================
 
     constructor(
+        address _primeRBAC,
         address _authority,
         string memory _name,
         string memory _symbol,
         address _asset
-    ) ERC20(_name, _symbol, ERC20(_asset).decimals()) RolesAuthority(_authority) {
+    ) ERC20(_name, _symbol, ERC20(_asset).decimals()) PrimeAuth(_primeRBAC, _authority) {
         asset = ERC20(_asset);
     }
 
@@ -52,11 +53,7 @@ contract BoringVault is ERC20, RolesAuthority, ERC721Holder, ERC1155Holder {
      * @notice Allows manager to make an arbitrary function call from this contract.
      * @dev Callable by MANAGER_ROLE.
      */
-    function manage(
-        address target,
-        bytes calldata data,
-        uint256 value
-    ) external requiresAuth returns (bytes memory result) {
+    function manage(address target, bytes calldata data, uint256 value) external requiresAuth returns (bytes memory result) {
         result = target.functionCallWithValue(data, value);
     }
 
@@ -64,11 +61,7 @@ contract BoringVault is ERC20, RolesAuthority, ERC721Holder, ERC1155Holder {
      * @notice Allows manager to make arbitrary function calls from this contract.
      * @dev Callable by MANAGER_ROLE.
      */
-    function bulkManage(
-        address[] calldata targets,
-        bytes[] calldata data,
-        uint256[] calldata values
-    ) external requiresAuth returns (bytes[] memory results) {
+    function bulkManage(address[] calldata targets, bytes[] calldata data, uint256[] calldata values) external requiresAuth returns (bytes[] memory results) {
         uint256 targetsLength = targets.length;
         results = new bytes[](targetsLength);
         for (uint256 i; i < targetsLength; ++i) {
@@ -121,9 +114,9 @@ contract BoringVault is ERC20, RolesAuthority, ERC721Holder, ERC1155Holder {
     /**
      * @notice Sets the before update hook (e.g., Distributor).
      * @notice If set to zero address, the hook is disabled.
-     * @dev Callable by OWNER_ROLE.
+     * @dev Callable by PROTOCOL_ADMIN_ROLE.
      */
-    function setBeforeUpdateHook(address _hook) external requiresAuth {
+    function setBeforeUpdateHook(address _hook) external onlyProtocolAdmin {
         beforeUpdateHook = IBeforeUpdateHook(_hook);
     }
 

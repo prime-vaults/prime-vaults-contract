@@ -9,13 +9,14 @@ import { ROLES } from "../../constants.js";
  */
 export default buildModule("VaultModule", (m) => {
   const decoder = m.contractAt("FullDecoderAndSanitizer", m.getParameter("DecoderAndSanitizerAddress"));
+  const primeRBAC = m.contractAt("PrimeRBAC", m.getParameter("PrimeRBAC"));
 
   // Deploy RolesAuthority for this vault
   // Pass address(0) as authority because PrimeRegistry is not an Authority and we want deployer to be owner
   const rolesAuthority = m.contract("RolesAuthority", ["0x0000000000000000000000000000000000000000"]);
 
   // Deploy BoringVault
-  const vault = m.contract("BoringVault", [rolesAuthority, m.getParameter("name"), m.getParameter("symbol"), m.getParameter("stakingToken")], {
+  const vault = m.contract("BoringVault", [primeRBAC, rolesAuthority, m.getParameter("name"), m.getParameter("symbol"), m.getParameter("stakingToken")], {
     after: [rolesAuthority],
   });
 

@@ -28,7 +28,7 @@ abstract contract PrimeAuth is Auth {
      * @dev Sets the owner to msg.sender and validates primeRBAC is not the zero address
      */
     constructor(address _primeRBAC, address _authority) Auth(msg.sender, Authority(_authority)) {
-        if (_primeRBAC == address(0)) {
+        if (_primeRBAC == address(0) || _authority == address(0)) {
             revert Error.ZERO_ADDRESS();
         }
         primeRBAC = IPrimeRBAC(_primeRBAC);
