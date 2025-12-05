@@ -15,7 +15,7 @@ export default buildModule("ManagerModule", (m) => {
   // Deploy Manager
   const manager = m.contract("ManagerWithMerkleVerification", [m.getParameter("PrimeRBAC"), vault]);
 
-  const tx1 = m.call(manager, "setManageRoot", [adminAddress, m.getParameter("manageRoot")]);
+  m.call(manager, "setManageRoot", [adminAddress, m.getParameter("manageRoot")]);
 
   // Set role capability for manageVaultWithMerkleVerification
   m.call(
