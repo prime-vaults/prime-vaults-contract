@@ -22,30 +22,20 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
     /**
      * @param allowDeposits whether deposits are allowed for the asset
      * @param allowWithdraws whether withdrawals are allowed for the asset
-     * @param permissionedTransfers if true, only permissioned operators can transfer shares
      * @param shareLockPeriod after deposits, shares are locked to the msg.sender's address for this period
      * @param depositCap the global deposit cap of the vault
      */
     struct TellerState {
         bool allowDeposits;
         bool allowWithdraws;
-        bool permissionedTransfers;
         uint64 shareLockPeriod;
         uint112 depositCap;
     }
 
     /**
-     * @param denyFrom bool indicating whether or not the user is on the deny from list.
-     * @param denyTo bool indicating whether or not the user is on the deny to list.
-     * @param denyOperator bool indicating whether or not the user is on the deny operator list.
-     * @param permissionedOperator bool indicating whether or not the user is a permissioned operator, only applies when permissionedTransfers is true.
      * @param shareUnlockTime uint256 indicating the time at which the shares will be unlocked.
      */
     struct BeforeTransferData {
-        bool denyFrom;
-        bool denyTo;
-        bool denyOperator;
-        bool permissionedOperator;
         uint256 shareUnlockTime;
     }
 
@@ -100,7 +90,7 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
         ONE_SHARE = 10 ** vault.decimals();
         accountant = AccountantProviders(_accountant);
         asset = vault.asset();
-        tellerState = TellerState({allowDeposits: true, allowWithdraws: true, permissionedTransfers: false, shareLockPeriod: 0, depositCap: type(uint112).max});
+        tellerState = TellerState({allowDeposits: true, allowWithdraws: true, shareLockPeriod: 0, depositCap: type(uint112).max});
     }
 
     // ========================================= ADMIN FUNCTIONS =========================================
@@ -142,113 +132,6 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
     }
 
     /**
-     * @notice Deny a user from transferring or receiving shares.
-     * @dev Callable by OPERATOR_ROLE.
-     */
-    function denyAll(address user) external onlyOperator {
-        beforeTransferData[user].denyFrom = true;
-        beforeTransferData[user].denyTo = true;
-        beforeTransferData[user].denyOperator = true;
-        emit DenyFrom(user);
-        emit DenyTo(user);
-        emit DenyOperator(user);
-    }
-
-    /**
-     * @notice Allow a user to transfer or receive shares.
-     * @dev Callable by OPERATOR_ROLE.
-     */
-    function allowAll(address user) external onlyOperator {
-        beforeTransferData[user].denyFrom = false;
-        beforeTransferData[user].denyTo = false;
-        beforeTransferData[user].denyOperator = false;
-        emit AllowFrom(user);
-        emit AllowTo(user);
-        emit AllowOperator(user);
-    }
-
-    /**
-     * @notice Deny a user from transferring shares.
-     * @dev Callable by OPERATOR_ROLE.
-     */
-    function denyFrom(address user) external onlyOperator {
-        beforeTransferData[user].denyFrom = true;
-        emit DenyFrom(user);
-    }
-
-    /**
-     * @notice Allow a user to transfer shares.
-     * @dev Callable by OPERATOR_ROLE.
-     */
-    function allowFrom(address user) external onlyOperator {
-        beforeTransferData[user].denyFrom = false;
-        emit AllowFrom(user);
-    }
-
-    /**
-     * @notice Deny a user from receiving shares.
-     * @dev Callable by OPERATOR_ROLE.
-     */
-    function denyTo(address user) external onlyOperator {
-        beforeTransferData[user].denyTo = true;
-        emit DenyTo(user);
-    }
-
-    /**
-     * @notice Allow a user to receive shares.
-     * @dev Callable by OPERATOR_ROLE.
-     */
-    function allowTo(address user) external onlyOperator {
-        beforeTransferData[user].denyTo = false;
-        emit AllowTo(user);
-    }
-
-    /**
-     * @notice Deny an operator from transferring shares.
-     * @dev Callable by OPERATOR_ROLE.
-     */
-    function denyOperator(address user) external onlyOperator {
-        beforeTransferData[user].denyOperator = true;
-        emit DenyOperator(user);
-    }
-
-    /**
-     * @notice Allow an operator to transfer shares.
-     * @dev Callable by OPERATOR_ROLE.
-     */
-    function allowOperator(address user) external onlyOperator {
-        beforeTransferData[user].denyOperator = false;
-        emit AllowOperator(user);
-    }
-
-    /**
-     * @notice Set the permissioned transfers flag.
-     * @dev Callable by PROTOCOL_ADMIN_ROLE.
-     */
-    function setPermissionedTransfers(bool _permissionedTransfers) external onlyProtocolAdmin {
-        tellerState.permissionedTransfers = _permissionedTransfers;
-        emit PermissionedTransfersSet(_permissionedTransfers);
-    }
-
-    /**
-     * @notice Give permission to an operator to transfer shares when permissioned transfers flag is true.
-     * @dev Callable by PROTOCOL_ADMIN_ROLE.
-     */
-    function allowPermissionedOperator(address operator) external onlyProtocolAdmin {
-        beforeTransferData[operator].permissionedOperator = true;
-        emit AllowPermissionedOperator(operator);
-    }
-
-    /**
-     * @notice Revoke permission from an operator to transfer shares when permissioned transfers flag is true.
-     * @dev Callable by PROTOCOL_ADMIN_ROLE.
-     */
-    function denyPermissionedOperator(address operator) external onlyProtocolAdmin {
-        beforeTransferData[operator].permissionedOperator = false;
-        emit DenyPermissionedOperator(operator);
-    }
-
-    /**
      * @notice Set the deposit cap of the vault.
      * @dev Callable by PROTOCOL_ADMIN_ROLE
      */
@@ -260,14 +143,13 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
     // ========================================= IBeforeUpdateHook FUNCTIONS =========================================
 
     /**
-     * @notice Implement beforeUpdate hook to check if shares are locked, or if `from`, `to`, or `operator` are denied.
-     * @notice If permissionedTransfers is true, then only operators on the allow list can transfer shares.
+     * @notice Implement beforeUpdate hook to check if shares are locked.
      * @notice If share lock period is set to zero, then users will be able to mint and transfer in the same tx.
      *         if this behavior is not desired then a share lock period of >=1 should be used.
-     * @notice When minting (from = address(0)), only checks `to` and `operator`.
-     * @notice When burning (to = address(0)), only checks `from` and `operator`.
+     * @notice When minting (from = address(0)), only checks `to`.
+     * @notice When burning (to = address(0)), only checks `from`.
      */
-    function beforeUpdate(address from, address to, uint256 /* amount */, address operator) public virtual {
+    function beforeUpdate(address from, address to, uint256 /* amount */, address /* operator */) public virtual {
         // Update rewards BEFORE balance changes if distributor is set
         if (address(distributor) != address(0)) {
             if (from != address(0)) {
@@ -278,49 +160,9 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
             }
         }
 
-        // For minting: from = address(0), skip from checks
-        if (from != address(0)) {
-            // Check if from is denied
-            if (beforeTransferData[from].denyFrom) {
-                revert Teller__TransferDenied(from, to, operator);
-            }
-            // Check if shares are locked
-            if (beforeTransferData[from].shareUnlockTime > block.timestamp) {
-                revert Teller__SharesAreLocked();
-            }
-        }
-
-        // For burning: to = address(0), skip to checks
-        if (to != address(0)) {
-            // Check if to is denied
-            if (beforeTransferData[to].denyTo) {
-                revert Teller__TransferDenied(from, to, operator);
-            }
-        }
-
-        // Always check operator (unless it's address(0))
-        if (operator != address(0) && beforeTransferData[operator].denyOperator) {
-            revert Teller__TransferDenied(from, to, operator);
-        }
-
-        // Check permissioned transfers (only for transfers, not mint/burn)
-        if (from != address(0) && to != address(0)) {
-            if (tellerState.permissionedTransfers && !beforeTransferData[operator].permissionedOperator) {
-                revert Teller__TransferDenied(from, to, operator);
-            }
-        }
-    }
-
-    /**
-     * @notice Internal function to check deny lists for transfers.
-     * @dev Reverts if `from` is denied, `to` is denied, or `operator` is denied.
-     * @param from The sender address.
-     * @param to The receiver address.
-     * @param operator The address performing the operation.
-     */
-    function _handleDenyList(address from, address to, address operator) internal view {
-        if (beforeTransferData[from].denyFrom || beforeTransferData[to].denyTo || beforeTransferData[operator].denyOperator) {
-            revert Teller__TransferDenied(from, to, operator);
+        // For transfers (not mint/burn): check if shares are locked
+        if (from != address(0) && beforeTransferData[from].shareUnlockTime > block.timestamp) {
+            revert Teller__SharesAreLocked();
         }
     }
 
@@ -375,7 +217,6 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
      */
     function _erc20Deposit(uint256 depositAmount, uint256 minimumMint, address from, address to) internal virtual returns (uint256 shares) {
         _getAccountant().updateExchangeRate();
-        _handleDenyList(from, to, msg.sender);
         TellerState storage state = tellerState;
         if (depositAmount == 0) revert Teller__ZeroAssets();
         shares = depositAmount.mulDivDown(ONE_SHARE, accountant.getRate());

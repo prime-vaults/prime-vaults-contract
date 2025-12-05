@@ -49,9 +49,10 @@ contract TellerWithBuffer is Teller {
      */
     function _afterDeposit(uint256 assetAmount) internal override {
         if (address(bufferHelpers.depositBufferHelper) != address(0)) {
-            (address[] memory targets, bytes[] memory data, uint256[] memory values) = bufferHelpers
-                .depositBufferHelper
-                .getDepositManageCall(address(asset), assetAmount);
+            (address[] memory targets, bytes[] memory data, uint256[] memory values) = bufferHelpers.depositBufferHelper.getDepositManageCall(
+                address(asset),
+                assetAmount
+            );
             vault.bulkManage(targets, data, values);
         }
     }
@@ -65,9 +66,10 @@ contract TellerWithBuffer is Teller {
      */
     function _beforeWithdraw(uint256 assetAmount) internal override {
         if (address(bufferHelpers.withdrawBufferHelper) != address(0)) {
-            (address[] memory targets, bytes[] memory data, uint256[] memory values) = bufferHelpers
-                .withdrawBufferHelper
-                .getWithdrawManageCall(address(asset), assetAmount);
+            (address[] memory targets, bytes[] memory data, uint256[] memory values) = bufferHelpers.withdrawBufferHelper.getWithdrawManageCall(
+                address(asset),
+                assetAmount
+            );
             vault.bulkManage(targets, data, values);
         }
     }

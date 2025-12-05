@@ -52,9 +52,6 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     /// @notice user -> reward token -> accumulated rewards
     mapping(address => mapping(address => uint256)) public rewards;
 
-    /// @notice Whether the contract is paused
-    bool public paused;
-
     /// @notice Compound fee percentage (in basis points, 10000 = 100%)
     uint256 public compoundFee;
 
@@ -70,7 +67,6 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     event RewardPaid(address indexed user, address indexed rewardsToken, uint256 reward, address to);
     event RewardsDurationUpdated(address token, uint256 newDuration);
     event Recovered(address token, uint256 amount);
-    event PausedUpdated(bool isPaused);
     event CompoundReward(address indexed account, address indexed rewardToken, uint256 rewardAmount, uint256 shares, uint256 fee);
     event CompoundFeeUpdated(uint256 newFee);
     event ThirdPartyCompoundAllowed(address indexed user, bool allowed);
@@ -138,16 +134,6 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     }
 
     /**
-     * @notice Pause or unpause the contract
-     * @param _paused Whether to pause the contract
-     * @dev Callable by EMERGENCY_ADMIN_ROLE
-     */
-    function setPaused(bool _paused) external onlyEmergencyAdmin {
-        paused = _paused;
-        emit PausedUpdated(_paused);
-    }
-
-    /**
      * @notice Set the compound fee percentage
      * @param _compoundFee The new compound fee in basis points (10000 = 100%)
      * @dev Callable by PROTOCOL_ADMIN_ROLE
@@ -210,9 +196,8 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @dev Must update rewards based on OLD balances before they change
      * @dev Callable by Teller only
      */
-    function beforeUpdate(address from, address to, uint256 /* amount */, address /* operator */) public {
-        if (paused) return; // Skip updates if paused
-        if (msg.sender != address(teller)) revert Distributor__NotAuthorized();
+    function beforeUpdate(address from, address to, uint256 /* amount */, address /* operator */) public requiresAuth {
+        if (isPaused) revert Distributor__Paused();
 
         // Update rewards for both parties BEFORE their balances change
         // address(0) means mint, skip sender update
@@ -235,7 +220,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @param _to The address to send claimed rewards to
      * @return rewardAmount The amount of reward token claimed
      */
-    function claimReward(address _account, address _rewardToken, address _to) public updateReward(_account) returns (uint256 rewardAmount) {
+    function _claimReward(address _account, address _rewardToken, address _to) internal updateReward(_account) returns (uint256 rewardAmount) {
         rewardAmount = rewards[_account][_rewardToken];
         if (rewardAmount > 0) {
             rewards[_account][_rewardToken] = 0;
@@ -250,10 +235,12 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @param _rewardTokens Array of reward token addresses to claim
      * @return rewardsOut Array of amounts claimed for each reward token
      */
-    function claimRewards(address[] memory _rewardTokens) public returns (uint256[] memory rewardsOut) {
+    function claimRewards(address[] memory _rewardTokens) public requiresAuth returns (uint256[] memory rewardsOut) {
+        if (isPaused) revert Distributor__Paused();
+
         rewardsOut = new uint256[](_rewardTokens.length);
         for (uint256 i = 0; i < _rewardTokens.length; i++) {
-            rewardsOut[i] = claimReward(msg.sender, _rewardTokens[i], msg.sender);
+            rewardsOut[i] = _claimReward(msg.sender, _rewardTokens[i], msg.sender);
         }
     }
 
@@ -262,7 +249,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @param _allowed Whether to allow third parties to compound rewards for the user
      * @dev Publicly callable by anyone for their own account
      */
-    function setAllowThirdPartyCompound(bool _allowed) external {
+    function setAllowThirdPartyCompound(bool _allowed) external requiresAuth {
         allowThirdPartyCompound[msg.sender] = _allowed;
         emit ThirdPartyCompoundAllowed(msg.sender, _allowed);
     }
@@ -272,9 +259,11 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @dev Can be called by the user themselves (no fee) or by third parties (with fee if enabled).
      * @dev Only works with tokens that can be deposited into the vault (typically the base asset).
      * @param _account The account to compound rewards for
-     * @param _rewardToken The reward token to compound
      */
-    function compoundReward(address _account, address _rewardToken) external updateReward(_account) {
+    function compoundReward(address _account) external updateReward(_account) requiresAuth {
+        if (isPaused) revert Distributor__Paused();
+
+        ERC20 asset = BoringVault(payable(address(vault))).asset();
         // Check authorization: user can compound for themselves, or third party if allowed
         if (msg.sender != _account) {
             if (!allowThirdPartyCompound[_account]) {
@@ -282,9 +271,9 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
             }
         }
 
-        uint256 rewardAmount = rewards[_account][_rewardToken];
+        uint256 rewardAmount = rewards[_account][address(asset)];
         if (rewardAmount > 0) {
-            rewards[_account][_rewardToken] = 0;
+            rewards[_account][address(asset)] = 0;
 
             uint256 fee = 0;
             uint256 amountToCompound = rewardAmount;
@@ -296,15 +285,15 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
 
                 // Transfer fee to caller
                 if (fee > 0) {
-                    ERC20(_rewardToken).safeTransfer(msg.sender, fee);
+                    asset.safeTransfer(msg.sender, fee);
                 }
             }
 
             // Compound remaining amount
             if (amountToCompound > 0) {
-                ERC20(_rewardToken).safeApprove(address(vault), amountToCompound);
+                asset.safeApprove(address(vault), amountToCompound);
                 uint256 shares = teller.deposit(amountToCompound, 0, _account);
-                emit CompoundReward(_account, _rewardToken, amountToCompound, shares, fee);
+                emit CompoundReward(_account, address(asset), amountToCompound, shares, fee);
             }
         }
     }
@@ -405,14 +394,6 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
                 userRewardPerTokenPaid[account][token] = rewardData[token].rewardPerTokenStored;
             }
         }
-        _;
-    }
-
-    /**
-     * @notice Ensures the contract is not paused
-     */
-    modifier notPaused() {
-        if (paused) revert Distributor__Paused();
         _;
     }
 

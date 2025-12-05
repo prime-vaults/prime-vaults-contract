@@ -66,6 +66,7 @@ export default buildModule("TellerModule", (m) => {
     after: [tx8],
   });
 
+  // npx hardhat ignition wipe bepolia-usd TellerModule#setUserRole_STRATEGIST_Teller
   m.call(rolesAuthority, "setUserRole", [teller, ROLES.STRATEGIST, true], {
     id: "setUserRole_STRATEGIST_Teller",
     after: [tx9],

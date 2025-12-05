@@ -292,7 +292,7 @@ void describe("02_Reward", function () {
       const earnedBefore = await distributor.read.earned([alice.account.address, mockERC20.address]);
 
       // Alice compounds her own rewards (no fee)
-      await distributor.write.compoundReward([alice.account.address, mockERC20.address], { account: alice.account });
+      await distributor.write.compoundReward([alice.account.address], { account: alice.account });
 
       const sharesAfter = await vault.read.balanceOf([alice.account.address]);
       const earnedAfter = await distributor.read.earned([alice.account.address, mockERC20.address]);
@@ -337,7 +337,7 @@ void describe("02_Reward", function () {
       const deployerBalanceBefore = await mockERC20.read.balanceOf(["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"]);
 
       // Deployer compounds for Bob (third-party compound)
-      await distributor.write.compoundReward([bob.account.address, mockERC20.address]);
+      await distributor.write.compoundReward([bob.account.address]);
 
       const sharesAfter = await vault.read.balanceOf([bob.account.address]);
       const earnedAfter = await distributor.read.earned([bob.account.address, mockERC20.address]);

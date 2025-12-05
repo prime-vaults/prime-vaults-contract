@@ -22,16 +22,10 @@ if (MNEMONIC && PRIVATE_KEY) {
   throw new Error("Both MNEMONIC and PRIVATE_KEY environment variables are set. PRIVATE_KEY will take precedence.");
 }
 
-const accounts: HttpNetworkAccountsUserConfig | undefined = MNEMONIC
-  ? { mnemonic: MNEMONIC }
-  : PRIVATE_KEY
-    ? [PRIVATE_KEY]
-    : undefined;
+const accounts: HttpNetworkAccountsUserConfig | undefined = MNEMONIC ? { mnemonic: MNEMONIC } : PRIVATE_KEY ? [PRIVATE_KEY] : undefined;
 
 if (accounts == null) {
-  console.warn(
-    "⚠️  Warning: No MNEMONIC or PRIVATE_KEY environment variable set. Deployments may fail if the network requires authentication.",
-  );
+  console.warn("⚠️  Warning: No MNEMONIC or PRIVATE_KEY environment variable set. Deployments may fail if the network requires authentication.");
 }
 
 const config: HardhatUserConfig = {
@@ -52,8 +46,8 @@ const config: HardhatUserConfig = {
       // Disable the optimizer when debugging
       // https://hardhat.org/hardhat-network/#solidity-optimizer-support
       optimizer: {
-        enabled: false,
-        runs: 1,
+        enabled: true,
+        runs: 200,
       },
       viaIR: true,
     },
@@ -83,9 +77,13 @@ const config: HardhatUserConfig = {
     },
     bepolia: {
       type: "http",
-      chainType: "l1",
+      chainType: "op",
       accounts,
       url: process.env.RPC_URL || berachainBepolia.rpcUrls.default.http[0],
+      timeout: 60000,
+      ignition: {
+        explorerUrl: "https://testnet.berascan.com",
+      },
     },
   },
 };
