@@ -10,7 +10,7 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
-import {IDelayedWithdraw} from "../interfaces/IDelayedWithdrawEvents.sol";
+import {IDelayedWithdraw} from "../interfaces/IDelayedWithdraw.sol";
 
 import "../auth/PrimeAuth.sol";
 

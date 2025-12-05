@@ -9,7 +9,7 @@ import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {Distributor} from "./Distributor.sol";
-import {ITeller} from "../interfaces/ITellerEvents.sol";
+import {ITeller} from "../interfaces/ITeller.sol";
 
 import "../auth/PrimeAuth.sol";
 

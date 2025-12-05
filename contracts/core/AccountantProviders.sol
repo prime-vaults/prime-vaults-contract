@@ -5,7 +5,7 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {BoringVault} from "./BoringVault.sol";
-import {IAccountant} from "../interfaces/IAccountantEvents.sol";
+import {IAccountant} from "../interfaces/IAccountant.sol";
 
 import {PrimeAuth} from "../auth/PrimeAuth.sol";
 

@@ -6,7 +6,7 @@ import {Auth, Authority} from "solmate/src/auth/Auth.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {MerkleProofLib} from "solmate/src/utils/MerkleProofLib.sol";
 import {BoringVault} from "./BoringVault.sol";
-import {IManager} from "../interfaces/IManagerEvents.sol";
+import {IManager} from "../interfaces/IManager.sol";
 
 import "../auth/PrimeAuth.sol";
 
