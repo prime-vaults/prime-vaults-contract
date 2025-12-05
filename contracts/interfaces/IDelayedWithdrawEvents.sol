@@ -2,8 +2,9 @@
 pragma solidity ^0.8.30;
 
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
+import {IPausableEvents} from "./IPausableEvents.sol";
 
-interface IDelayedWithdrawEvents {
+interface IDelayedWithdrawEvents is IPausableEvents {
     event WithdrawRequested(address indexed account, ERC20 indexed asset, uint96 shares, uint40 maturity);
     event WithdrawCancelled(address indexed account, ERC20 indexed asset, uint96 shares);
     event WithdrawCompleted(address indexed account, ERC20 indexed asset, uint256 shares, uint256 assets);
@@ -13,8 +14,6 @@ interface IDelayedWithdrawEvents {
     event WithdrawFeeUpdated(address indexed asset, uint16 newWithdrawFee);
     event WithdrawalsStopped(address indexed asset);
     event ThirdPartyCompletionChanged(address indexed account, ERC20 indexed asset, bool allowed);
-    event Paused();
-    event Unpaused();
     event PullFundsFromVaultUpdated(bool _pullFundsFromVault);
     event ExpeditedWithdrawFeeUpdated(uint16 newFee);
     event WithdrawAccelerated(address indexed account, ERC20 indexed asset, uint40 newMaturity, uint96 accelerationFee);

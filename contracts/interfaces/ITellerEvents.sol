@@ -2,8 +2,6 @@
 pragma solidity ^0.8.30;
 
 interface ITellerEvents {
-    event Paused();
-    event Unpaused();
     event DepositsAllowed(bool allowed);
     event WithdrawsAllowed(bool allowed);
     event Deposit(

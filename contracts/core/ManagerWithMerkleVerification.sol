@@ -6,7 +6,6 @@ import {Auth, Authority} from "solmate/src/auth/Auth.sol";
 import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {MerkleProofLib} from "solmate/src/utils/MerkleProofLib.sol";
 import {BoringVault} from "./BoringVault.sol";
-import {IPausable} from "../interfaces/IPausable.sol";
 import {IManagerErrors} from "../interfaces/IManagerErrors.sol";
 import {IManagerEvents} from "../interfaces/IManagerEvents.sol";
 
@@ -19,7 +18,7 @@ import "../auth/PrimeAuth.sol";
  * @dev Each strategist can have their own Merkle root defining allowed operations
  *      Merkle tree leaves are: keccak256(abi.encodePacked(decoderAndSanitizer, target, valueIsNonZero, selector, argumentAddresses...))
  */
-contract ManagerWithMerkleVerification is PrimeAuth, IPausable, IManagerErrors, IManagerEvents {
+contract ManagerWithMerkleVerification is PrimeAuth, IManagerErrors, IManagerEvents {
     using FixedPointMathLib for uint256;
     using Address for address;
 
@@ -35,11 +34,6 @@ contract ManagerWithMerkleVerification is PrimeAuth, IPausable, IManagerErrors, 
      * @dev Maps strategist address => merkle root
      */
     mapping(address => bytes32) public manageRoot;
-
-    /**
-     * @notice Pauses manageVaultWithMerkleVerification calls
-     */
-    bool public isPaused;
 
     // ========================================= CONSTRUCTOR =========================================
 
@@ -59,24 +53,6 @@ contract ManagerWithMerkleVerification is PrimeAuth, IPausable, IManagerErrors, 
         bytes32 oldRoot = manageRoot[strategist];
         manageRoot[strategist] = _manageRoot;
         emit ManageRootUpdated(strategist, oldRoot, _manageRoot);
-    }
-
-    /**
-     * @notice Pause manageVaultWithMerkleVerification calls
-     * @dev Callable by EMERGENCY_ADMIN_ROLE
-     */
-    function pause() external onlyEmergencyAdmin {
-        isPaused = true;
-        emit Paused();
-    }
-
-    /**
-     * @notice Unpause manageVaultWithMerkleVerification calls
-     * @dev Callable by EMERGENCY_ADMIN_ROLE
-     */
-    function unpause() external onlyEmergencyAdmin {
-        isPaused = false;
-        emit Unpaused();
     }
 
     // ========================================= STRATEGIST FUNCTIONS =========================================

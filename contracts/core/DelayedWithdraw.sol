@@ -10,13 +10,12 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
-import {IPausable} from "../interfaces/IPausable.sol";
 import {IDelayedWithdrawErrors} from "../interfaces/IDelayedWithdrawErrors.sol";
 import {IDelayedWithdrawEvents} from "../interfaces/IDelayedWithdrawEvents.sol";
 
 import "../auth/PrimeAuth.sol";
 
-contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable, IDelayedWithdrawErrors, IDelayedWithdrawEvents {
+contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdrawErrors, IDelayedWithdrawEvents {
     using SafeTransferLib for BoringVault;
     using SafeTransferLib for ERC20;
     using FixedPointMathLib for uint256;
@@ -71,11 +70,6 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable, IDelayedWithd
      * @notice The address that receives the fee when a withdrawal is completed.
      */
     address public feeAddress;
-
-    /**
-     * @notice Used to pause calls to `requestWithdraw`, and `completeWithdraw`.
-     */
-    bool public isPaused;
 
     /**
      * @notice Whether or not the contract should pull funds from the Boring Vault when completing a withdrawal,
@@ -139,24 +133,6 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable, IDelayedWithd
     // ========================================= ADMIN FUNCTIONS =========================================
 
     /**
-     * @notice Pause this contract, which prevents future calls to `manageVaultWithMerkleVerification`.
-     * @dev Callable by MULTISIG_ROLE.
-     */
-    function pause() external requiresAuth {
-        isPaused = true;
-        emit Paused();
-    }
-
-    /**
-     * @notice Unpause this contract, which allows future calls to `manageVaultWithMerkleVerification`.
-     * @dev Callable by MULTISIG_ROLE.
-     */
-    function unpause() external requiresAuth {
-        isPaused = false;
-        emit Unpaused();
-    }
-
-    /**
      * @notice Stops withdrawals.
      * @dev Callable by MULTISIG_ROLE.
      */
@@ -172,11 +148,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IPausable, IDelayedWithd
      * @notice Sets up the withdrawal settings.
      * @dev Callable by OWNER_ROLE.
      */
-    function setupWithdraw(
-        uint32 withdrawDelay,
-        uint16 withdrawFee,
-        uint16 expeditedWithdrawFee
-    ) external onlyProtocolAdmin {
+    function setupWithdraw(uint32 withdrawDelay, uint16 withdrawFee, uint16 expeditedWithdrawFee) external onlyProtocolAdmin {
         if (withdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__WithdrawFeeTooHigh();
         if (expeditedWithdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__ExpeditedWithdrawFeeTooHigh();
 

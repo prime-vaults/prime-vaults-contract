@@ -5,6 +5,8 @@ import {Error} from "../helper/Error.sol";
 import {IPrimeRBAC} from "../interfaces/IPrimeRBAC.sol";
 import {PrimeRBAC} from "./PrimeRBAC.sol";
 import {Auth, Authority} from "solmate/src/auth/Auth.sol";
+import {IPausable} from "../interfaces/IPausable.sol";
+import {IPausableEvents} from "../interfaces/IPausableEvents.sol";
 
 /**
  * @title PrimeAuth
@@ -12,20 +14,21 @@ import {Auth, Authority} from "solmate/src/auth/Auth.sol";
  * @notice Abstract contract providing authentication functionality integrated with PrimeRBAC
  * @dev Extends Solmate's Auth contract and provides protocol admin role checking via PrimeRBAC
  */
-abstract contract PrimeAuth is Auth {
-    //============================== STATE ===============================
+abstract contract PrimeAuth is Auth, IPausable, IPausableEvents {
+    /* ========================================= STATE ========================================= */
 
-    /**
-     * @notice The PrimeRBAC contract that manages role-based access control
-     */
+    /** @notice PrimeRBAC contract for protocol-level role management */
     IPrimeRBAC public primeRBAC;
 
-    //============================== CONSTRUCTOR ===============================
+    /** @notice Pause status for contract operations */
+    bool public isPaused;
+
+    /* ========================================= CONSTRUCTOR ========================================= */
 
     /**
-     * @notice Initializes the PrimeAuth contract
-     * @param _primeRBAC The address of the PrimeRBAC contract
-     * @dev Sets the owner to msg.sender and validates primeRBAC is not the zero address
+     * @notice Initialize PrimeAuth with RBAC integration
+     * @param _primeRBAC PrimeRBAC contract address
+     * @param _authority RolesAuthority contract address
      */
     constructor(address _primeRBAC, address _authority) Auth(msg.sender, Authority(_authority)) {
         if (_primeRBAC == address(0) || _authority == address(0)) {
@@ -34,11 +37,11 @@ abstract contract PrimeAuth is Auth {
         primeRBAC = IPrimeRBAC(_primeRBAC);
     }
 
-    //============================== MODIFIERS ===============================
+    /* ========================================= MODIFIERS ========================================= */
 
     /**
-     * @notice Modifier to restrict function access to protocol admins only
-     * @dev Checks if msg.sender has the PROTOCOL_ADMIN_ROLE in PrimeRBAC
+     * @notice Restrict access to protocol admins
+     * @dev Checks PROTOCOL_ADMIN_ROLE in PrimeRBAC
      */
     modifier onlyProtocolAdmin() {
         if (!primeRBAC.hasProtocolAdminRole(msg.sender)) {
@@ -47,6 +50,10 @@ abstract contract PrimeAuth is Auth {
         _;
     }
 
+    /**
+     * @notice Restrict access to emergency admins
+     * @dev Checks EMERGENCY_ADMIN_ROLE in PrimeRBAC
+     */
     modifier onlyEmergencyAdmin() {
         if (!primeRBAC.hasEmergencyAdminRole(msg.sender)) {
             revert Error.NOT_EMERGENCY_ADMIN();
@@ -54,10 +61,34 @@ abstract contract PrimeAuth is Auth {
         _;
     }
 
+    /**
+     * @notice Restrict access to operators
+     * @dev Checks OPERATOR_ROLE in PrimeRBAC
+     */
     modifier onlyOperator() {
         if (!primeRBAC.hasOperatorRole(msg.sender)) {
             revert Error.NOT_OPERATOR();
         }
         _;
+    }
+
+    /* ========================================= PAUSE FUNCTIONS ========================================= */
+
+    /**
+     * @notice Pause contract operations
+     * @dev Restricted to EMERGENCY_ADMIN_ROLE
+     */
+    function pause() external onlyEmergencyAdmin {
+        isPaused = true;
+        emit Paused();
+    }
+
+    /**
+     * @notice Unpause contract operations
+     * @dev Restricted to EMERGENCY_ADMIN_ROLE
+     */
+    function unpause() external onlyEmergencyAdmin {
+        isPaused = false;
+        emit Unpaused();
     }
 }

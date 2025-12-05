@@ -5,13 +5,12 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {BoringVault} from "./BoringVault.sol";
-import {IPausable} from "../interfaces/IPausable.sol";
 import {IAccountantErrors} from "../interfaces/IAccountantErrors.sol";
 import {IAccountantEvents} from "../interfaces/IAccountantEvents.sol";
 
 import {PrimeAuth} from "../auth/PrimeAuth.sol";
 
-contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccountantEvents {
+contract AccountantProviders is PrimeAuth, IAccountantErrors, IAccountantEvents {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
@@ -24,7 +23,6 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
      * @param totalSharesLastUpdate Total vault shares at last update
      * @param exchangeRate Current share price (base asset per share)
      * @param lastUpdateTimestamp Last exchange rate update timestamp
-     * @param isPaused Contract pause status
      * @param platformFee Annual fee rate in basis points (e.g., 1000 = 10%)
      */
     struct AccountantState {
@@ -33,7 +31,6 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
         uint128 totalSharesLastUpdate;
         uint96 exchangeRate;
         uint64 lastUpdateTimestamp;
-        bool isPaused;
         uint16 platformFee;
     }
 
@@ -79,30 +76,11 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
             totalSharesLastUpdate: uint128(vault.totalSupply()),
             exchangeRate: uint96(10 ** decimals),
             lastUpdateTimestamp: uint64(block.timestamp),
-            isPaused: false,
             platformFee: platformFee
         });
     }
 
     /* ========================================= ADMIN FUNCTIONS ========================================= */
-
-    /**
-     * @notice Pause contract (blocks updateExchangeRate and getRateSafe)
-     * @dev Restricted to EMERGENCY_ADMIN_ROLE
-     */
-    function pause() external onlyEmergencyAdmin {
-        accountantState.isPaused = true;
-        emit Paused();
-    }
-
-    /**
-     * @notice Unpause contract (re-enables updateExchangeRate and getRateSafe)
-     * @dev Restricted to EMERGENCY_ADMIN_ROLE
-     */
-    function unpause() external onlyEmergencyAdmin {
-        accountantState.isPaused = false;
-        emit Unpaused();
-    }
 
     /**
      * @notice Update platform fee (max 20% = 2000 bps)
@@ -137,7 +115,7 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
      */
     function updateExchangeRate() public virtual requiresAuth {
         AccountantState storage state = accountantState;
-        if (state.isPaused) revert AccountantProviders__Paused();
+        if (isPaused) revert AccountantProviders__Paused();
 
         uint64 currentTime = uint64(block.timestamp);
         uint96 oldExchangeRate = state.exchangeRate;
@@ -177,7 +155,7 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
         if (msg.sender != address(vault)) revert AccountantProviders__OnlyCallableByBoringVault();
 
         AccountantState storage state = accountantState;
-        if (state.isPaused) revert AccountantProviders__Paused();
+        if (isPaused) revert AccountantProviders__Paused();
 
         this.updateExchangeRate();
         if (state.feesOwedInBase == 0) revert AccountantProviders__ZeroFeesOwed();
@@ -205,7 +183,7 @@ contract AccountantProviders is PrimeAuth, IPausable, IAccountantErrors, IAccoun
      * @dev Use this for critical operations that should fail when paused
      */
     function getRateSafe() external view virtual returns (uint256 rate) {
-        if (accountantState.isPaused) revert AccountantProviders__Paused();
+        if (isPaused) revert AccountantProviders__Paused();
         rate = getRate();
     }
 

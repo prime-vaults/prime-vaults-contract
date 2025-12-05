@@ -31,11 +31,7 @@ void describe("01_Deposit", function () {
       const result = await depositTokens(context, depositAmount, alice.account);
 
       assert.equal(result.shares, depositAmount, "Shares should equal deposit amount on first deposit");
-      assert.equal(
-        result.balanceAfter,
-        result.initialBalance - depositAmount,
-        "Balance should decrease by deposit amount",
-      );
+      assert.equal(result.balanceAfter, result.initialBalance - depositAmount, "Balance should decrease by deposit amount");
     });
   });
 
@@ -99,8 +95,8 @@ void describe("01_Deposit", function () {
       await teller.write.setDepositCap([DEPOSIT_CAP]);
 
       const tellerState = await teller.read.tellerState();
-      // TellerState: [isPaused, allowDeposits, allowWithdraws, permissionedTransfers, shareLockPeriod, depositCap]
-      assert.equal(tellerState[5], DEPOSIT_CAP, "Deposit cap should be set to 200 tokens");
+      // TellerState: [allowDeposits, allowWithdraws, permissionedTransfers, shareLockPeriod, depositCap]
+      assert.equal(tellerState[4], DEPOSIT_CAP, "Deposit cap should be set to 200 tokens");
     });
 
     void it("Step 2: Alice deposits 100 tokens", async function () {
@@ -195,8 +191,8 @@ void describe("01_Deposit", function () {
       await teller.write.setDepositCap([newCap]);
 
       const tellerState = await teller.read.tellerState();
-      // TellerState: [isPaused, allowDeposits, allowWithdraws, permissionedTransfers, shareLockPeriod, depositCap]
-      assert.equal(tellerState[5], newCap, "Deposit cap should be increased to 250 tokens");
+      // TellerState: [allowDeposits, allowWithdraws, permissionedTransfers, shareLockPeriod, depositCap]
+      assert.equal(tellerState[4], newCap, "Deposit cap should be increased to 250 tokens");
 
       // Mint 50 tokens for Alice
       const depositAmount = 50n * ONE_TOKEN;

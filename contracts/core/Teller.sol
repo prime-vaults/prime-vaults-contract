@@ -8,21 +8,19 @@ import {FixedPointMathLib} from "solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {IBeforeUpdateHook} from "../interfaces/hooks/IBeforeUpdateHook.sol";
 import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
-import {IPausable} from "../interfaces/IPausable.sol";
 import {Distributor} from "./Distributor.sol";
 import {ITellerErrors} from "../interfaces/ITellerErrors.sol";
 import {ITellerEvents} from "../interfaces/ITellerEvents.sol";
 
 import "../auth/PrimeAuth.sol";
 
-contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITellerErrors, ITellerEvents {
+contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITellerErrors, ITellerEvents {
     using FixedPointMathLib for uint256;
     using SafeTransferLib for ERC20;
 
     // ========================================= STRUCTS =========================================
 
     /**
-     * @param isPaused whether or not this contract is paused
      * @param allowDeposits whether deposits are allowed for the asset
      * @param allowWithdraws whether withdrawals are allowed for the asset
      * @param permissionedTransfers if true, only permissioned operators can transfer shares
@@ -30,7 +28,6 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITe
      * @param depositCap the global deposit cap of the vault
      */
     struct TellerState {
-        bool isPaused;
         bool allowDeposits;
         bool allowWithdraws;
         bool permissionedTransfers;
@@ -99,44 +96,15 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITe
      */
     uint256 internal immutable ONE_SHARE;
 
-    constructor(
-        address _primeRBAC,
-        address _vault,
-        address _accountant
-    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
+    constructor(address _primeRBAC, address _vault, address _accountant) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
         vault = BoringVault(payable(_vault));
         ONE_SHARE = 10 ** vault.decimals();
         accountant = AccountantProviders(_accountant);
         asset = vault.asset();
-        tellerState = TellerState({
-            isPaused: false,
-            allowDeposits: true,
-            allowWithdraws: true,
-            permissionedTransfers: false,
-            shareLockPeriod: 0,
-            depositCap: type(uint112).max
-        });
+        tellerState = TellerState({allowDeposits: true, allowWithdraws: true, permissionedTransfers: false, shareLockPeriod: 0, depositCap: type(uint112).max});
     }
 
     // ========================================= ADMIN FUNCTIONS =========================================
-
-    /**
-     * @notice Pause this contract, which prevents future calls to `deposit` and `depositWithPermit`.
-     * @dev Callable by MULTISIG_ROLE.
-     */
-    function pause() external requiresAuth {
-        tellerState.isPaused = true;
-        emit Paused();
-    }
-
-    /**
-     * @notice Unpause this contract, which allows future calls to `deposit` and `depositWithPermit`.
-     * @dev Callable by MULTISIG_ROLE.
-     */
-    function unpause() external requiresAuth {
-        tellerState.isPaused = false;
-        emit Unpaused();
-    }
 
     /**
      * @notice Enable or disable deposits for the asset.
@@ -352,11 +320,7 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITe
      * @param operator The address performing the operation.
      */
     function _handleDenyList(address from, address to, address operator) internal view {
-        if (
-            beforeTransferData[from].denyFrom ||
-            beforeTransferData[to].denyTo ||
-            beforeTransferData[operator].denyOperator
-        ) {
+        if (beforeTransferData[from].denyFrom || beforeTransferData[to].denyTo || beforeTransferData[operator].denyOperator) {
             revert Teller__TransferDenied(from, to, operator);
         }
     }
@@ -367,11 +331,7 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITe
      * @notice Allows users to deposit into the BoringVault, if this contract is not paused.
      * @dev Publicly callable.
      */
-    function deposit(
-        uint256 depositAmount,
-        uint256 minimumMint,
-        address to
-    ) external virtual requiresAuth nonReentrant returns (uint256 shares) {
+    function deposit(uint256 depositAmount, uint256 minimumMint, address to) external virtual requiresAuth nonReentrant returns (uint256 shares) {
         if (to == address(0)) to = msg.sender;
         _beforeDeposit();
         shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, to);
@@ -383,11 +343,7 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITe
      * @dev Does NOT support native deposits.
      * @dev Callable by SOLVER_ROLE.
      */
-    function bulkDeposit(
-        uint256 depositAmount,
-        uint256 minimumMint,
-        address to
-    ) external virtual requiresAuth nonReentrant returns (uint256 shares) {
+    function bulkDeposit(uint256 depositAmount, uint256 minimumMint, address to) external virtual requiresAuth nonReentrant returns (uint256 shares) {
         _beforeDeposit();
         shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, to);
         emit BulkDeposit(address(asset), depositAmount);
@@ -397,11 +353,7 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITe
      * @notice Allows off ramp role to withdraw from this contract.
      * @dev Callable by SOLVER_ROLE.
      */
-    function bulkWithdraw(
-        uint256 shareAmount,
-        uint256 minimumAssets,
-        address to
-    ) external virtual requiresAuth nonReentrant returns (uint256 assetsOut) {
+    function bulkWithdraw(uint256 shareAmount, uint256 minimumAssets, address to) external virtual requiresAuth nonReentrant returns (uint256 assetsOut) {
         _getAccountant().updateExchangeRate();
         assetsOut = _withdraw(shareAmount, minimumAssets, to);
         emit BulkWithdraw(address(asset), shareAmount);
@@ -411,11 +363,7 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITe
      * @notice Allows withdrawals from this contract.
      * @dev Either public or disabled depending on configuration.
      */
-    function withdraw(
-        uint256 shareAmount,
-        uint256 minimumAssets,
-        address to
-    ) external virtual requiresAuth nonReentrant returns (uint256 assetsOut) {
+    function withdraw(uint256 shareAmount, uint256 minimumAssets, address to) external virtual requiresAuth nonReentrant returns (uint256 assetsOut) {
         _getAccountant().updateExchangeRate();
         assetsOut = _withdraw(shareAmount, minimumAssets, to);
         emit Withdraw(address(asset), shareAmount);
@@ -426,12 +374,7 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITe
     /**
      * @notice Implements a common ERC20 deposit into BoringVault.
      */
-    function _erc20Deposit(
-        uint256 depositAmount,
-        uint256 minimumMint,
-        address from,
-        address to
-    ) internal virtual returns (uint256 shares) {
+    function _erc20Deposit(uint256 depositAmount, uint256 minimumMint, address from, address to) internal virtual returns (uint256 shares) {
         _getAccountant().updateExchangeRate();
         _handleDenyList(from, to, msg.sender);
         TellerState storage state = tellerState;
@@ -440,8 +383,7 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITe
         if (shares < minimumMint) revert Teller__MinimumMintNotMet();
         if (state.depositCap != type(uint112).max) {
             uint256 totalSharesAfterDeposit = shares + vault.totalSupply();
-            if (totalSharesAfterDeposit > state.depositCap)
-                revert Teller__DepositExceedsCap(totalSharesAfterDeposit, state.depositCap);
+            if (totalSharesAfterDeposit > state.depositCap) revert Teller__DepositExceedsCap(totalSharesAfterDeposit, state.depositCap);
         }
         vault.enter(from, depositAmount, to, shares);
         _afterDeposit(depositAmount);
@@ -450,13 +392,9 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITe
     /**
      * @notice Implements a common ERC20 withdraw from BoringVault.
      */
-    function _withdraw(
-        uint256 shareAmount,
-        uint256 minimumAssets,
-        address to
-    ) internal virtual returns (uint256 assetsOut) {
+    function _withdraw(uint256 shareAmount, uint256 minimumAssets, address to) internal virtual returns (uint256 assetsOut) {
         TellerState storage state = tellerState;
-        if (state.isPaused) revert Teller__Paused();
+        if (isPaused) revert Teller__Paused();
         if (!state.allowWithdraws) revert Teller__WithdrawsNotAllowed();
 
         if (shareAmount == 0) revert Teller__ZeroShares();
@@ -478,19 +416,14 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, IPausable, ITe
      */
     function _beforeDeposit() internal view {
         TellerState storage state = tellerState;
-        if (state.isPaused) revert Teller__Paused();
+        if (isPaused) revert Teller__Paused();
         if (!state.allowDeposits) revert Teller__DepositsNotAllowed();
     }
 
     /**
      * @notice Handle share lock logic, and event.
      */
-    function _afterPublicDeposit(
-        address user,
-        uint256 depositAmount,
-        uint256 shares,
-        uint256 currentShareLockPeriod
-    ) internal {
+    function _afterPublicDeposit(address user, uint256 depositAmount, uint256 shares, uint256 currentShareLockPeriod) internal {
         // Only set share unlock time if share lock period is greater than 0.
         if (currentShareLockPeriod > 0) {
             beforeTransferData[user].shareUnlockTime = block.timestamp + currentShareLockPeriod;
