@@ -80,20 +80,10 @@ void describe("04_ClaimFees", function () {
 
       // Unpause accountant if it was paused
       const accountantStateBefore = await accountant.read.getAccountantState();
-      if (accountantStateBefore.isPaused) {
-        await accountant.write.unpause();
-      }
 
       // Check fees owed before claiming
       const feesOwedBefore = accountantStateBefore.feesOwedInBase;
       assert.ok(feesOwedBefore > 0n, "Should have accumulated platform fees");
-
-      // Calculate expected platform fee:
-      // platformFee = 1000 bps = 10% annual
-      // time passed = 1 day
-      // assets = 100 tokens
-      // expectedFee = 100 * 0.10 * (1/365) ≈ 0.0274...
-      const expectedFeeApprox = (DEPOSIT_AMOUNT * 1000n * 86400n) / (10000n * 365n * 86400n);
 
       // Get payout address balance before
       const payoutAddress = accountantStateBefore.payoutAddress;
@@ -134,10 +124,7 @@ void describe("04_ClaimFees", function () {
 
       // claimFees() calls updateExchangeRate() internally, which may add a tiny bit more fees
       // due to the time elapsed since Step 2, so we check it's at least what we saw before
-      assert.ok(
-        actualFeesReceived >= feesOwedBefore,
-        `Payout address should receive at least ${feesOwedBefore}, got ${actualFeesReceived}`,
-      );
+      assert.ok(actualFeesReceived >= feesOwedBefore, `Payout address should receive at least ${feesOwedBefore}, got ${actualFeesReceived}`);
 
       console.log(`Successfully claimed ${actualFeesReceived} in platform fees (expected at least ${feesOwedBefore})`);
     });

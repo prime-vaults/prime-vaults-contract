@@ -133,9 +133,9 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
 
     /**
      * @notice Stops withdrawals.
-     * @dev Callable by MULTISIG_ROLE.
+     * @dev Callable by EMERGENCY_ADMIN_ROLE.
      */
-    function stopWithdrawals() external requiresAuth {
+    function stopWithdrawals() external onlyEmergencyAdmin {
         if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         withdrawState.allowWithdraws = false;
@@ -162,9 +162,9 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
 
     /**
      * @notice Changes the withdraw delay.
-     * @dev Callable by MULTISIG_ROLE.
+     * @dev Callable by PROTOCOL_ADMIN_ROLE.
      */
-    function changeWithdrawDelay(uint32 withdrawDelay) external requiresAuth {
+    function changeWithdrawDelay(uint32 withdrawDelay) external onlyProtocolAdmin {
         if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         withdrawState.withdrawDelay = withdrawDelay;
@@ -174,9 +174,9 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
 
     /**
      * @notice Changes the withdraw fee.
-     * @dev Callable by OWNER_ROLE.
+     * @dev Callable by PROTOCOL_ADMIN_ROLE.
      */
-    function changeWithdrawFee(uint16 withdrawFee) external requiresAuth {
+    function changeWithdrawFee(uint16 withdrawFee) external onlyProtocolAdmin {
         if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         if (withdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__WithdrawFeeTooHigh();
@@ -188,9 +188,9 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
 
     /**
      * @notice Changes the fee address.
-     * @dev Callable by STRATEGIST_MULTISIG_ROLE.
+     * @dev Callable by PROTOCOL_ADMIN_ROLE.
      */
-    function setFeeAddress(address _feeAddress) external requiresAuth {
+    function setFeeAddress(address _feeAddress) external onlyProtocolAdmin {
         if (_feeAddress == address(0)) revert DelayedWithdraw__BadAddress();
         feeAddress = _feeAddress;
 
@@ -213,18 +213,18 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
 
     /**
      * @notice Cancels a user's withdrawal request.
-     * @dev Callable by MULTISIG_ROLE, and STRATEGIST_MULTISIG_ROLE.
+     * @dev Callable by OPERATOR_ROLE.
      */
-    function cancelUserWithdraw(address user) external requiresAuth {
+    function cancelUserWithdraw(address user) external onlyOperator {
         _cancelWithdraw(user);
     }
 
     /**
      * @notice Completes a user's withdrawal request.
      * @dev Admins can complete requests even if they are outside the completion window.
-     * @dev Callable by MULTISIG_ROLE, and STRATEGIST_MULTISIG_ROLE.
+     * @dev Callable by OPERATOR_ROLE.
      */
-    function completeUserWithdraw(address user) external requiresAuth returns (uint256 assetsOut) {
+    function completeUserWithdraw(address user) external onlyOperator returns (uint256 assetsOut) {
         WithdrawRequest storage req = withdrawRequests[user];
         assetsOut = _completeWithdraw(user, req);
     }

@@ -19,37 +19,57 @@ export default buildModule("TellerModule", (m) => {
   });
 
   // Set public capability for deposit
-  m.call(rolesAuthority, "setPublicCapability", [teller, toFunctionSelector("deposit(uint256,uint256,address)"), true], { id: "setPublicCapability_deposit" });
-
-  // Set role capabilities for Teller functions
-  m.call(rolesAuthority, "setRoleCapability", [ROLES.BURNER, teller, toFunctionSelector("withdraw(uint256,uint256,address)"), true], {
-    id: "setRoleCapability_withdraw",
+  const tx1 = m.call(rolesAuthority, "setPublicCapability", [teller, toFunctionSelector("deposit(uint256,uint256,address)"), true], {
+    id: "setPublicCapability_deposit",
+    after: [teller],
   });
 
-  m.call(rolesAuthority, "setRoleCapability", [ROLES.BURNER, teller, toFunctionSelector("bulkWithdraw(uint256,uint256,address)"), true], {
+  // Set role capabilities for Teller functions
+  const tx2 = m.call(rolesAuthority, "setRoleCapability", [ROLES.BURNER, teller, toFunctionSelector("withdraw(uint256,uint256,address)"), true], {
+    id: "setRoleCapability_withdraw",
+    after: [tx1],
+  });
+
+  const tx3 = m.call(rolesAuthority, "setRoleCapability", [ROLES.BURNER, teller, toFunctionSelector("bulkWithdraw(uint256,uint256,address)"), true], {
     id: "setRoleCapability_bulkWithdraw",
+    after: [tx2],
   });
 
   // Set role capabilities for buffer helper management
-  m.call(rolesAuthority, "setRoleCapability", [ROLES.MANAGER, teller, toFunctionSelector("setDepositBufferHelper(address)"), true], {
+  const tx4 = m.call(rolesAuthority, "setRoleCapability", [ROLES.MANAGER, teller, toFunctionSelector("setDepositBufferHelper(address)"), true], {
     id: "setRoleCapability_setDepositBufferHelper",
+    after: [tx3],
   });
 
-  m.call(rolesAuthority, "setRoleCapability", [ROLES.MANAGER, teller, toFunctionSelector("setWithdrawBufferHelper(address)"), true], {
+  const tx5 = m.call(rolesAuthority, "setRoleCapability", [ROLES.MANAGER, teller, toFunctionSelector("setWithdrawBufferHelper(address)"), true], {
     id: "setRoleCapability_setWithdrawBufferHelper",
+    after: [tx4],
   });
 
-  m.call(rolesAuthority, "setRoleCapability", [ROLES.MANAGER, teller, toFunctionSelector("allowBufferHelper(address)"), true], {
+  const tx6 = m.call(rolesAuthority, "setRoleCapability", [ROLES.MANAGER, teller, toFunctionSelector("allowBufferHelper(address)"), true], {
     id: "setRoleCapability_allowBufferHelper",
+    after: [tx5],
   });
 
-  m.call(rolesAuthority, "setUserRole", [teller, ROLES.MINTER, true], { id: "setUserRole_MINTER_Teller" });
+  const tx7 = m.call(rolesAuthority, "setUserRole", [teller, ROLES.MINTER, true], {
+    id: "setUserRole_MINTER_Teller",
+    after: [tx6],
+  });
 
-  m.call(rolesAuthority, "setUserRole", [teller, ROLES.BURNER, true], { id: "setUserRole_BURNER_Teller" });
+  const tx8 = m.call(rolesAuthority, "setUserRole", [teller, ROLES.BURNER, true], {
+    id: "setUserRole_BURNER_Teller",
+    after: [tx7],
+  });
 
-  m.call(rolesAuthority, "setUserRole", [teller, ROLES.MANAGER, true], { id: "setUserRole_MANAGER_Teller" });
+  const tx9 = m.call(rolesAuthority, "setUserRole", [teller, ROLES.MANAGER, true], {
+    id: "setUserRole_MANAGER_Teller",
+    after: [tx8],
+  });
 
-  m.call(rolesAuthority, "setUserRole", [teller, ROLES.STRATEGIST, true], { id: "setUserRole_STRATEGIST_Teller" });
+  m.call(rolesAuthority, "setUserRole", [teller, ROLES.STRATEGIST, true], {
+    id: "setUserRole_STRATEGIST_Teller",
+    after: [tx9],
+  });
 
   return { teller, accountant, vault, primeRBAC };
 });

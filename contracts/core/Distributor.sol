@@ -71,13 +71,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     event RewardsDurationUpdated(address token, uint256 newDuration);
     event Recovered(address token, uint256 amount);
     event PausedUpdated(bool isPaused);
-    event CompoundReward(
-        address indexed account,
-        address indexed rewardToken,
-        uint256 rewardAmount,
-        uint256 shares,
-        uint256 fee
-    );
+    event CompoundReward(address indexed account, address indexed rewardToken, uint256 rewardAmount, uint256 shares, uint256 fee);
     event CompoundFeeUpdated(uint256 newFee);
     event ThirdPartyCompoundAllowed(address indexed user, bool allowed);
 
@@ -99,10 +93,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @param _primeRBAC The PrimeRBAC contract for authentication
      * @param _teller The vault contract (source of share balances)
      */
-    constructor(
-        address _primeRBAC,
-        address _teller
-    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(Teller(_teller).vault())).authority())) {
+    constructor(address _primeRBAC, address _teller) PrimeAuth(_primeRBAC, address(BoringVault(payable(Teller(_teller).vault())).authority())) {
         teller = Teller(_teller);
         vault = ERC20(teller.vault());
     }
@@ -113,9 +104,9 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @notice Add a new reward token to the contract
      * @param _rewardsToken The address of the reward token
      * @param _rewardsDuration The duration over which rewards will be distributed
-     * @dev Callable by OWNER_ROLE
+     * @dev Callable by PROTOCOL_ADMIN_ROLE
      */
-    function addReward(address _rewardsToken, uint256 _rewardsDuration) external requiresAuth {
+    function addReward(address _rewardsToken, uint256 _rewardsDuration) external onlyProtocolAdmin {
         if (rewardData[_rewardsToken].rewardsDuration != 0) revert Distributor__AlreadyAdded();
 
         rewardTokens.push(_rewardsToken);
@@ -149,9 +140,9 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     /**
      * @notice Pause or unpause the contract
      * @param _paused Whether to pause the contract
-     * @dev Callable by OWNER_ROLE
+     * @dev Callable by EMERGENCY_ADMIN_ROLE
      */
-    function setPaused(bool _paused) external requiresAuth {
+    function setPaused(bool _paused) external onlyEmergencyAdmin {
         paused = _paused;
         emit PausedUpdated(_paused);
     }
@@ -159,10 +150,10 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     /**
      * @notice Set the compound fee percentage
      * @param _compoundFee The new compound fee in basis points (10000 = 100%)
-     * @dev Callable by OWNER_ROLE
+     * @dev Callable by PROTOCOL_ADMIN_ROLE
      * @dev Maximum fee is 20% (2000 basis points)
      */
-    function setCompoundFee(uint256 _compoundFee) external requiresAuth {
+    function setCompoundFee(uint256 _compoundFee) external onlyProtocolAdmin {
         if (_compoundFee > MAX_COMPOUND_FEE) revert Distributor__CompoundFeeExceedsMaximum();
         compoundFee = _compoundFee;
         emit CompoundFeeUpdated(_compoundFee);
@@ -173,9 +164,9 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @param tokenAddress The token to recover
      * @param tokenAmount The amount to recover
      * @dev Cannot recover active reward tokens
-     * @dev Callable by OWNER_ROLE
+     * @dev Callable by PROTOCOL_ADMIN_ROLE
      */
-    function recoverERC20(address tokenAddress, uint256 tokenAmount) external requiresAuth {
+    function recoverERC20(address tokenAddress, uint256 tokenAmount) external onlyProtocolAdmin {
         if (rewardData[tokenAddress].lastUpdateTime != 0) revert Distributor__CannotWithdrawRewardToken();
 
         ERC20(tokenAddress).safeTransfer(msg.sender, tokenAmount);
@@ -244,11 +235,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @param _to The address to send claimed rewards to
      * @return rewardAmount The amount of reward token claimed
      */
-    function claimReward(
-        address _account,
-        address _rewardToken,
-        address _to
-    ) public updateReward(_account) returns (uint256 rewardAmount) {
+    function claimReward(address _account, address _rewardToken, address _to) public updateReward(_account) returns (uint256 rewardAmount) {
         rewardAmount = rewards[_account][_rewardToken];
         if (rewardAmount > 0) {
             rewards[_account][_rewardToken] = 0;
@@ -346,10 +333,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @param _rewardsToken The reward token address
      */
     function lastTimeRewardApplicable(address _rewardsToken) public view returns (uint256) {
-        return
-            block.timestamp < rewardData[_rewardsToken].periodFinish
-                ? block.timestamp
-                : rewardData[_rewardsToken].periodFinish;
+        return block.timestamp < rewardData[_rewardsToken].periodFinish ? block.timestamp : rewardData[_rewardsToken].periodFinish;
     }
 
     /**
@@ -363,9 +347,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
 
         return
             rewardData[_rewardsToken].rewardPerTokenStored +
-            ((lastTimeRewardApplicable(_rewardsToken) - rewardData[_rewardsToken].lastUpdateTime) *
-                rewardData[_rewardsToken].rewardRate *
-                1e18) /
+            ((lastTimeRewardApplicable(_rewardsToken) - rewardData[_rewardsToken].lastUpdateTime) * rewardData[_rewardsToken].rewardRate * 1e18) /
                 vault.totalSupply();
     }
 
@@ -376,9 +358,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      */
     function earned(address account, address _rewardsToken) public view returns (uint256) {
         return
-            (vault.balanceOf(account) *
-                (rewardPerToken(_rewardsToken) - userRewardPerTokenPaid[account][_rewardsToken])) /
-                1e18 +
+            (vault.balanceOf(account) * (rewardPerToken(_rewardsToken) - userRewardPerTokenPaid[account][_rewardsToken])) / 1e18 +
             rewards[account][_rewardsToken];
     }
 

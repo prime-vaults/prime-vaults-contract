@@ -134,18 +134,18 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
     /**
      * @notice Sets the share lock period.
      * @dev This locks shares to the user address for the specified period.
-     * @dev Callable by OWNER_ROLE.
+     * @dev Callable by PROTOCOL_ADMIN_ROLE.
      */
-    function setShareLockPeriod(uint64 _shareLockPeriod) external requiresAuth {
+    function setShareLockPeriod(uint64 _shareLockPeriod) external onlyProtocolAdmin {
         if (_shareLockPeriod > MAX_SHARE_LOCK_PERIOD) revert Teller__ShareLockPeriodTooLong();
         tellerState.shareLockPeriod = _shareLockPeriod;
     }
 
     /**
      * @notice Deny a user from transferring or receiving shares.
-     * @dev Callable by OWNER_ROLE, and DENIER_ROLE.
+     * @dev Callable by OPERATOR_ROLE.
      */
-    function denyAll(address user) external requiresAuth {
+    function denyAll(address user) external onlyOperator {
         beforeTransferData[user].denyFrom = true;
         beforeTransferData[user].denyTo = true;
         beforeTransferData[user].denyOperator = true;
@@ -156,9 +156,9 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
 
     /**
      * @notice Allow a user to transfer or receive shares.
-     * @dev Callable by OWNER_ROLE, and DENIER_ROLE.
+     * @dev Callable by OPERATOR_ROLE.
      */
-    function allowAll(address user) external requiresAuth {
+    function allowAll(address user) external onlyOperator {
         beforeTransferData[user].denyFrom = false;
         beforeTransferData[user].denyTo = false;
         beforeTransferData[user].denyOperator = false;
@@ -169,90 +169,90 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
 
     /**
      * @notice Deny a user from transferring shares.
-     * @dev Callable by OWNER_ROLE, and DENIER_ROLE.
+     * @dev Callable by OPERATOR_ROLE.
      */
-    function denyFrom(address user) external requiresAuth {
+    function denyFrom(address user) external onlyOperator {
         beforeTransferData[user].denyFrom = true;
         emit DenyFrom(user);
     }
 
     /**
      * @notice Allow a user to transfer shares.
-     * @dev Callable by OWNER_ROLE, and DENIER_ROLE.
+     * @dev Callable by OPERATOR_ROLE.
      */
-    function allowFrom(address user) external requiresAuth {
+    function allowFrom(address user) external onlyOperator {
         beforeTransferData[user].denyFrom = false;
         emit AllowFrom(user);
     }
 
     /**
      * @notice Deny a user from receiving shares.
-     * @dev Callable by OWNER_ROLE, and DENIER_ROLE.
+     * @dev Callable by OPERATOR_ROLE.
      */
-    function denyTo(address user) external requiresAuth {
+    function denyTo(address user) external onlyOperator {
         beforeTransferData[user].denyTo = true;
         emit DenyTo(user);
     }
 
     /**
      * @notice Allow a user to receive shares.
-     * @dev Callable by OWNER_ROLE, and DENIER_ROLE.
+     * @dev Callable by OPERATOR_ROLE.
      */
-    function allowTo(address user) external requiresAuth {
+    function allowTo(address user) external onlyOperator {
         beforeTransferData[user].denyTo = false;
         emit AllowTo(user);
     }
 
     /**
      * @notice Deny an operator from transferring shares.
-     * @dev Callable by OWNER_ROLE, and DENIER_ROLE.
+     * @dev Callable by OPERATOR_ROLE.
      */
-    function denyOperator(address user) external requiresAuth {
+    function denyOperator(address user) external onlyOperator {
         beforeTransferData[user].denyOperator = true;
         emit DenyOperator(user);
     }
 
     /**
      * @notice Allow an operator to transfer shares.
-     * @dev Callable by OWNER_ROLE, and DENIER_ROLE.
+     * @dev Callable by OPERATOR_ROLE.
      */
-    function allowOperator(address user) external requiresAuth {
+    function allowOperator(address user) external onlyOperator {
         beforeTransferData[user].denyOperator = false;
         emit AllowOperator(user);
     }
 
     /**
      * @notice Set the permissioned transfers flag.
-     * @dev Callable by OWNER_ROLE.
+     * @dev Callable by PROTOCOL_ADMIN_ROLE.
      */
-    function setPermissionedTransfers(bool _permissionedTransfers) external requiresAuth {
+    function setPermissionedTransfers(bool _permissionedTransfers) external onlyProtocolAdmin {
         tellerState.permissionedTransfers = _permissionedTransfers;
         emit PermissionedTransfersSet(_permissionedTransfers);
     }
 
     /**
      * @notice Give permission to an operator to transfer shares when permissioned transfers flag is true.
-     * @dev Callable by OWNER_ROLE.
+     * @dev Callable by PROTOCOL_ADMIN_ROLE.
      */
-    function allowPermissionedOperator(address operator) external requiresAuth {
+    function allowPermissionedOperator(address operator) external onlyProtocolAdmin {
         beforeTransferData[operator].permissionedOperator = true;
         emit AllowPermissionedOperator(operator);
     }
 
     /**
      * @notice Revoke permission from an operator to transfer shares when permissioned transfers flag is true.
-     * @dev Callable by OWNER_ROLE, and DENIER_.
+     * @dev Callable by PROTOCOL_ADMIN_ROLE.
      */
-    function denyPermissionedOperator(address operator) external requiresAuth {
+    function denyPermissionedOperator(address operator) external onlyProtocolAdmin {
         beforeTransferData[operator].permissionedOperator = false;
         emit DenyPermissionedOperator(operator);
     }
 
     /**
      * @notice Set the deposit cap of the vault.
-     * @dev Callable by OWNER_ROLE
+     * @dev Callable by PROTOCOL_ADMIN_ROLE
      */
-    function setDepositCap(uint112 cap) external requiresAuth {
+    function setDepositCap(uint112 cap) external onlyProtocolAdmin {
         tellerState.depositCap = cap;
         emit DepositCapSet(cap);
     }
