@@ -43,10 +43,7 @@ contract ManagerWithMerkleVerification is PrimeAuth, IPausable, IManagerErrors, 
 
     // ========================================= CONSTRUCTOR =========================================
 
-    constructor(
-        address _primeRBAC,
-        address _vault
-    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
+    constructor(address _primeRBAC, address _vault) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
         vault = BoringVault(payable(_vault));
     }
 
@@ -114,14 +111,7 @@ contract ManagerWithMerkleVerification is PrimeAuth, IPausable, IManagerErrors, 
         uint256 totalSupply = vault.totalSupply();
 
         for (uint256 i; i < targetsLength; ++i) {
-            _verifyCallData(
-                strategistManageRoot,
-                manageProofs[i],
-                decodersAndSanitizers[i],
-                targets[i],
-                values[i],
-                targetData[i]
-            );
+            _verifyCallData(strategistManageRoot, manageProofs[i], decodersAndSanitizers[i], targets[i], values[i], targetData[i]);
             vault.manage(targets[i], targetData[i], values[i]);
         }
 
@@ -158,17 +148,7 @@ contract ManagerWithMerkleVerification is PrimeAuth, IPausable, IManagerErrors, 
         // Get packed argument addresses from decoder
         bytes memory packedArgumentAddresses = abi.decode(decoderAndSanitizer.functionStaticCall(targetData), (bytes));
 
-        if (
-            !_verifyManageProof(
-                currentManageRoot,
-                manageProof,
-                target,
-                decoderAndSanitizer,
-                value,
-                selector,
-                packedArgumentAddresses
-            )
-        ) {
+        if (!_verifyManageProof(currentManageRoot, manageProof, target, decoderAndSanitizer, value, selector, packedArgumentAddresses)) {
             revert ManagerWithMerkleVerification__FailedToVerifyManageProof(target, targetData, value);
         }
     }
@@ -194,9 +174,7 @@ contract ManagerWithMerkleVerification is PrimeAuth, IPausable, IManagerErrors, 
         bytes memory packedArgumentAddresses
     ) internal pure returns (bool) {
         bool valueNonZero = value > 0;
-        bytes32 leaf = keccak256(
-            abi.encodePacked(decoderAndSanitizer, target, valueNonZero, selector, packedArgumentAddresses)
-        );
+        bytes32 leaf = keccak256(abi.encodePacked(decoderAndSanitizer, target, valueNonZero, selector, packedArgumentAddresses));
         return MerkleProofLib.verify(proof, root, leaf);
     }
 }
