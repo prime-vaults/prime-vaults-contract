@@ -1,134 +1,165 @@
-# PrimeVaults Smart Contracts
+# Prime Vaults
 
-**PrimeVaults** is an enterprise-grade DeFi vault infrastructure built on the BoringVault architecture. It provides a
-secure, flexible, and composable framework for managing yield strategies with single-asset architecture.
+A modular DeFi vault system enabling users to deposit assets, receive vault shares, and earn passive income through automated strategy execution and
+multi-reward distribution.
 
-## 📖 Table of Contents
+## Overview
 
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Core Contracts](#core-contracts)
-- [Flow of Funds](#flow-of-funds)
-- [Role-Based Access Control](#role-based-access-control)
-- [Contract Structure](#contract-structure)
-- [Development](#development)
-- [Security](#security)
+Prime Vaults is built on the **BoringVault architecture** and provides:
+
+- **Strategy Execution** - Automated DeFi operations (lending, farming, swaps)
+- **Multi-Reward Distribution** - Automatic reward accrual to share holders
+- **Time-Locked Withdrawals** - Security protection against flash attacks
+- **Platform Fees** - Time-based fee accrual with transparent accounting
 
 ---
 
-## 🔍 Overview
-
-PrimeVaults implements a **single-asset vault model** where each vault supports exactly one ERC20 token. This design
-simplifies security, reduces complexity, and eliminates MEV opportunities associated with multi-asset vaults.
-
-### Key Features
-
-✅ **Single-Asset Architecture**: One vault = one token, eliminating complex asset swapping logic  
-✅ **Modular Design**: Minimal core vault contract (~100 lines) with logic delegated to external modules  
-✅ **Yield Streaming**: Time-weighted yield distribution with TWAS (Time-Weighted Average Supply) validation  
-✅ **Buffer Helpers**: Automatic capital deployment to yield strategies  
-✅ **Role-Based Security**: Granular permission system via RolesAuthority  
-✅ **Transfer Hooks**: Customizable share transfer restrictions for compliance  
-✅ **Non-Custodial**: User funds secured in audited smart contracts
-
----
-
-## 🏗 Architecture
-
-PrimeVaults follows the BoringVault architecture pattern with these core components:
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         USER LAYER                               │
-│              (Deposits/Withdraws via Teller)                     │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    TELLER CONTRACT                               │
-│  • Handles user deposits & withdrawals                           │
-│  • Enforces share lock periods                                   │
-│  • Manages deposit caps                                          │
-│  • Triggers buffer helper hooks                                  │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   BORINGVAULT (CORE)                             │
-│  • Minimal vault contract (~100 lines)                           │
-│  • Holds user assets                                             │
-│  • Mints/burns vault shares                                      │
-│  • Delegates strategy execution to Manager                       │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-           ┌───────────────┴───────────────┐
-           │                               │
-           ▼                               ▼
-┌──────────────────────┐        ┌──────────────────────┐
-│    ACCOUNTANT        │        │    BUFFER HELPER     │
-│  • Exchange rate     │        │  • Auto-deploy       │
-│  • Fee calculation   │        │    capital           │
-│  • Yield streaming   │        │  • Strategy calls    │
-│  • TWAS validation   │        │  • Yield optimization│
-└──────────────────────┘        └──────────────────────┘
-           │
-           ▼
-┌──────────────────────┐
-│    MANAGER           │
-│  (Future: Merkle     │
-│   verification)      │
-└──────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                        PRIME VAULTS ECOSYSTEM                    │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────┐      ┌──────────────┐      ┌──────────────┐   │
+│  │BoringVault  │◄─────┤ Accountant   │◄─────┤ Teller       │   │
+│  │(ERC20 Vault)│      │(Rates & Fees)│      │(Gateway)     │   │
+│  └──────┬──────┘      └──────────────┘      └──────────────┘   │
+│         │                                                        │
+│         │                                                        │
+│  ┌──────▼──────┐      ┌──────────────┐      ┌──────────────┐   │
+│  │ Manager     │      │DelayedWithdraw│     │ Distributor  │   │
+│  │(Strategy)   │      │(Time-lock)    │     │(Rewards)     │   │
+│  └─────────────┘      └──────────────┘      └──────────────┘   │
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │           PrimeRBAC (Role-Based Access Control)           │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+The system consists of six modular contracts working together:
+
 ```
+
+┌──────────────────────────────────────────────────────────────────┐ │ PRIME VAULTS ECOSYSTEM │
+├──────────────────────────────────────────────────────────────────┤ │ │ │ ┌─────────────┐ ┌──────────────┐ ┌──────────────┐ │ │ │BoringVault │◄─────┤
+Accountant │◄─────┤ Teller │ │ │ │(ERC20 Vault)│ │(Rates & Fees)│ │(Gateway) │ │ │ └──────┬──────┘ └──────────────┘ └──────────────┘ │ │ │ │ │ ┌──────▼──────┐
+┌──────────────┐ ┌──────────────┐ │ │ │ Manager │ │DelayedWithdraw│ │ Distributor │ │ │ │(Strategy) │ │(Time-lock) │ │(Rewards) │ │ │ └─────────────┘
+└──────────────┘ └──────────────┘ │ │ │ │ ┌───────────────────────────────────────────────────────────┐ │ │ │ PrimeRBAC (Role-Based Access Control) │ │ │
+└───────────────────────────────────────────────────────────┘ │ └──────────────────────────────────────────────────────────────────┘
+
+```
+
+### Core Components
+
+| Component | Purpose | Responsibility |
+|-----------|---------|----------------|
+| **BoringVault** | Asset custody | ERC20 share ledger, holds all vault assets |
+| **Accountant** | Pricing oracle | Calculate exchange rates, accrue platform fees |
+| **Teller** | User gateway | Handle deposits and withdrawals |
+| **Manager** | Strategy router | Execute whitelisted DeFi operations |
+| **DelayedWithdraw** | Security layer | Time-locked withdrawals with rate protection |
+| **Distributor** | Reward engine | Multi-token reward distribution to holders |
+
+**For detailed documentation on each component, see:**
+- [BoringVault](./BORINGVAULT_README.md) - Core vault mechanics
+- [Accountant](./ACCOUNTANT_README.md) - Exchange rate & fee calculation
+- [Teller](./TELLER_README.md) - Deposit/withdrawal flows
+- [Manager](./MANAGER_README.md) - Strategy execution with Merkle verification
+- [DelayedWithdraw](./DELAYEDWITHDRAW_README.md) - Time-lock mechanism
+- [Distributor](./DISTRIBUTOR_README.md) - Reward distribution system
 
 ---
 
-## 📦 Core Contracts
+## Key Concepts
 
-### 1. **BoringVault**
+### ERC20 Vault Shares
 
-_The foundation of the vault system_
+Users deposit assets (USDC, WBTC, etc.) and receive proportional ERC20 vault shares. Share value appreciates as the vault generates yield through DeFi strategies.
 
-- **Purpose**: Minimal vault contract that holds user assets and delegates complex logic
-- **Size**: ~16 KB (100 lines of core logic)
-- **Key Functions**:
-  - `enter()`: Mints vault shares in exchange for assets
-  - `exit()`: Burns vault shares and returns assets
-  - `manage()`: Executes strategy calls (restricted to authorized managers)
-  - `setBeforeTransferHook()`: Configures transfer restrictions
+**Exchange Rate Formula:**
+```
 
-**Authorization**: Requires `MINTER_ROLE` for deposits, `BURNER_ROLE` for withdrawals
+shareValue = (totalAssets - feesOwed) / totalShares
+
+```
+
+### Merkle-Verified Strategies
+
+All vault operations (Aave deposits, Uniswap swaps, etc.) must be pre-approved via Merkle tree verification. This whitelist approach prevents unauthorized asset movements.
+
+### Promise-Based Rewards
+
+The Distributor uses a promise-based model where admins notify reward amounts first, then deposit tokens later. This improves capital efficiency while tracking reward debt.
+
+### Time-Locked Security
+
+Deposits are share-locked for 1 day to prevent flash loan attacks. Withdrawals require a 3-day delay (or pay expedited fee) to allow emergency response time.
 
 ---
 
-### 2. **Teller**
+## User Flows
 
-_User-facing deposit/withdrawal interface_
+### Deposit Flow
 
-- **Purpose**: Facilitates user interactions with the vault
-- **Size**: ~18 KB
-- **Key Features**:
-  - Single asset support
-  - Share lock periods to prevent flashloan attacks
-  - Deposit caps for risk management
-  - Permit-based deposits (gasless approvals)
-  - Deny lists and permissioned transfers for compliance
-
-**State Management**:
-
-```solidity
-struct TellerState {
-  bool isPaused; // Emergency pause
-  bool allowDeposits; // Toggle deposits
-  bool allowWithdraws; // Toggle withdrawals
-  bool permissionedTransfers; // Require whitelisting
-  uint64 shareLockPeriod; // Minimum holding period
-  uint112 depositCap; // Maximum total shares
-}
 ```
 
-**Key Functions**:
+1. User approves asset transfer to Teller
+2. Teller calls Accountant to get current exchange rate
+3. Teller calculates shares to mint (asset amount / rate)
+4. Vault mints shares to user (locked for 1 day)
+5. User automatically starts earning rewards
 
-- `deposit()`: Public deposits with optional native ETH
+```
+
+### Withdrawal Flow
+
+```
+
+1. User requests withdrawal via DelayedWithdraw
+2. Current exchange rate is locked for the request
+3. After 3-day maturity, user completes withdrawal
+4. Vault burns shares and transfers assets to user
+
+```
+
+### Strategy Execution Flow
+
+```
+
+1. Admin generates Merkle proof for desired operation
+2. Manager verifies proof against stored root
+3. Decoder validates and sanitizes transaction data
+4. Vault executes operation (e.g., Aave deposit)
+5. Total supply invariant check ensures no share dilution
+
+---
+
+## Contract Addresses
+
+### Berachain Testnet (bepolia)
+
+Deployment artifacts available in:
+
+- `ignition/deployments/bepolia-usd/`
+- `ignition/deployments/bepolia-btc/`
+
+---
+
+## Additional Resources
+
+- **Strategy Guide**: [MANAGER_MERKLE.md](./MANAGER_MERKLE.md)
+- **Component Documentation**: See links in [Core Components](#core-components) section
+
+---
+
+## License
+
+MIT License
+
+---
+
+**Built on Berachain**
+
 - `depositWithPermit()`: Gasless approval deposits
 - `withdraw()`: Burns shares for underlying assets
 - `bulkDeposit()`: Authorized batch deposits
@@ -308,8 +339,7 @@ struct WithdrawRequest {
 - `cancelUserWithdraw()`: Admin emergency cancel
 - `completeUserWithdraw()`: Admin force complete
 
-**Important**: Once withdrawal is requested, shares are locked and **no longer earn yield**. The exchange rate is frozen
-at the time of request.
+**Important**: Once withdrawal is requested, shares are locked and **no longer earn yield**. The exchange rate is frozen at the time of request.
 
 ---
 

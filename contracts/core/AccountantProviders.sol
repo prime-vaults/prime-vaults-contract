@@ -56,12 +56,7 @@ contract AccountantProviders is PrimeAuth, IAccountant {
      * @param _payoutAddress Address to receive claimed fees
      * @param platformFee Initial platform fee in basis points
      */
-    constructor(
-        address _primeRBAC,
-        address _vault,
-        address _payoutAddress,
-        uint16 platformFee
-    ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
+    constructor(address _primeRBAC, address _vault, address _payoutAddress, uint16 platformFee) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
         vault = BoringVault(payable(_vault));
         base = vault.asset();
         ONE_SHARE = 10 ** vault.decimals();
@@ -117,14 +112,7 @@ contract AccountantProviders is PrimeAuth, IAccountant {
         uint256 currentShares = vault.totalSupply();
 
         // Calculate platform fees
-        uint256 newFeesOwedInBase = _calculatePlatformFee(
-            state.totalSharesLastUpdate,
-            state.lastUpdateTimestamp,
-            state.platformFee,
-            oldExchangeRate,
-            currentShares,
-            currentTime
-        );
+        uint256 newFeesOwedInBase = _calculatePlatformFee(state.totalSharesLastUpdate, state.lastUpdateTimestamp, state.platformFee, oldExchangeRate, currentShares, currentTime);
         state.feesOwedInBase += uint128(newFeesOwedInBase);
 
         // Update exchange rate to reflect fees owed
