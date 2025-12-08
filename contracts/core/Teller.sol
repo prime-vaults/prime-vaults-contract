@@ -44,14 +44,9 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
     /**
      * @notice The maximum possible share lock period.
      */
-    uint256 internal constant MAX_SHARE_LOCK_PERIOD = 3 days;
+    uint256 internal constant MAX_SHARE_LOCK_PERIOD = 7 days;
 
     // ========================================= STATE =========================================
-
-    /**
-     * @notice The single asset this teller supports
-     */
-    ERC20 public immutable asset;
 
     /**
      * @notice Store the teller state in a packed slot.
@@ -64,6 +59,10 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
     mapping(address => BeforeTransferData) public beforeTransferData;
 
     //============================== IMMUTABLES ===============================
+    /**
+     * @notice The single asset this teller supports
+     */
+    ERC20 public immutable asset;
 
     /**
      * @notice The BoringVault this contract is working with.

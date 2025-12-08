@@ -84,13 +84,9 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
     /* ========================================= DEPOSIT ========================================= */
 
     /**
-     * @notice Mint vault shares when user deposits assets
-     * @dev Restricted to MINTER_ROLE (typically Teller contract)
-     * @dev Hook is called BEFORE minting to update rewards with old balances
-     * @param from Address to pull assets from (must have approved vault)
-     * @param assetAmount Amount of assets to deposit (0 = no transfer)
-     * @param to Address to receive shares
-     * @param shareAmount Amount of shares to mint
+     * @notice Allows minter to mint shares, in exchange for assets.
+     * @dev If assetAmount is zero, no assets are transferred in.
+     * @dev Callable by MINTER_ROLE.
      */
     function enter(address from, uint256 assetAmount, address to, uint256 shareAmount) external requiresAuth {
         // Transfer assets in
@@ -108,13 +104,9 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
     /* ========================================= WITHDRAWAL ========================================= */
 
     /**
-     * @notice Burn vault shares when user withdraws assets
-     * @dev Restricted to BURNER_ROLE (typically Teller contract)
-     * @dev Hook is called BEFORE burning to update rewards with old balances
-     * @param to Address to send assets to
-     * @param assetAmount Amount of assets to withdraw (0 = no transfer)
-     * @param from Address to burn shares from
-     * @param shareAmount Amount of shares to burn
+     * @notice Allows burner to burn shares, in exchange for assets.
+     * @dev If assetAmount is zero, no assets are transferred out.
+     * @dev Callable by BURNER_ROLE.
      */
     function exit(address to, uint256 assetAmount, address from, uint256 shareAmount) external requiresAuth {
         // Update rewards BEFORE burning (with old balances)
@@ -137,7 +129,7 @@ contract BoringVault is ERC20, PrimeAuth, ERC721Holder, ERC1155Holder {
      * @dev Common use case: Distributor contract for reward tracking
      * @param _hook Address implementing IBeforeUpdateHook interface
      */
-    function setBeforeUpdateHook(address _hook) external onlyProtocolAdmin {
+    function setBeforeUpdateHook(address _hook) external onlyOwner {
         beforeUpdateHook = IBeforeUpdateHook(_hook);
     }
 

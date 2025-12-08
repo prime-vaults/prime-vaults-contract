@@ -39,6 +39,17 @@ abstract contract PrimeAuth is Auth, IPausable {
     /* ========================================= MODIFIERS ========================================= */
 
     /**
+     * @notice Restrict access to owner
+     * @dev Checks OWNER_ROLE in PrimeRBAC
+     */
+    modifier onlyOwner() {
+        if (!primeRBAC.hasOwnerRole(msg.sender)) {
+            revert Error.NOT_OWNER();
+        }
+        _;
+    }
+
+    /**
      * @notice Restrict access to protocol admins
      * @dev Checks PROTOCOL_ADMIN_ROLE in PrimeRBAC
      */

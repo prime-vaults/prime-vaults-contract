@@ -210,22 +210,17 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
 
     /**
      * @notice Withdraws a non boring token from the contract.
-     * @dev Callable by BoringVault.
-     * @dev Eventhough withdrawing the BoringVault share from this contract requires
-     *      a malicious leaf in the merkle tree, we explicitly revert if `token`
-     *      is the BoringVault.
-     * @dev For future reference if this function selector is ever changed, the
-     *      associated function selector must be updated in `BaseDecoderAndSanitizer.sol`.
+     * @dev Callable by PROTOCOL_ADMIN_ROLE only.
+     * @dev Explicitly reverts if token is the BoringVault to prevent unauthorized share withdrawals.
+     * @param token The ERC20 token to withdraw
+     * @param amount The amount to withdraw (use type(uint256).max for full balance)
      */
-    function withdrawNonBoringToken(ERC20 token, uint256 amount) external {
-        if (msg.sender != address(boringVault)) revert DelayedWithdraw__CallerNotBoringVault();
+    function withdrawNonBoringToken(ERC20 token, uint256 amount) external onlyProtocolAdmin {
         if (address(token) == address(boringVault)) revert DelayedWithdraw__CannotWithdrawBoringToken();
-
         if (amount == type(uint256).max) {
             amount = token.balanceOf(address(this));
         }
-
-        token.safeTransfer(address(boringVault), amount);
+        token.safeTransfer(msg.sender, amount);
     }
 
     // ========================================= PUBLIC FUNCTIONS =========================================
@@ -370,15 +365,6 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
         req.shares = 0;
         req.sharesFee = 0;
 
-        // if (pullFundsFromVault) {
-        //     // Burn shares and transfer assets to user.
-        //     boringVault.exit(account, asset, assetsOut, address(this), shares);
-        // } else {
-        //     // Burn shares.
-        //     boringVault.exit(account, asset, 0, address(this), shares);
-        //     // Transfer assets to user.
-        //     asset.safeTransfer(account, assetsOut);
-        // }
         teller.bulkWithdraw(shares, assetsOut, account);
 
         emit WithdrawCompleted(account, asset, shares, assetsOut);

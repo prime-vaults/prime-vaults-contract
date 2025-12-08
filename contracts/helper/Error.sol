@@ -18,6 +18,9 @@ library Error {
     //////////////////////////////////////////////////////////////
     ///@notice errors thrown if functions cannot be called
 
+    /// @dev thrown if msg.sender is not owner
+    error NOT_OWNER();
+
     /// @dev thrown if msg.sender is not protocol admin
     error NOT_PROTOCOL_ADMIN();
 

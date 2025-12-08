@@ -18,33 +18,30 @@ contract AccountantProviders is PrimeAuth, IAccountant {
     /**
      * @notice Packed accountant state (3 storage slots)
      * @param payoutAddress Address to receive claimed fees
+     * @param exchangeRate Current share price (base asset per share)
      * @param feesOwedInBase Accumulated fees pending claim (in base asset)
      * @param totalSharesLastUpdate Total vault shares at last update
-     * @param exchangeRate Current share price (base asset per share)
      * @param lastUpdateTimestamp Last exchange rate update timestamp
      * @param platformFee Annual fee rate in basis points (e.g., 1000 = 10%)
      */
     struct AccountantState {
         address payoutAddress;
+        uint96 exchangeRate;
         uint128 feesOwedInBase;
         uint128 totalSharesLastUpdate;
-        uint96 exchangeRate;
         uint64 lastUpdateTimestamp;
         uint16 platformFee;
     }
 
     /* ========================================= STATE ========================================= */
 
-    /** @notice Accountant state stored in 3 packed storage slots */
+    /** @notice Accountant state stored */
     AccountantState public accountantState;
 
     /* ========================================= IMMUTABLES ========================================= */
 
     /** @notice Base asset for exchange rate and fee calculations */
     ERC20 public immutable base;
-
-    /** @notice Decimals for exchange rate precision */
-    uint8 public immutable decimals;
 
     /** @notice BoringVault contract for share supply queries */
     BoringVault public immutable vault;
@@ -67,13 +64,12 @@ contract AccountantProviders is PrimeAuth, IAccountant {
     ) PrimeAuth(_primeRBAC, address(BoringVault(payable(_vault)).authority())) {
         vault = BoringVault(payable(_vault));
         base = vault.asset();
-        decimals = base.decimals();
         ONE_SHARE = 10 ** vault.decimals();
         accountantState = AccountantState({
             payoutAddress: _payoutAddress,
             feesOwedInBase: 0,
             totalSharesLastUpdate: uint128(vault.totalSupply()),
-            exchangeRate: uint96(10 ** decimals),
+            exchangeRate: uint96(10 ** base.decimals()),
             lastUpdateTimestamp: uint64(block.timestamp),
             platformFee: platformFee
         });
@@ -218,7 +214,7 @@ contract AccountantProviders is PrimeAuth, IAccountant {
 
     /* ========================================= GETTERS ========================================= */
 
-    /** @notice Get full accountant state (all 3 packed slots) */
+    /** @notice Get full accountant state  */
     function getAccountantState() external view returns (AccountantState memory) {
         return accountantState;
     }

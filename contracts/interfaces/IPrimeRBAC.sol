@@ -18,11 +18,18 @@ interface IPrimeRBAC {
     //              EXTERNAL VIEW FUNCTIONS                     //
     //////////////////////////////////////////////////////////////
 
+    /// @dev returns the id of the owner role
+    function OWNER_ROLE() external view returns (bytes32);
+
     /// @dev returns the id of the protocol admin role
     function PROTOCOL_ADMIN_ROLE() external view returns (bytes32);
 
     /// @dev returns the id of the operator role
     function OPERATOR_ROLE() external view returns (bytes32);
+
+    /// @dev returns whether the given address has the owner role
+    /// @param owner_ the address to check
+    function hasOwnerRole(address owner_) external view returns (bool);
 
     /// @dev returns whether the given address has the protocol admin role
     /// @param admin_ the address to check

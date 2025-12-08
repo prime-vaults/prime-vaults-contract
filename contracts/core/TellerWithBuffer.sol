@@ -109,7 +109,7 @@ contract TellerWithBuffer is Teller {
      * @param _bufferHelper The buffer helper contract address to allow
      * @dev Only callable by admin to allowlist buffer helpers
      */
-    function allowBufferHelper(IBufferHelper _bufferHelper) external onlyProtocolAdmin {
+    function allowBufferHelper(IBufferHelper _bufferHelper) external onlyOwner {
         allowedBufferHelpers[_bufferHelper] = true;
         emit BufferHelperAllowed(_bufferHelper);
     }
@@ -119,7 +119,7 @@ contract TellerWithBuffer is Teller {
      * @param _bufferHelper The buffer helper contract address to disallow
      * @dev Only callable by admin to disallow buffer helpers
      */
-    function disallowBufferHelper(IBufferHelper _bufferHelper) external requiresAuth {
+    function disallowBufferHelper(IBufferHelper _bufferHelper) external onlyProtocolAdmin {
         allowedBufferHelpers[_bufferHelper] = false;
         emit BufferHelperDisallowed(_bufferHelper);
     }
