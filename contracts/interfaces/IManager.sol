@@ -14,6 +14,7 @@ interface IManager {
     error ManagerWithMerkleVerification__OnlyCallableByBoringVault();
     error ManagerWithMerkleVerification__TotalSupplyMustRemainConstant();
     error ManagerWithMerkleVerification__FlashLoanNotInProgress();
+    error ManagerWithMerkleVerification__TotalSupplyMustRemainConstantDuringPlatform();
 
     /* ========================================= EVENTS ========================================= */
     event ManageRootUpdated(address indexed strategist, bytes32 oldRoot, bytes32 newRoot);

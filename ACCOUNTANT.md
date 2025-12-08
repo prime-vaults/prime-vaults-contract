@@ -94,12 +94,11 @@ All state is packed into **3 storage slots** for gas efficiency:
 
 ## Role System
 
-| Role                | Functions                                      | Purpose                            |
-| ------------------- | ---------------------------------------------- | ---------------------------------- |
-| **STRATEGIST**      | `updateExchangeRate()`                         | Update share price and accrue fees |
-| **PROTOCOL_ADMIN**  | `updatePlatformFee()`, `updatePayoutAddress()` | Configure fee parameters           |
-| **EMERGENCY_ADMIN** | `pause()`, `unpause()`                         | Emergency controls                 |
-| **BoringVault**     | `claimFees()` caller                           | Only vault can trigger fee claims  |
+| Role               | Functions                                      | Purpose                            |
+| ------------------ | ---------------------------------------------- | ---------------------------------- |
+| **STRATEGIST**     | `updateExchangeRate()`                         | Update share price and accrue fees |
+| **PROTOCOL_ADMIN** | `updatePlatformFee()`, `updatePayoutAddress()` | Configure fee                      |
+| **BoringVault**    | `claimFees()` caller                           | Only vault can trigger fee claims  |
 
 ## Key Functions
 
@@ -193,9 +192,6 @@ function getRateSafe() external view returns (uint256)
 - Access: PROTOCOL_ADMIN_ROLE
 
 **`pause()` / `unpause()`**
-
-- Emergency stop for rate updates and critical operations
-- Access: EMERGENCY_ADMIN_ROLE
 
 ## Fee Accrual Example (from Test)
 

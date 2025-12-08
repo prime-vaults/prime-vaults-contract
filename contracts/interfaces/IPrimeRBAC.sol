@@ -21,9 +21,6 @@ interface IPrimeRBAC {
     /// @dev returns the id of the protocol admin role
     function PROTOCOL_ADMIN_ROLE() external view returns (bytes32);
 
-    /// @dev returns the id of the emergency admin role
-    function EMERGENCY_ADMIN_ROLE() external view returns (bytes32);
-
     /// @dev returns the id of the operator role
     function OPERATOR_ROLE() external view returns (bytes32);
 

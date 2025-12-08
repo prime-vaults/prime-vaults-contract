@@ -50,17 +50,6 @@ abstract contract PrimeAuth is Auth, IPausable {
     }
 
     /**
-     * @notice Restrict access to emergency admins
-     * @dev Checks EMERGENCY_ADMIN_ROLE in PrimeRBAC
-     */
-    modifier onlyEmergencyAdmin() {
-        if (!primeRBAC.hasEmergencyAdminRole(msg.sender)) {
-            revert Error.NOT_EMERGENCY_ADMIN();
-        }
-        _;
-    }
-
-    /**
      * @notice Restrict access to operators
      * @dev Checks OPERATOR_ROLE in PrimeRBAC
      */
@@ -75,18 +64,18 @@ abstract contract PrimeAuth is Auth, IPausable {
 
     /**
      * @notice Pause contract operations
-     * @dev Restricted to EMERGENCY_ADMIN_ROLE
+     * @dev Callable by PROTOCOL_ADMIN_ROLE
      */
-    function pause() external onlyEmergencyAdmin {
+    function pause() external onlyProtocolAdmin {
         isPaused = true;
         emit Paused();
     }
 
     /**
      * @notice Unpause contract operations
-     * @dev Restricted to EMERGENCY_ADMIN_ROLE
+     * @dev Callable by PROTOCOL_ADMIN_ROLE
      */
-    function unpause() external onlyEmergencyAdmin {
+    function unpause() external onlyProtocolAdmin {
         isPaused = false;
         emit Unpaused();
     }

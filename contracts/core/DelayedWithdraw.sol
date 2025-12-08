@@ -22,14 +22,12 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
     // ========================================= STRUCTS =========================================
 
     /**
-     * @param allowWithdraws Whether or not withdrawals are allowed for this asset.
      * @param withdrawDelay The delay in seconds before a requested withdrawal can be completed.
      * @param outstandingShares The total number of shares that are currently outstanding for an asset.
      * @param withdrawFee The fee that is charged when a withdrawal is completed.
      * @param expeditedWithdrawFee The fee charged to accelerate withdrawal to 1 day (in basis points).
      */
     struct WithdrawState {
-        bool allowWithdraws;
         uint32 withdrawDelay;
         uint128 outstandingShares;
         uint16 withdrawFee;
@@ -69,12 +67,6 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
      * @notice The address that receives the fee when a withdrawal is completed.
      */
     address public feeAddress;
-
-    /**
-     * @notice Whether or not the contract should pull funds from the Boring Vault when completing a withdrawal,
-     *         or use funds the BoringVault has previously sent to this contract.
-     */
-    bool public pullFundsFromVault;
 
     /**
      * @notice The withdrawal settings for the asset.
@@ -132,18 +124,6 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
     // ========================================= ADMIN FUNCTIONS =========================================
 
     /**
-     * @notice Stops withdrawals.
-     * @dev Callable by EMERGENCY_ADMIN_ROLE.
-     */
-    function stopWithdrawals() external onlyEmergencyAdmin {
-        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
-
-        withdrawState.allowWithdraws = false;
-
-        emit WithdrawalsStopped(address(asset));
-    }
-
-    /**
      * @notice Sets up the withdrawal settings.
      * @dev Callable by OWNER_ROLE.
      */
@@ -151,8 +131,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
         if (withdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__WithdrawFeeTooHigh();
         if (expeditedWithdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__ExpeditedWithdrawFeeTooHigh();
 
-        if (withdrawState.allowWithdraws) revert DelayedWithdraw__AlreadySetup();
-        withdrawState.allowWithdraws = true;
+        if (withdrawState.withdrawDelay != 0) revert DelayedWithdraw__AlreadySetup();
         withdrawState.withdrawDelay = withdrawDelay;
         withdrawState.withdrawFee = withdrawFee;
         withdrawState.expeditedWithdrawFee = expeditedWithdrawFee;
@@ -165,7 +144,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
      * @dev Callable by PROTOCOL_ADMIN_ROLE.
      */
     function changeWithdrawDelay(uint32 withdrawDelay) external onlyProtocolAdmin {
-        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
+        if (isPaused) revert DelayedWithdraw__Paused();
 
         withdrawState.withdrawDelay = withdrawDelay;
 
@@ -177,7 +156,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
      * @dev Callable by PROTOCOL_ADMIN_ROLE.
      */
     function changeWithdrawFee(uint16 withdrawFee) external onlyProtocolAdmin {
-        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
+        if (isPaused) revert DelayedWithdraw__Paused();
 
         if (withdrawFee > MAX_WITHDRAW_FEE) revert DelayedWithdraw__WithdrawFeeTooHigh();
 
@@ -230,16 +209,6 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
     }
 
     /**
-     * @notice Changes the global setting for whether or not to pull funds from the vault when completing a withdrawal.
-     * @dev Callable by OWNER_ROLE.
-     */
-    function setPullFundsFromVault(bool _pullFundsFromVault) external onlyProtocolAdmin {
-        pullFundsFromVault = _pullFundsFromVault;
-
-        emit PullFundsFromVaultUpdated(_pullFundsFromVault);
-    }
-
-    /**
      * @notice Withdraws a non boring token from the contract.
      * @dev Callable by BoringVault.
      * @dev Eventhough withdrawing the BoringVault share from this contract requires
@@ -276,7 +245,6 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
      */
     function requestWithdraw(uint96 shares, bool allowThirdPartyToComplete) external requiresAuth nonReentrant {
         if (isPaused) revert DelayedWithdraw__Paused();
-        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
 
         WithdrawRequest storage req = withdrawRequests[msg.sender];
         if (req.shares > 0) revert DelayedWithdraw__WithdrawPending();
@@ -305,7 +273,6 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
      */
     function accelerateWithdraw() external requiresAuth nonReentrant {
         if (isPaused) revert DelayedWithdraw__Paused();
-        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
         if (withdrawState.expeditedWithdrawFee == 0) revert DelayedWithdraw__ExpeditedWithdrawNotAvailable();
         if (withdrawState.withdrawDelay <= EXPEDITED_WITHDRAW_DELAY) {
             revert DelayedWithdraw__ExpeditedWithdrawNotAvailable();
@@ -380,7 +347,7 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
      * @notice Internal helper function that implements shared logic for completing a user's withdrawal request.
      */
     function _completeWithdraw(address account, WithdrawRequest storage req) internal returns (uint256 assetsOut) {
-        if (!withdrawState.allowWithdraws) revert DelayedWithdraw__WithdrawsNotAllowed();
+        if (isPaused) revert DelayedWithdraw__Paused();
 
         if (block.timestamp < req.maturity) revert DelayedWithdraw__WithdrawNotMatured();
         if (req.shares == 0) revert DelayedWithdraw__NoSharesToWithdraw();
