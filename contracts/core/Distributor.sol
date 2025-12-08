@@ -165,13 +165,11 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @notice Notify the contract of a new reward amount
      * @param _rewardsToken The reward token address
      * @param reward The amount of rewards to distribute
-     * @dev Transfers reward tokens from caller to this contract
-     * @dev Callable by the rewards distributor for this token
+     * @dev Does NOT transfer tokens - admin promises to deposit later
+     * @dev Use getRewardDebt() to check how much needs to be deposited
+     * @dev Callable by OPERATOR_ROLE
      */
     function notifyRewardAmount(address _rewardsToken, uint256 reward) external onlyOperator updateReward(address(0)) {
-        // Transfer reward tokens from distributor to this contract
-        ERC20(_rewardsToken).safeTransferFrom(msg.sender, address(this), reward);
-
         if (block.timestamp >= rewardData[_rewardsToken].periodFinish) {
             rewardData[_rewardsToken].rewardRate = reward / rewardData[_rewardsToken].rewardsDuration;
         } else {
@@ -357,6 +355,32 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      */
     function getRewardForDuration(address _rewardsToken) external view returns (uint256) {
         return rewardData[_rewardsToken].rewardRate * rewardData[_rewardsToken].rewardsDuration;
+    }
+
+    /**
+     * @notice Calculate total reward debt (how much needs to be deposited)
+     * @param _rewardsToken The reward token address
+     * @return debt The amount of reward tokens that should be in the contract to cover all promises
+     * @dev This is the total amount users can claim based on current rewards accounting
+     * @dev Admin should deposit (debt - currentBalance) to fulfill promises
+     */
+    function getRewardDebt(address _rewardsToken) external view returns (uint256 debt) {
+        uint256 currentTime = block.timestamp;
+        uint256 applicableTime = currentTime < rewardData[_rewardsToken].periodFinish ? currentTime : rewardData[_rewardsToken].periodFinish;
+
+        // Calculate total rewards distributed so far
+        uint256 timeElapsed = applicableTime > rewardData[_rewardsToken].lastUpdateTime ? applicableTime - rewardData[_rewardsToken].lastUpdateTime : 0;
+
+        uint256 rewardsSinceLastUpdate = timeElapsed * rewardData[_rewardsToken].rewardRate;
+
+        // Total debt includes:
+        // 1. Already accumulated reward per token * total supply
+        // 2. New rewards since last update
+        uint256 supply = vault.totalSupply();
+        if (supply > 0) {
+            uint256 currentRewardPerToken = rewardData[_rewardsToken].rewardPerTokenStored + (rewardsSinceLastUpdate * 1e18) / supply;
+            debt = (currentRewardPerToken * supply) / 1e18;
+        }
     }
 
     // ========================================= INTERNAL FUNCTIONS =========================================

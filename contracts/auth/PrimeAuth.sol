@@ -54,7 +54,7 @@ abstract contract PrimeAuth is Auth, IPausable {
      * @dev Checks PROTOCOL_ADMIN_ROLE in PrimeRBAC
      */
     modifier onlyProtocolAdmin() {
-        if (!primeRBAC.hasProtocolAdminRole(msg.sender)) {
+        if (!primeRBAC.hasProtocolAdminRole(msg.sender) && !primeRBAC.hasOwnerRole(msg.sender)) {
             revert Error.NOT_PROTOCOL_ADMIN();
         }
         _;
@@ -65,7 +65,7 @@ abstract contract PrimeAuth is Auth, IPausable {
      * @dev Checks OPERATOR_ROLE in PrimeRBAC
      */
     modifier onlyOperator() {
-        if (!primeRBAC.hasOperatorRole(msg.sender)) {
+        if (!primeRBAC.hasOperatorRole(msg.sender) && !primeRBAC.hasProtocolAdminRole(msg.sender) && !primeRBAC.hasOwnerRole(msg.sender)) {
             revert Error.NOT_OPERATOR();
         }
         _;

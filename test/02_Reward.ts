@@ -62,11 +62,11 @@ void describe("02_Reward", function () {
 
       const rewardAmount = 7n * ONE_TOKEN;
 
-      // Approve distributor to pull reward tokens
-      await mockERC20.write.approve([distributor.address, rewardAmount]);
-
-      // Notify reward amount
+      // Notify reward amount (no transfer yet, just promise)
       await distributor.write.notifyRewardAmount([mockERC20.address, rewardAmount]);
+
+      // Admin deposits reward tokens to fulfill promise
+      await mockERC20.write.transfer([distributor.address, rewardAmount]);
 
       const rewardData = await distributor.read.rewardData([mockERC20.address]);
       const rewardRate = rewardData[3]; // rewardRate
@@ -174,9 +174,11 @@ void describe("02_Reward", function () {
       // Add reward token
       await distributor.write.addReward([mockERC20.address, rewardDuration]);
 
-      // Approve and notify reward
-      await mockERC20.write.approve([distributor.address, rewardAmount]);
+      // Notify reward (promise only)
       await distributor.write.notifyRewardAmount([mockERC20.address, rewardAmount]);
+
+      // Admin deposits reward tokens to fulfill promise
+      await mockERC20.write.transfer([distributor.address, rewardAmount]);
 
       const rewardData = await distributor.read.rewardData([mockERC20.address]);
       assert.ok(rewardData[3] > 0n, "Reward rate should be set");
