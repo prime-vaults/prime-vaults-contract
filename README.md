@@ -36,37 +36,18 @@ Prime Vaults is built on the **BoringVault architecture** and provides:
 │  │           PrimeRBAC (Role-Based Access Control)           │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────┘
-The system consists of six modular contracts working together:
-
-```
-
-┌──────────────────────────────────────────────────────────────────┐ │ PRIME VAULTS ECOSYSTEM │
-├──────────────────────────────────────────────────────────────────┤ │ │ │ ┌─────────────┐ ┌──────────────┐ ┌──────────────┐ │ │ │BoringVault │◄─────┤
-Accountant │◄─────┤ Teller │ │ │ │(ERC20 Vault)│ │(Rates & Fees)│ │(Gateway) │ │ │ └──────┬──────┘ └──────────────┘ └──────────────┘ │ │ │ │ │ ┌──────▼──────┐
-┌──────────────┐ ┌──────────────┐ │ │ │ Manager │ │DelayedWithdraw│ │ Distributor │ │ │ │(Strategy) │ │(Time-lock) │ │(Rewards) │ │ │ └─────────────┘
-└──────────────┘ └──────────────┘ │ │ │ │ ┌───────────────────────────────────────────────────────────┐ │ │ │ PrimeRBAC (Role-Based Access Control) │ │ │
-└───────────────────────────────────────────────────────────┘ │ └──────────────────────────────────────────────────────────────────┘
-
 ```
 
 ### Core Components
 
-| Component | Purpose | Responsibility |
-|-----------|---------|----------------|
-| **BoringVault** | Asset custody | ERC20 share ledger, holds all vault assets |
-| **Accountant** | Pricing oracle | Calculate exchange rates, accrue platform fees |
-| **Teller** | User gateway | Handle deposits and withdrawals |
-| **Manager** | Strategy router | Execute whitelisted DeFi operations |
-| **DelayedWithdraw** | Security layer | Time-locked withdrawals with rate protection |
-| **Distributor** | Reward engine | Multi-token reward distribution to holders |
-
-**For detailed documentation on each component, see:**
-- [BoringVault](./BORINGVAULT_README.md) - Core vault mechanics
-- [Accountant](./ACCOUNTANT_README.md) - Exchange rate & fee calculation
-- [Teller](./TELLER_README.md) - Deposit/withdrawal flows
-- [Manager](./MANAGER_README.md) - Strategy execution with Merkle verification
-- [DelayedWithdraw](./DELAYEDWITHDRAW_README.md) - Time-lock mechanism
-- [Distributor](./DISTRIBUTOR_README.md) - Reward distribution system
+| Component           | Purpose                        | Documentation                          |
+| ------------------- | ------------------------------ | -------------------------------------- |
+| **BoringVault**     | Asset custody & ERC20 shares   | [Details](./BORINGVAULT_README.md)     |
+| **Accountant**      | Exchange rates & platform fees | [Details](./ACCOUNTANT_README.md)      |
+| **Teller**          | Deposit/withdrawal gateway     | [Details](./TELLER_README.md)          |
+| **Manager**         | Strategy execution             | [Details](./MANAGER_README.md)         |
+| **DelayedWithdraw** | Time-locked withdrawals        | [Details](./DELAYEDWITHDRAW_README.md) |
+| **Distributor**     | Multi-token rewards            | [Details](./DISTRIBUTOR_README.md)     |
 
 ---
 
@@ -74,22 +55,24 @@ Accountant │◄─────┤ Teller │ │ │ │(ERC20 Vault)│ │(R
 
 ### ERC20 Vault Shares
 
-Users deposit assets (USDC, WBTC, etc.) and receive proportional ERC20 vault shares. Share value appreciates as the vault generates yield through DeFi strategies.
+Users deposit assets (USDC, WBTC, etc.) and receive proportional ERC20 vault shares. Share value appreciates as the vault generates yield through DeFi
+strategies.
 
 **Exchange Rate Formula:**
+
 ```
-
 shareValue = (totalAssets - feesOwed) / totalShares
-
 ```
 
 ### Merkle-Verified Strategies
 
-All vault operations (Aave deposits, Uniswap swaps, etc.) must be pre-approved via Merkle tree verification. This whitelist approach prevents unauthorized asset movements.
+All vault operations (Aave deposits, Uniswap swaps, etc.) must be pre-approved via Merkle tree verification. This whitelist approach prevents unauthorized asset
+movements.
 
 ### Promise-Based Rewards
 
-The Distributor uses a promise-based model where admins notify reward amounts first, then deposit tokens later. This improves capital efficiency while tracking reward debt.
+The Distributor uses a promise-based model where admins notify reward amounts first, then deposit tokens later. This improves capital efficiency while tracking
+reward debt.
 
 ### Time-Locked Security
 
@@ -124,7 +107,7 @@ Deposits are share-locked for 1 day to prevent flash loan attacks. Withdrawals r
 
 ### Strategy Execution Flow
 
-```
+````
 
 1. Admin generates Merkle proof for desired operation
 2. Manager verifies proof against stored root
@@ -134,36 +117,27 @@ Deposits are share-locked for 1 day to prevent flash loan attacks. Withdrawals r
 
 ---
 
-## Contract Addresses
+## Deployment
 
 ### Berachain Testnet (bepolia)
 
 Deployment artifacts available in:
-
 - `ignition/deployments/bepolia-usd/`
 - `ignition/deployments/bepolia-btc/`
 
 ---
 
-## Additional Resources
+## Role-Based Access Control
 
-- **Strategy Guide**: [MANAGER_MERKLE.md](./MANAGER_MERKLE.md)
-- **Component Documentation**: See links in [Core Components](#core-components) section
+**Key Roles:**
+- `PUBLIC` - User deposits/withdrawals
+- `SOLVER_ROLE` - Bulk operations (market makers)
+- `MINTER_ROLE` / `BURNER_ROLE` - Share minting/burning
+- `MANAGER_ROLE` - Strategy execution
+- `UPDATE_EXCHANGE_RATE_ROLE` - Rate updates
+- `ADMIN_ROLE` - Pause & configuration
 
----
-
-## License
-
-MIT License
-
----
-
-**Built on Berachain**
-
-- `depositWithPermit()`: Gasless approval deposits
-- `withdraw()`: Burns shares for underlying assets
-- `bulkDeposit()`: Authorized batch deposits
-- `bulkWithdraw()`: Authorized batch withdrawals
+See component documentation for detailed permission matrices.
 
 ---
 
@@ -186,7 +160,7 @@ struct BufferHelpers {
   IBufferHelper depositBufferHelper; // Deploy capital after deposits
   IBufferHelper withdrawBufferHelper; // Unwind positions before withdrawals
 }
-```
+````
 
 **Example**: `PrimeStrategyV1BufferHelper` automatically deposits assets into a strategy manager contract.
 
@@ -373,103 +347,18 @@ function setup(
 
 ---
 
-## 💰 Flow of Funds
+## Role-Based Access Control
 
-### Deposit Flow
+**Key Roles:**
 
-```
-1. User → Teller.deposit(1000 USDC)
-   ├─ Teller checks: not paused, deposits allowed
-   ├─ Teller transfers 1000 USDC from user
-   └─ Teller calculates shares = amount * ONE_SHARE / exchangeRate
+- `PUBLIC` - User deposits/withdrawals
+- `SOLVER_ROLE` - Bulk operations (market makers)
+- `MINTER_ROLE` / `BURNER_ROLE` - Share minting/burning
+- `MANAGER_ROLE` - Strategy execution
+- `UPDATE_EXCHANGE_RATE_ROLE` - Rate updates
+- `ADMIN_ROLE` - Pause & configuration
 
-2. Teller → Vault.enter(user, USDC, 1000, user, shares)
-   ├─ Vault mints 950 shares to user
-   └─ Emits Enter event
-
-3. Teller → _afterDeposit(1000)
-   ├─ BufferHelper generates strategy calls
-   ├─ Vault.manage([strategyManager], [deposit(1000)], [0])
-   └─ 1000 USDC deployed to yield strategy
-
-4. Share Lock Applied
-   └─ Shares locked to user address for shareLockPeriod (prevents MEV)
-```
-
-### Withdrawal Flow
-
-```
-1. User → Teller.withdraw(950 shares)
-   ├─ Teller checks: not paused, withdrawals allowed
-   └─ Teller verifies share lock period expired
-
-2. Teller → _beforeWithdraw(1050)
-   ├─ BufferHelper calculates assets needed
-   ├─ Vault.manage([strategyManager], [withdraw(1050)], [0])
-   └─ 1050 USDC withdrawn from strategy
-
-3. Teller → Vault.exit(user, USDC, 1050, user, 950)
-   ├─ Vault burns 950 shares from user
-   ├─ Vault transfers 1050 USDC to user
-   └─ Emits Exit event (user gained 50 USDC yield)
-```
-
-### Yield Update Flow
-
-```
-1. Strategist → Accountant.vestYield(5000 USDC, 3 days)
-   ├─ Validates: duration bounds, TWAS deviation
-   ├─ Updates vesting state:
-   │  └─ vestingGains = 5000
-   │  └─ endVestingTime = now + 3 days
-   └─ Emits YieldRecorded event
-
-2. Oracle → Accountant.updateExchangeRate() [every 24h]
-   ├─ Calculates vested yield: (5000 * elapsed) / 3 days
-   ├─ Updates exchange rate: oldRate + (vestedYield / totalShares)
-   ├─ Calculates platform fees
-   └─ Updates state
-
-3. Vault → Accountant.claimFees()
-   ├─ Transfers accumulated fees to payoutAddress
-   └─ Resets feesOwedInBase to 0
-```
-
----
-
-## 🔐 Role-Based Access Control
-
-### Permission Matrix
-
-| Function                  | Role Required             | Contract            |
-| ------------------------- | ------------------------- | ------------------- |
-| `deposit()`               | PUBLIC                    | Teller              |
-| `depositWithPermit()`     | PUBLIC                    | Teller              |
-| `withdraw()`              | PUBLIC                    | Teller              |
-| `bulkDeposit()`           | SOLVER_ROLE               | Teller              |
-| `bulkWithdraw()`          | SOLVER_ROLE               | Teller              |
-| `enter()`                 | MINTER_ROLE               | BoringVault         |
-| `exit()`                  | BURNER_ROLE               | BoringVault         |
-| `manage()`                | MANAGER_ROLE              | BoringVault         |
-| `updateExchangeRate()`    | UPDATE_EXCHANGE_RATE_ROLE | AccountantProviders |
-| `claimFees()`             | BORING_VAULT_ROLE         | AccountantProviders |
-| `pause()`                 | ADMIN_ROLE                | Teller/Accountant   |
-| `setBeforeTransferHook()` | OWNER                     | BoringVault         |
-
-### Role Assignment
-
-```solidity
-// Teller can mint and burn vault shares
-rolesAuthority.setUserRole(teller, MINTER_ROLE, true);
-rolesAuthority.setUserRole(teller, BURNER_ROLE, true);
-
-// Accountant can update rates and claim fees
-rolesAuthority.setUserRole(accountant, UPDATE_EXCHANGE_RATE_ROLE, true);
-rolesAuthority.setUserRole(accountant, STRATEGIST_ROLE, true);
-
-// Vault contract can claim its own fees
-rolesAuthority.setUserRole(vault, BORING_VAULT_ROLE, true);
-```
+See component documentation for detailed permission matrices.
 
 ---
 

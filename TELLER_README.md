@@ -97,8 +97,8 @@ struct BeforeTransferData {
 
 | Role               | Permission                                                         | Use Case                |
 | ------------------ | ------------------------------------------------------------------ | ----------------------- |
-| **Public**         | `deposit()` nếu allowDeposits=true                                 | Normal user deposits    |
-| **Public**         | `withdraw()` nếu allowWithdraws=true                               | Normal user withdrawals |
+| **Public**         | `deposit()` if allowDeposits=true                                  | Normal user deposits    |
+| **Public**         | `withdraw()` if allowWithdraws=true                                | Normal user withdrawals |
 | **SOLVER_ROLE**    | `bulkDeposit()`, `bulkWithdraw()`                                  | Market makers, MEV bots |
 | **PROTOCOL_ADMIN** | Config: allowDeposits, allowWithdraws, shareLockPeriod, depositCap | Admin operations        |
 | **PROTOCOL_ADMIN** | `setDistributor()`                                                 | Set reward distributor  |
