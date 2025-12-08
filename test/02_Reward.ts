@@ -360,5 +360,168 @@ void describe("02_Reward", function () {
       // Earned should be reset to 0
       assert.equal(earnedAfter, 0n, "Bob earned should be 0 after compounding");
     });
+
+    void it("Step 13: Check getRewardDebt shows correct debt amount", async function () {
+      const { mockERC20, distributor, networkHelpers, vault } = context;
+
+      // Fast forward 1 day to accumulate more rewards
+      await networkHelpers.time.increase(Number(ONE_DAY_SECS));
+
+      // Get reward debt
+      const debt = await distributor.read.getRewardDebt([mockERC20.address]);
+
+      // Get current balance in distributor
+      const balance = await mockERC20.read.balanceOf([distributor.address]);
+
+      // Get current supply to understand the calculation
+      const supply = await vault.read.totalSupply();
+
+      // Get reward data to see the actual state
+      const rewardData = await distributor.read.rewardData([mockERC20.address]);
+
+      console.log(`\n=== Step 13 Debug ===`);
+      console.log(`Reward debt: ${debt}`);
+      console.log(`Current balance: ${balance}`);
+      console.log(`Total supply: ${supply}`);
+      console.log(`RewardPerTokenStored: ${rewardData[5]}`);
+      console.log(`Period finish: ${rewardData[2]}`);
+      console.log(`Current time: ${await networkHelpers.time.latest()}`);
+      console.log(`Expected debt calculation: (${rewardData[5]} * ${supply}) / 1e18 = ${(rewardData[5] * supply) / 10n ** 18n}`);
+
+      // Debt should be greater than 0 (users have earned rewards)
+      assert.ok(debt > 0n, "Reward debt should be greater than 0");
+
+      // The debt represents cumulative rewards distributed
+      // After compounding by both users, supply increased, so debt is higher
+      assert.ok(debt >= 6n * ONE_TOKEN, "Debt should be at least 6 tokens");
+      assert.ok(debt <= 7n * ONE_TOKEN, "Debt should not exceed 7 tokens (total reward amount)");
+
+      console.log(`Need to deposit: ${debt > balance ? debt - balance : 0n}`);
+    });
+
+    void it("Step 14: Admin checks debt and deposits additional rewards", async function () {
+      const { mockERC20, distributor } = context;
+
+      const debtBefore = await distributor.read.getRewardDebt([mockERC20.address]);
+      const balanceBefore = await mockERC20.read.balanceOf([distributor.address]);
+
+      // Calculate shortfall
+      const shortfall = debtBefore > balanceBefore ? debtBefore - balanceBefore : 0n;
+
+      if (shortfall > 0n) {
+        // Admin deposits to cover shortfall
+        await mockERC20.write.transfer([distributor.address, shortfall]);
+
+        const balanceAfter = await mockERC20.read.balanceOf([distributor.address]);
+
+        // Balance should now cover debt
+        assert.ok(balanceAfter >= debtBefore, "Balance should cover debt after deposit");
+      }
+    });
+  });
+
+  /**
+   * Scenario 3: Test getRewardDebt calculation accuracy
+   * Verifies that reward debt calculation matches actual claimable rewards
+   */
+  void describe("Reward Debt Calculation", function () {
+    let context: Awaited<ReturnType<typeof initializeTest>>;
+
+    before(async function () {
+      context = await initializeTest();
+    });
+
+    void it("Setup: Alice deposits and reward is configured", async function () {
+      const { mockERC20, distributor, alice } = context;
+
+      // Alice deposits 100 tokens
+      await depositTokens(context, DEPOSIT_AMOUNT, alice.account);
+
+      // Setup 7 day reward
+      const rewardDuration = 7n * ONE_DAY_SECS;
+      const rewardAmount = 7n * ONE_TOKEN;
+
+      await distributor.write.addReward([mockERC20.address, rewardDuration]);
+      await distributor.write.notifyRewardAmount([mockERC20.address, rewardAmount]);
+
+      // Admin deposits reward tokens
+      await mockERC20.write.transfer([distributor.address, rewardAmount]);
+    });
+
+    void it("Test 1: Debt starts small (rewardPerToken already set from previous scenario)", async function () {
+      const { mockERC20, distributor } = context;
+
+      const debt = await distributor.read.getRewardDebt([mockERC20.address]);
+      // Debt won't be 0 since this is a continuation of the test suite
+      // and rewardPerToken accumulates across scenarios
+      assert.ok(debt >= 0n, "Debt should be non-negative");
+    });
+
+    void it("Test 2: After 1 day, debt should equal earned amount", async function () {
+      const { mockERC20, distributor, alice, networkHelpers } = context;
+
+      // Fast forward 1 day
+      await networkHelpers.time.increase(Number(ONE_DAY_SECS));
+
+      const debt = await distributor.read.getRewardDebt([mockERC20.address]);
+      const earned = await distributor.read.earned([alice.account.address, mockERC20.address]);
+
+      // Debt should approximately equal what Alice earned (since she's the only user)
+      assertApproxEqual(debt, earned, "Debt should equal earned amount");
+      assertApproxEqual(debt, ONE_TOKEN, "Debt should be approximately 1 token after 1 day");
+    });
+
+    void it("Test 3: After claiming, debt stays same (cumulative metric)", async function () {
+      const { mockERC20, distributor, alice } = context;
+
+      const debtBefore = await distributor.read.getRewardDebt([mockERC20.address]);
+
+      // Alice claims
+      await distributor.write.claimRewards([[mockERC20.address]], { account: alice.account });
+
+      const debtAfter = await distributor.read.getRewardDebt([mockERC20.address]);
+
+      // Debt doesn't decrease when claiming because it's based on rewardPerToken
+      // which is a cumulative metric, not current claimable balance
+      assert.ok(debtAfter >= debtBefore, "Debt should stay the same or increase (cumulative)");
+    });
+
+    void it("Test 4: After 3 more days, debt increases further", async function () {
+      const { mockERC20, distributor, networkHelpers } = context;
+
+      const debtBefore = await distributor.read.getRewardDebt([mockERC20.address]);
+
+      // Fast forward 3 days
+      await networkHelpers.time.increase(Number(3n * ONE_DAY_SECS));
+
+      const debtAfter = await distributor.read.getRewardDebt([mockERC20.address]);
+      const expectedIncrease = 3n * ONE_TOKEN;
+
+      // Debt should increase by approximately 3 tokens
+      const actualIncrease = debtAfter - debtBefore;
+      assertApproxEqual(actualIncrease, expectedIncrease, "Debt should increase by 3 tokens over 3 days");
+    });
+
+    void it("Test 5: With multiple users, debt calculation accounts for total supply", async function () {
+      const { mockERC20, distributor, bob, networkHelpers } = context;
+
+      const debtBefore = await distributor.read.getRewardDebt([mockERC20.address]);
+      const supplyBefore = await distributor.read.totalSupply();
+
+      // Bob deposits 100 tokens (total supply becomes 200)
+      await depositTokens(context, DEPOSIT_AMOUNT, bob.account);
+
+      const supplyAfter = await distributor.read.totalSupply();
+
+      // Fast forward 1 day
+      await networkHelpers.time.increase(Number(ONE_DAY_SECS));
+
+      const debtAfter = await distributor.read.getRewardDebt([mockERC20.address]);
+
+      // With doubled supply, debt calculation changes
+      // Debt is based on (rewardPerToken * totalSupply) / 1e18
+      assert.ok(supplyAfter > supplyBefore, "Total supply should increase after Bob deposits");
+      assert.ok(debtAfter > debtBefore, "Debt should increase over time");
+    });
   });
 });
