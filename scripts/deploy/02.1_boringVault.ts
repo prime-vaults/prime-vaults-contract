@@ -21,11 +21,26 @@ export default async function deployBoringVault(connection: NetworkConnection, p
     deploymentId: parameterId,
   });
 
+  const client = await connection.viem.getPublicClient();
+  const [deployer] = await connection.viem.getWalletClients();
+
   // Save deployed addresses
   parameters.$global = {
-    ...parameters.$global,
+    chainId: await client.getChainId(),
+    network: connection.networkName,
+    stakingToken: parameters.$global.stakingToken,
+    adminAddress: deployer.account.address,
+    PrimeStrategistAddress: parameters.$global.PrimeStrategistAddress,
+    PrimeRBAC: parameters.$global.PrimeRBAC,
+    DecoderAndSanitizerAddress: parameters.$global.DecoderAndSanitizerAddress,
+    //
     BoringVaultAddress: modules.vault.address,
     RolesAuthorityAddress: modules.rolesAuthority.address,
+    //
+    AccountantAddress: "0x",
+    TellerAddress: "0x",
+    DistributorAddress: "0x",
+    WithdrawerAddress: "0x",
   };
 
   await writeParams(parameterId, parameters);
