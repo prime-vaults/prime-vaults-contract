@@ -2,5 +2,8 @@
   "DistributorModule#PrimeRBAC": "0x2Fa45bA9C63ef98B0D0404619E44880cD6E75B14",
   "DistributorModule#RolesAuthority": "0x8d4AF49D7395F6BB4bF326cB4bE1b20b6bff55bA",
   "DistributorModule#TellerWithBuffer": "0xC6ACb3701FC91cD971926b2Fd71a99CC239ab536",
-  "DistributorModule#Distributor": "0xbc70a1f10a39746465aEd53c7E4194b58E0aB8fD"
+  "DistributorModule#Distributor": "0xbc70a1f10a39746465aEd53c7E4194b58E0aB8fD",
+  "ManagerModule#BoringVault": "0x46f6AFDdE0ddb2C9AEC92809EaC836B737C8144a",
+  "ManagerModule#RolesAuthority": "0x8d4AF49D7395F6BB4bF326cB4bE1b20b6bff55bA",
+  "ManagerModule#ManagerWithMerkleVerification": "0xAaC3f26712cd4bEE101ac0B24da80aC4CB5efec8"
 }

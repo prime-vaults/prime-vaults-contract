@@ -9,11 +9,7 @@ import { runHardhatCmd } from "../utils.js";
  * Deploy Prime Vault system
  * Deploys: Vault, Accountant, Teller, Withdrawer, Manager, Registry, RolesAuthority
  */
-export default async function deployPrimeManager(
-  connection: NetworkConnection,
-  parameterId: string,
-  displayUi = false,
-) {
+export default async function deployPrimeManager(connection: NetworkConnection, parameterId: string, displayUi = false) {
   // Update parameters with required addresses
   const parameters = readParams(parameterId);
 
@@ -30,6 +26,8 @@ export default async function deployPrimeManager(
     displayUi,
     deploymentId: parameterId,
   });
+  parameters.$global.ManagerAddress = manager.address;
+  await writeParams(parameterId, parameters);
 
   if (displayUi) console.table({ Manager: manager.address });
   return { manager };

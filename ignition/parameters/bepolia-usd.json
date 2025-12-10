@@ -12,7 +12,8 @@
     "AccountantAddress": "0xe2cfb0A06222000c4B8324F839d0Ed9b5557E4c1",
     "TellerAddress": "0xC6ACb3701FC91cD971926b2Fd71a99CC239ab536",
     "DistributorAddress": "0xbc70a1f10a39746465aEd53c7E4194b58E0aB8fD",
-    "WithdrawerAddress": "0x602c77E3a8aBFB70C7FF75Dc944d1A3880C2A1E5"
+    "WithdrawerAddress": "0x602c77E3a8aBFB70C7FF75Dc944d1A3880C2A1E5",
+    "ManagerAddress": "0xAaC3f26712cd4bEE101ac0B24da80aC4CB5efec8"
   },
   "VaultModule": {
     "name": "Prime USD",

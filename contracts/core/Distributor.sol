@@ -61,6 +61,9 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     /// @notice Mapping of user address to whether they allow third-party compounding
     mapping(address => bool) public allowThirdPartyCompound;
 
+    /// @notice Treasury address - holds reward tokens to pay users
+    address public treasury;
+
     // ========================================= EVENTS =========================================
 
     event RewardAdded(uint256 reward);
@@ -70,6 +73,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     event CompoundReward(address indexed account, address indexed rewardToken, uint256 rewardAmount, uint256 shares, uint256 fee);
     event CompoundFeeUpdated(uint256 newFee);
     event ThirdPartyCompoundAllowed(address indexed user, bool allowed);
+    event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
 
     // ========================================= ERRORS =========================================
 
@@ -143,6 +147,18 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
         if (_compoundFee > MAX_COMPOUND_FEE) revert Distributor__CompoundFeeExceedsMaximum();
         compoundFee = _compoundFee;
         emit CompoundFeeUpdated(_compoundFee);
+    }
+
+    /**
+     * @notice Set the treasury address
+     * @param _treasury The new treasury address (address(0) to disable)
+     * @dev Callable by PROTOCOL_ADMIN_ROLE
+     * @dev If treasury is set, rewards are transferred from treasury instead of contract balance
+     */
+    function setTreasury(address _treasury) external onlyProtocolAdmin {
+        address oldTreasury = treasury;
+        treasury = _treasury;
+        emit TreasuryUpdated(oldTreasury, _treasury);
     }
 
     /**
@@ -222,7 +238,14 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
         rewardAmount = rewards[_account][_rewardToken];
         if (rewardAmount > 0) {
             rewards[_account][_rewardToken] = 0;
-            ERC20(_rewardToken).safeTransfer(_to, rewardAmount);
+
+            // If treasury is set, transfer from treasury. Otherwise use contract balance
+            if (treasury != address(0)) {
+                ERC20(_rewardToken).safeTransferFrom(treasury, _to, rewardAmount);
+            } else {
+                ERC20(_rewardToken).safeTransfer(_to, rewardAmount);
+            }
+
             emit RewardPaid(_account, _rewardToken, rewardAmount, _to);
         }
     }
@@ -275,6 +298,11 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
 
             uint256 fee = 0;
             uint256 amountToCompound = rewardAmount;
+
+            // If treasury is set, transfer from treasury to this contract first
+            if (treasury != address(0)) {
+                asset.safeTransferFrom(treasury, address(this), rewardAmount);
+            }
 
             // Charge fee if third party is calling and fee is set
             if (msg.sender != _account && compoundFee > 0) {

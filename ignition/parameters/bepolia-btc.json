@@ -12,7 +12,8 @@
     "AccountantAddress": "0x3C56Eb74a3d0Fcd3eD692b26037Bfc9bBE05474D",
     "TellerAddress": "0x75c4Ddb87Be465ac7f63FBaD47A57319c6dc4c4d",
     "DistributorAddress": "0xF8C13f4751696FED7d9Bb3Fefc2dB13A58e296A5",
-    "WithdrawerAddress": "0xa6C9a2204FF6dB141B22E402AC390A84861A7cFa"
+    "WithdrawerAddress": "0xa6C9a2204FF6dB141B22E402AC390A84861A7cFa",
+    "ManagerAddress": "0x1dec34314005Bc38FbA6e54D81585E8371665EEC"
   },
   "VaultModule": {
     "name": "Prime BTC",

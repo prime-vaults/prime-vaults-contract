@@ -41,6 +41,7 @@ export default async function deployBoringVault(connection: NetworkConnection, p
     TellerAddress: "0x",
     DistributorAddress: "0x",
     WithdrawerAddress: "0x",
+    ManagerAddress: "0x",
   };
 
   await writeParams(parameterId, parameters);

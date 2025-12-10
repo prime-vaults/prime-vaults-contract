@@ -1,6 +1,7 @@
 import bepoliaBtc from "../ignition/parameters/bepolia-btc.json";
 import bepoliaUsd from "../ignition/parameters/bepolia-usd.json";
 import localhostUsd from "../ignition/parameters/localhost-usd.json";
+import { generateMerkleTree, getProof } from "../scripts/createMerkleTree.js";
 
 export interface GlobalConfig {
   chainId: number;
@@ -17,6 +18,7 @@ export interface GlobalConfig {
   WithdrawerAddress: `0x${string}`;
   RolesAuthorityAddress: `0x${string}`;
   DistributorAddress: `0x${string}`;
+  ManagerAddress: `0x${string}`;
 }
 
 export interface LeafConfig {
@@ -47,3 +49,21 @@ export interface VaultParameters {
 export const BepoliaVaultUsd = bepoliaUsd as unknown as VaultParameters;
 export const BepoliaVaultBtc = bepoliaBtc as unknown as VaultParameters;
 export const LocalhostVaultUsd = localhostUsd as unknown as VaultParameters;
+
+export function getLeaf(params: VaultParameters, description: string) {
+  const leaves = params.ManagerModule?.leafs;
+
+  const index = leaves.findIndex((l) => l.Description === description);
+
+  if (index === -1) return undefined;
+  const leaf = leaves[index];
+  const leafDigests = leaves.map((l: any) => l.LeafDigest as `0x${string}`);
+  const tree = generateMerkleTree(leafDigests);
+  const proof = getProof(index, tree);
+  return {
+    leaf,
+    index,
+    proof,
+    tree,
+  };
+}
