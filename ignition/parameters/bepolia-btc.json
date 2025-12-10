@@ -11,7 +11,7 @@
     "RolesAuthorityAddress": "0xABAE2D40Eb3940Bdf1971d54AEAf9f55c019d628",
     "AccountantAddress": "0x3C56Eb74a3d0Fcd3eD692b26037Bfc9bBE05474D",
     "TellerAddress": "0x75c4Ddb87Be465ac7f63FBaD47A57319c6dc4c4d",
-    "DistributorAddress": "0x9759911B68a04b807e7457fb765655fFf6C13952",
+    "DistributorAddress": "0xF8C13f4751696FED7d9Bb3Fefc2dB13A58e296A5",
     "WithdrawerAddress": "0xa6C9a2204FF6dB141B22E402AC390A84861A7cFa"
   },
   "VaultModule": {

@@ -415,5 +415,5 @@
   "deployedLinkReferences": {},
   "immutableReferences": {},
   "inputSourceName": "project/contracts/auth/RolesAuthority.sol",
-  "buildInfoId": "solc-0_8_30-b1deb4c4b252a5a720287fb52c5c91a97e4d8c74"
+  "buildInfoId": "solc-0_8_30-c343951cd4ea2dd0f437bcf4da6c38bb2f2936dc"
 }
