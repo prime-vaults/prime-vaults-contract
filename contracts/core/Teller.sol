@@ -149,6 +149,7 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
      * @notice When burning (to = address(0)), only checks `from`.
      */
     function beforeUpdate(address from, address to, uint256 /* amount */, address /* operator */) public virtual {
+        _getAccountant().updateExchangeRate();
         // Update rewards BEFORE balance changes if distributor is set
         if (address(distributor) != address(0)) {
             if (from != address(0)) {
