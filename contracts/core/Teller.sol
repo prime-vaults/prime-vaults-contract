@@ -190,16 +190,6 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
     }
 
     /**
-     * @notice Allows off ramp role to withdraw from this contract.
-     * @dev Callable by SOLVER_ROLE.
-     */
-    function bulkWithdraw(uint256 shareAmount, uint256 minimumAssets, address to) external virtual requiresAuth nonReentrant returns (uint256 assetsOut) {
-        _getAccountant().updateExchangeRate();
-        assetsOut = _withdraw(shareAmount, minimumAssets, to);
-        emit BulkWithdraw(address(asset), shareAmount);
-    }
-
-    /**
      * @notice Allows withdrawals from this contract.
      * @dev Either public or disabled depending on configuration.
      */

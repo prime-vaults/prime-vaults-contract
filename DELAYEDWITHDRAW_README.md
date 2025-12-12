@@ -12,7 +12,6 @@ DelayedWithdraw is the **withdrawal protection layer**:
 - **Time-lock enforcement**: Enforces delay before withdrawal
 - **Emergency brake**: Admin can pause or cancel withdrawals
 - **Fee collector**: Collects withdrawal and expedited withdrawal fees
-- **Exchange rate lock**: Locks price at request time, unaffected by subsequent changes
 
 ## Core Functions
 
@@ -28,27 +27,21 @@ function requestWithdraw(uint96 shares, bool allowThirdPartyToComplete)
 1. Check not paused
 2. Check withdrawal has been setup (`withdrawDelay != 0`)
 3. Check user has no pending request
-4. Update exchange rate to get current price
-5. Calculate assets to receive = `shares * exchangeRate / ONE_SHARE`
-6. Calculate fee = `assets * withdrawFee / 10000`
-7. Create `WithdrawRequest`:
+4. Calculate fee = `shares * withdrawFee / 10000`
+5. Create `WithdrawRequest`:
    - `maturity` = `block.timestamp + withdrawDelay`
-   - `exchangeRateAtTimeOfRequest` = current rate
    - `sharesFee` = fee in shares
-8. Update `outstandingShares` += shares
-9. Emit `WithdrawRequested`
+6. Update `outstandingShares` += shares
+7. Emit `WithdrawRequested`
 
 **Example**:
 
 ```javascript
 // Config: withdrawDelay = 3 days, withdrawFee = 100 (1%)
-// User requests withdrawal of 100 shares when rate = 1.1 USDC/share
+// User requests withdrawal of 100 shares
 
 shares = 100e18
-rate = 1.1e6
-assets = 100e18 * 1.1e6 / 1e18 = 110e6 USDC
-fee = 110e6 * 100 / 10000 = 1.1e6 USDC (1%)
-sharesFee = 1.1e6 * 1e18 / 1.1e6 = 1e18 shares
+fee = 100e18 * 100 / 10000 = 1e18 shares (1%)
 
 maturity = now + 3 days
 ```
@@ -65,10 +58,9 @@ function completeWithdraw(address account) external nonReentrant
 2. Get user's `WithdrawRequest`
 3. Check `maturity <= block.timestamp` (delay has elapsed)
 4. Check third-party authorization if caller != user
-5. Calculate actual assets and fee:
-   - `totalAssets = shares * lockedExchangeRate / ONE_SHARE`
-   - `fee = sharesFee * lockedExchangeRate / ONE_SHARE`
-   - `assetsToUser = totalAssets - fee`
+5. Calculate assets using current exchange rate:
+   - Update exchange rate via `accountant.updateExchangeRate()`
+   - `assetsOut = shares * currentRate / ONE_SHARE`
 6. Delete withdraw request
 7. Update `outstandingShares` -= shares
 8. Call `vault.exit()` to burn shares
@@ -139,7 +131,6 @@ struct WithdrawRequest {
   bool allowThirdPartyToComplete; // Allow others to complete
   uint40 maturity; // Timestamp when withdrawal is allowed
   uint96 shares; // Number of shares to withdraw
-  uint96 exchangeRateAtTimeOfRequest; // Exchange rate at request time
   uint96 sharesFee; // Fee (in shares)
 }
 ```
@@ -210,26 +201,6 @@ totalFee = 1 + 5 = 6 USDC
 userReceives = 100 - 6 = 94 USDC
 ```
 
-## Exchange Rate Lock Mechanism
-
-**Purpose**: Protects user from exchange rate decreases during delay period
-
-```solidity
-// At request time (rate = 1.0)
-request.exchangeRateAtTimeOfRequest = 1.0e6;
-
-// 3 days later, rate drops to 0.9
-// User still receives at rate = 1.0 (protected)
-
-assets = shares * 1.0e6 / 1e18;  // Uses locked rate
-```
-
-**Example**:
-
-- T0: Request 100 shares @ 1.0 USDC/share = 100 USDC
-- T3: Complete withdrawal, current rate = 0.95 USDC/share
-- User receives: 100 USDC (locked rate), not 95 USDC
-
 ## Third-Party Complete
 
 **Use Case**: Automation, keeper bots
@@ -255,9 +226,8 @@ function requestWithdraw(uint96 shares, bool allowThirdPartyToComplete)
 ┌─────────────────────────────────────────────────┐
 │ Step 1: Request Withdrawal                      │
 │  - User calls requestWithdraw(100 shares)       │
-│  - Lock exchange rate = 1.0                     │
-│  - Set maturity = now + 3 days                  │
 │  - Calculate fee = 1%                           │
+│  - Set maturity = now + 3 days                  │
 └─────────────────────────────────────────────────┘
                       │
                       │ Wait 3 days
@@ -266,9 +236,10 @@ function requestWithdraw(uint96 shares, bool allowThirdPartyToComplete)
 │ Step 2: Complete Withdrawal                     │
 │  - User calls completeWithdraw()                │
 │  - Check maturity reached                       │
+│  - Get current exchange rate                    │
+│  - Calculate assets from shares                 │
 │  - Burn shares via vault.exit()                 │
-│  - Transfer 99 USDC to user                     │
-│  - Transfer 1 USDC fee to feeAddress            │
+│  - Transfer assets to user                      │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -304,9 +275,8 @@ function cancelUserWithdraw(address user) external onlyOperator
 
 ## Important Notes
 
-1. **Exchange rate locked**: User is protected from rate decreases during delay period
-2. **Single request limitation**: Must complete/cancel before making new request
-3. **Expedited not partial**: Must accelerate entire request
-4. **Maturity check strict**: Must wait exact time, no earlier
-5. **Fee paid in shares**: Fee is calculated in shares, not assets
-6. **Outstanding shares tracking**: Vault must ensure sufficient liquidity for pending withdrawals
+1. **Single request limitation**: Must complete/cancel before making new request
+2. **Expedited not partial**: Must accelerate entire request
+3. **Maturity check strict**: Must wait exact time, no earlier
+4. **Fee paid in shares**: Fee is calculated in shares, not assets
+5. **Outstanding shares tracking**: Vault must ensure sufficient liquidity for pending withdrawals

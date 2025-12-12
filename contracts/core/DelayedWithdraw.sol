@@ -38,14 +38,12 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
      * @param allowThirdPartyToComplete Whether or not a 3rd party can complete a withdraw on behalf of a user.
      * @param maturity The time at which the withdrawal can be completed.
      * @param shares The number of shares that are requested to be withdrawn.
-     * @param exchangeRateAtTimeOfRequest The exchange rate at the time of the request.
      * @param sharesFee The total fee in shares that will be charged.
      */
     struct WithdrawRequest {
         bool allowThirdPartyToComplete;
         uint40 maturity;
         uint96 shares;
-        uint96 exchangeRateAtTimeOfRequest;
         uint96 sharesFee;
     }
 
@@ -251,7 +249,6 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
         req.shares = shares;
         uint40 maturity = uint40(block.timestamp + withdrawState.withdrawDelay);
         req.maturity = maturity;
-        req.exchangeRateAtTimeOfRequest = uint96(accountant.getRateSafe());
         req.allowThirdPartyToComplete = allowThirdPartyToComplete;
 
         // Calculate and store fee at time of request
@@ -348,24 +345,25 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
         if (req.shares == 0) revert DelayedWithdraw__NoSharesToWithdraw();
 
         uint256 shares = req.shares;
-        uint256 fee = req.sharesFee;
+        uint256 sharesFee = req.sharesFee;
 
         // Safe to cast shares to a uint128 since req.shares is constrained to be less than 2^96.
         withdrawState.outstandingShares -= uint128(shares);
 
         // Deduct fee from shares and transfer to fee address
-        if (fee > 0) {
-            shares -= fee;
-            boringVault.safeTransfer(feeAddress, fee);
+        if (sharesFee > 0) {
+            shares -= sharesFee;
+            boringVault.safeTransfer(feeAddress, sharesFee);
         }
 
         // Calculate assets out using exchange rate at time of request (shares are locked and no longer earn rewards)
-        assetsOut = shares.mulDivDown(req.exchangeRateAtTimeOfRequest, ONE_SHARE);
+        accountant.updateExchangeRate();
+        uint256 minimum = shares.mulDivDown(accountant.getRateSafe(), ONE_SHARE);
 
         req.shares = 0;
         req.sharesFee = 0;
 
-        teller.bulkWithdraw(shares, assetsOut, account);
+        assetsOut = teller.withdraw(shares, minimum, account);
 
         emit WithdrawCompleted(account, asset, shares, assetsOut);
     }
