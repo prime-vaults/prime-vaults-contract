@@ -1,26 +1,5 @@
 {
-  "VaultModule#FullDecoderAndSanitizer": "0x92EEE9BBCd6561576C9B6d5A181bc193207D66a5",
-  "VaultModule#PrimeRBAC": "0x77Af103309cB467CF9aCf151D02138b08122523E",
-  "VaultModule#RolesAuthority": "0x0c73a6535739C18e462B096a8C84fE44fA6cCe4e",
-  "VaultModule#BoringVault": "0x3F2Bb51C6aCe306613D7B11c5024B0f9F21CDb9e",
-  "AccountantModule#PrimeRBAC": "0x77Af103309cB467CF9aCf151D02138b08122523E",
-  "AccountantModule#RolesAuthority": "0x0c73a6535739C18e462B096a8C84fE44fA6cCe4e",
-  "AccountantModule#AccountantProviders": "0x33B4AeAf064179aA44feE98e741972bb3AEfAC4d",
-  "TellerModule#AccountantProviders": "0x33B4AeAf064179aA44feE98e741972bb3AEfAC4d",
-  "TellerModule#BoringVault": "0x3F2Bb51C6aCe306613D7B11c5024B0f9F21CDb9e",
-  "TellerModule#PrimeRBAC": "0x77Af103309cB467CF9aCf151D02138b08122523E",
-  "TellerModule#RolesAuthority": "0x0c73a6535739C18e462B096a8C84fE44fA6cCe4e",
-  "TellerModule#TellerWithBuffer": "0x6362aFc8ED8738093fA97D0c5084342Ae88B1adc",
-  "TellerHelper#BoringVault": "0x3F2Bb51C6aCe306613D7B11c5024B0f9F21CDb9e",
-  "TellerHelper#TellerWithBuffer": "0x6362aFc8ED8738093fA97D0c5084342Ae88B1adc",
-  "TellerHelper#PrimeBufferHelper": "0x50658E3afE2EbDf81a2Ef6Ba3821E3D17004607B",
-  "WithdrawerModule#RolesAuthority": "0x0c73a6535739C18e462B096a8C84fE44fA6cCe4e",
-  "WithdrawerModule#DelayedWithdraw": "0x2131d089b72D8681a27176fe769781b913F04DE1",
   "ManagerModule#BoringVault": "0x3F2Bb51C6aCe306613D7B11c5024B0f9F21CDb9e",
   "ManagerModule#RolesAuthority": "0x0c73a6535739C18e462B096a8C84fE44fA6cCe4e",
-  "ManagerModule#ManagerWithMerkleVerification": "0x710499Ae96038639eb8EBaDfb7D14a287024A78b",
-  "DistributorModule#PrimeRBAC": "0x77Af103309cB467CF9aCf151D02138b08122523E",
-  "DistributorModule#RolesAuthority": "0x0c73a6535739C18e462B096a8C84fE44fA6cCe4e",
-  "DistributorModule#TellerWithBuffer": "0x6362aFc8ED8738093fA97D0c5084342Ae88B1adc",
-  "DistributorModule#Distributor": "0xDA2e6539AF98d20b6b9A7ad34F867e01cfCCaFA3"
+  "ManagerModule#ManagerWithMerkleVerification": "0xfe5E17351A17633d88e3e52F583d5f0757eFB66A"
 }
