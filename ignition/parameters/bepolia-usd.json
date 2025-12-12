@@ -4,7 +4,7 @@
     "network": "bepolia",
     "stakingToken": "0x312203a9df1b39824a826e4ceb266541d6e0feaa",
     "adminAddress": "0xcd2ab433521a1188eccc406f59cac6d1303c7c2c",
-    "PrimeStrategistAddress": "0x979B11c59040745FEdEB3C262BCbE490287bDE8D",
+    "PrimeStrategistAddress": "0x10417d922222f869cb179b733eFacf939a707Dd4",
     "PrimeRBAC": "0x77Af103309cB467CF9aCf151D02138b08122523E",
     "DecoderAndSanitizerAddress": "0x92EEE9BBCd6561576C9B6d5A181bc193207D66a5",
     "BoringVaultAddress": "0x525eF4B50DFF45F6684Ae4c9989574329CFE3353",
@@ -37,9 +37,7 @@
         "DecoderAndSanitizerAddress": "0x92EEE9BBCd6561576C9B6d5A181bc193207D66a5",
         "TargetAddress": "0x312203a9df1b39824a826e4ceb266541d6e0feaa",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x733a82490e1c1fac50eeFFfC9262a8E68C09835F"
-        ],
+        "AddressArguments": ["0x733a82490e1c1fac50eeFFfC9262a8E68C09835F"],
         "PackedArgumentAddresses": "733a82490e1c1fac50eefffc9262a8e68c09835f",
         "LeafDigest": "0x8d5e1f77768ca3cef18376ff1021b656cf156c3cddb86b7bcc954f0f51160c52"
       },
@@ -50,9 +48,7 @@
         "DecoderAndSanitizerAddress": "0x92EEE9BBCd6561576C9B6d5A181bc193207D66a5",
         "TargetAddress": "0x312203a9df1b39824a826e4ceb266541d6e0feaa",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x979B11c59040745FEdEB3C262BCbE490287bDE8D"
-        ],
+        "AddressArguments": ["0x979B11c59040745FEdEB3C262BCbE490287bDE8D"],
         "PackedArgumentAddresses": "979b11c59040745fedeb3c262bcbe490287bde8d",
         "LeafDigest": "0x4407cb40c0644a20278d02295f8846f1ce4c14aedbb61e81a722e78cbce2ce02"
       },
@@ -63,9 +59,7 @@
         "DecoderAndSanitizerAddress": "0x92EEE9BBCd6561576C9B6d5A181bc193207D66a5",
         "TargetAddress": "0x979B11c59040745FEdEB3C262BCbE490287bDE8D",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x312203a9df1b39824a826e4ceb266541d6e0feaa"
-        ],
+        "AddressArguments": ["0x312203a9df1b39824a826e4ceb266541d6e0feaa"],
         "PackedArgumentAddresses": "312203a9df1b39824a826e4ceb266541d6e0feaa",
         "LeafDigest": "0x68a51c6904be4b7831fb8660f4fbae2464a6a251d333b43abf878e45bb1a5a71"
       },
@@ -76,10 +70,7 @@
         "DecoderAndSanitizerAddress": "0x92EEE9BBCd6561576C9B6d5A181bc193207D66a5",
         "TargetAddress": "0x979B11c59040745FEdEB3C262BCbE490287bDE8D",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x312203a9df1b39824a826e4ceb266541d6e0feaa",
-          "0x525eF4B50DFF45F6684Ae4c9989574329CFE3353"
-        ],
+        "AddressArguments": ["0x312203a9df1b39824a826e4ceb266541d6e0feaa", "0x525eF4B50DFF45F6684Ae4c9989574329CFE3353"],
         "PackedArgumentAddresses": "312203a9df1b39824a826e4ceb266541d6e0feaa525ef4b50dff45f6684ae4c9989574329cfe3353",
         "LeafDigest": "0x19e8debf6af50fd87501aa03a103ce42896dd5a1aa8c235f825388fa9ad3f17f"
       },

@@ -22,5 +22,7 @@
   "DistributorModule#PrimeRBAC": "0x77Af103309cB467CF9aCf151D02138b08122523E",
   "DistributorModule#RolesAuthority": "0x2E12e500740FEADac97d6C47422EA260Ada39948",
   "DistributorModule#TellerWithBuffer": "0xa0142738aDbdf9B4E2dAf00b44e64D437c10CAa2",
-  "DistributorModule#Distributor": "0x68a5001F357eDb2ABfB861D02f06798516f60d42"
+  "DistributorModule#Distributor": "0x68a5001F357eDb2ABfB861D02f06798516f60d42",
+  "MockERC20Module#MockERC20": "0x54D376675856915C12607A8F668E12a804256913",
+  "MockStrategistModule#MockStrategist": "0x10417d922222f869cb179b733eFacf939a707Dd4"
 }
