@@ -12,7 +12,7 @@
     "AccountantAddress": "0x733a82490e1c1fac50eeFFfC9262a8E68C09835F",
     "TellerAddress": "0xa0142738aDbdf9B4E2dAf00b44e64D437c10CAa2",
     "DistributorAddress": "0x68a5001F357eDb2ABfB861D02f06798516f60d42",
-    "WithdrawerAddress": "0xF29616444c759fd0d419942Ca2Bab2fd9E245714",
+    "WithdrawerAddress": "0xA56DC8564d48E3F9e1b4b31fDE853230Ad7dA51a",
     "ManagerAddress": "0x1AF4d704d858610BF1D336b916aA718aaC1304bf"
   },
   "VaultModule": {

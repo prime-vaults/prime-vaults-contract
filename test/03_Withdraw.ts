@@ -159,7 +159,7 @@ void describe("03_Withdraw", function () {
       const userBalanceBefore = await mockERC20.read.balanceOf([alice.account.address]);
       const strategistBalanceBefore = await mockERC20.read.balanceOf([mockStrategist.address]);
 
-      await withdrawer.write.completeWithdraw([alice.account.address], {
+      await withdrawer.write.completeWithdraw([alice.account.address, 0n], {
         account: alice.account,
       });
 
@@ -280,7 +280,7 @@ void describe("03_Withdraw", function () {
       const totalShares = withdrawRequest.shares;
       const totalFee = withdrawRequest.sharesFee;
 
-      await withdrawer.write.completeWithdraw([bob.account.address], {
+      await withdrawer.write.completeWithdraw([bob.account.address, 0n], {
         account: bob.account,
       });
 

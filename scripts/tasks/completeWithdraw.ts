@@ -38,8 +38,11 @@ export default async function completeWithdraw(connection: NetworkConnection, pa
   // Get user balance before
   const balanceBefore = await mockERC20.read.balanceOf([userAccount.account.address]);
 
+  // Calculate minimum assets (0 for no slippage protection, or set a specific value)
+  const minimumAssets = 0n;
+
   // Complete withdrawal
-  const txComplete = await withdrawer.write.completeUserWithdraw([userAccount.account.address]);
+  const txComplete = await withdrawer.write.completeWithdraw([userAccount.account.address, minimumAssets]);
   await (await connection.viem.getPublicClient()).waitForTransactionReceipt({ hash: txComplete });
   console.log(`Withdrawal completed: ${txComplete}`);
 

@@ -201,9 +201,9 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
      * @dev Admins can complete requests even if they are outside the completion window.
      * @dev Callable by OPERATOR_ROLE.
      */
-    function completeUserWithdraw(address user) external onlyOperator returns (uint256 assetsOut) {
+    function completeUserWithdraw(address user, uint256 minimumAssets) external onlyOperator returns (uint256 assetsOut) {
         WithdrawRequest storage req = withdrawRequests[user];
-        assetsOut = _completeWithdraw(user, req);
+        assetsOut = _completeWithdraw(user, req, minimumAssets);
     }
 
     /**
@@ -295,15 +295,17 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
     /**
      * @notice Completes a user's withdrawal request.
      * @dev Publicly callable. No time limit after maturity.
+     * @param account Address of the user whose withdrawal to complete
+     * @param minimumAssets Minimum amount of assets to receive (slippage protection)
      */
-    function completeWithdraw(address account) external requiresAuth nonReentrant returns (uint256 assetsOut) {
+    function completeWithdraw(address account, uint256 minimumAssets) external requiresAuth nonReentrant returns (uint256 assetsOut) {
         if (isPaused) revert DelayedWithdraw__Paused();
         WithdrawRequest storage req = withdrawRequests[account];
 
         if (msg.sender != account && !req.allowThirdPartyToComplete) {
             revert DelayedWithdraw__ThirdPartyCompletionNotAllowed();
         }
-        assetsOut = _completeWithdraw(account, req);
+        assetsOut = _completeWithdraw(account, req, minimumAssets);
     }
 
     // ========================================= VIEW FUNCTIONS =========================================
@@ -337,8 +339,11 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
 
     /**
      * @notice Internal helper function that implements shared logic for completing a user's withdrawal request.
+     * @param account Address of the user
+     * @param req Storage pointer to the user's withdraw request
+     * @param minimumAssets Minimum amount of assets to receive (slippage protection)
      */
-    function _completeWithdraw(address account, WithdrawRequest storage req) internal returns (uint256 assetsOut) {
+    function _completeWithdraw(address account, WithdrawRequest storage req, uint256 minimumAssets) internal returns (uint256 assetsOut) {
         if (isPaused) revert DelayedWithdraw__Paused();
 
         if (block.timestamp < req.maturity) revert DelayedWithdraw__WithdrawNotMatured();
@@ -356,14 +361,10 @@ contract DelayedWithdraw is PrimeAuth, ReentrancyGuard, IDelayedWithdraw {
             boringVault.safeTransfer(feeAddress, sharesFee);
         }
 
-        // Calculate assets out using exchange rate at time of request (shares are locked and no longer earn rewards)
-        accountant.updateExchangeRate();
-        uint256 minimum = shares.mulDivDown(accountant.getRateSafe(), ONE_SHARE);
-
         req.shares = 0;
         req.sharesFee = 0;
 
-        assetsOut = teller.withdraw(shares, minimum, account);
+        assetsOut = teller.withdraw(shares, minimumAssets, account);
 
         emit WithdrawCompleted(account, asset, shares, assetsOut);
     }
