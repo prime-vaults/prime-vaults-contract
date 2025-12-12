@@ -28,7 +28,7 @@
     "expeditedWithdrawFee": 200
   },
   "ManagerModule": {
-    "manageRoot": "0x144c3bf6e83abd70e270d743fcacae4c2ec81a1bd39d54be9fd6300300af1f4b",
+    "manageRoot": "0x984a35cbbea76c9c956f76457c95476cd267b428a0bc7f9fbedca116b25832f7",
     "leafs": [
       {
         "Description": "Approve Accountant to spend base asset (staking token)",
@@ -71,8 +71,8 @@
       },
       {
         "Description": "Withdraw from PrimeStrategist back to vault",
-        "FunctionSignature": "withdraw(address,uint256,address)",
-        "FunctionSelector": "0x69328dec",
+        "FunctionSignature": "withdraw(address,uint256)",
+        "FunctionSelector": "0xf3fef3a3",
         "DecoderAndSanitizerAddress": "0x92EEE9BBCd6561576C9B6d5A181bc193207D66a5",
         "TargetAddress": "0x10417d922222f869cb179b733eFacf939a707Dd4",
         "CanSendValue": false,
@@ -81,7 +81,7 @@
           "0x525eF4B50DFF45F6684Ae4c9989574329CFE3353"
         ],
         "PackedArgumentAddresses": "312203a9df1b39824a826e4ceb266541d6e0feaa525ef4b50dff45f6684ae4c9989574329cfe3353",
-        "LeafDigest": "0x7e58e7563dfa16e8a8ef553d2dbc80e4a4893ceaa63b12f0b337c3ae1c074624"
+        "LeafDigest": "0x7d174fd7eb535b1f7d35940955891e92a9299a00902f2aec6568daa4f4e86b0e"
       },
       {
         "Description": "Claim platform fees from Accountant",
