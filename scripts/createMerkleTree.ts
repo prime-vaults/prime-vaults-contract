@@ -109,11 +109,7 @@ export function getProof(leafIndex: number, tree: `0x${string}`[][]): `0x${strin
  * const result2 = findLeaf(params, "claimFees()", accountantAddr);
  * ```
  */
-export function findLeaf(
-  params: VaultParameters,
-  functionSignature: string,
-  target?: string,
-): { leaf: LeafConfig; index: number } | undefined {
+export function findLeaf(params: VaultParameters, functionSignature: string, target?: string): { leaf: LeafConfig; index: number } | undefined {
   // Read from $global (new location) or fallback to ManagerModule (backward compatibility)
   const leaves = params.ManagerModule?.leafs;
   if (!leaves) return undefined;
@@ -252,12 +248,12 @@ export async function createMerkleTree(params: VaultParameters): Promise<{
   // Leaf 3: withdraw(address,uint256,address) - Withdraw from PrimeStrategist to vault
   leafs.push({
     Description: "Withdraw from PrimeStrategist back to vault",
-    FunctionSignature: "withdraw(address,uint256,address)",
-    FunctionSelector: toFunctionSelector("withdraw(address,uint256,address)"),
+    FunctionSignature: "withdraw(address,uint256)",
+    FunctionSelector: toFunctionSelector("withdraw(address,uint256)"),
     DecoderAndSanitizerAddress,
     TargetAddress: PrimeStrategistAddress,
     CanSendValue: false,
-    AddressArguments: [stakingToken, params.$global.BoringVaultAddress],
+    AddressArguments: [stakingToken],
     PackedArgumentAddresses: "0x",
     LeafDigest: "0x",
   });

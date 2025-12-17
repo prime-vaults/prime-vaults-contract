@@ -28,7 +28,7 @@
     "expeditedWithdrawFee": 200
   },
   "ManagerModule": {
-    "manageRoot": "0x3e86c204bd144143c96438435663b689d6f393c7dd9d3a98b7664567ad496a10",
+    "manageRoot": "0xe610e150862c24f16474600b3760290badbfbd295ad76e666f5659cb5cb3fdd9",
     "leafs": [
       {
         "Description": "Approve Accountant to spend base asset (staking token)",
@@ -37,9 +37,7 @@
         "DecoderAndSanitizerAddress": "0x92EEE9BBCd6561576C9B6d5A181bc193207D66a5",
         "TargetAddress": "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x33B4AeAf064179aA44feE98e741972bb3AEfAC4d"
-        ],
+        "AddressArguments": ["0x33B4AeAf064179aA44feE98e741972bb3AEfAC4d"],
         "PackedArgumentAddresses": "33b4aeaf064179aa44fee98e741972bb3aefac4d",
         "LeafDigest": "0xc0cb416b08943cbb1c2a994a17454336971410c547433a427ef5f6eca0b0d0ca"
       },
@@ -50,9 +48,7 @@
         "DecoderAndSanitizerAddress": "0x92EEE9BBCd6561576C9B6d5A181bc193207D66a5",
         "TargetAddress": "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x979B11c59040745FEdEB3C262BCbE490287bDE8D"
-        ],
+        "AddressArguments": ["0x979B11c59040745FEdEB3C262BCbE490287bDE8D"],
         "PackedArgumentAddresses": "979b11c59040745fedeb3c262bcbe490287bde8d",
         "LeafDigest": "0x30c08c7ada2c4eb227ee8fbf06d9ef18a7d97d9e954ca534030b161ebadec13b"
       },
@@ -63,9 +59,7 @@
         "DecoderAndSanitizerAddress": "0x92EEE9BBCd6561576C9B6d5A181bc193207D66a5",
         "TargetAddress": "0x979B11c59040745FEdEB3C262BCbE490287bDE8D",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469"
-        ],
+        "AddressArguments": ["0xde9decc3a84cf9cd197ca51ec998a475cc4e8469"],
         "PackedArgumentAddresses": "de9decc3a84cf9cd197ca51ec998a475cc4e8469",
         "LeafDigest": "0x60eef8199e848c76524544d479262cb8525b6c6d8238990436f90b816062c719"
       },
@@ -76,12 +70,9 @@
         "DecoderAndSanitizerAddress": "0x92EEE9BBCd6561576C9B6d5A181bc193207D66a5",
         "TargetAddress": "0x979B11c59040745FEdEB3C262BCbE490287bDE8D",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469",
-          "0x3F2Bb51C6aCe306613D7B11c5024B0f9F21CDb9e"
-        ],
-        "PackedArgumentAddresses": "de9decc3a84cf9cd197ca51ec998a475cc4e84693f2bb51c6ace306613d7b11c5024b0f9f21cdb9e",
-        "LeafDigest": "0xe8b83e82e120ad93345140b438ef5e3c4ebd5131faf848243f076b7a5bad0c5b"
+        "AddressArguments": ["0xde9decc3a84cf9cd197ca51ec998a475cc4e8469"],
+        "PackedArgumentAddresses": "de9decc3a84cf9cd197ca51ec998a475cc4e8469",
+        "LeafDigest": "0xf46e1078f79846eb35bde06a8b3c9db9b4820b0a4ae8e21a16a172cce99c3ce3"
       },
       {
         "Description": "Claim platform fees from Accountant",
