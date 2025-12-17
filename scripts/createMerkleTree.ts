@@ -253,7 +253,7 @@ export async function createMerkleTree(params: VaultParameters): Promise<{
     DecoderAndSanitizerAddress,
     TargetAddress: PrimeStrategistAddress,
     CanSendValue: false,
-    AddressArguments: [stakingToken, params.$global.BoringVaultAddress],
+    AddressArguments: [stakingToken],
     PackedArgumentAddresses: "0x",
     LeafDigest: "0x",
   });
