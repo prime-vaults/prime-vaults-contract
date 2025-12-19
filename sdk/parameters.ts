@@ -19,6 +19,7 @@ export interface GlobalConfig {
   RolesAuthorityAddress: `0x${string}`;
   DistributorAddress: `0x${string}`;
   ManagerAddress: `0x${string}`;
+  PrimeTimelockAddress: `0x${string}`;
 }
 
 export interface LeafConfig {

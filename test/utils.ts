@@ -10,6 +10,7 @@ import deployTellerHelper from "../scripts/deploy/02.4_tellerHelper.js";
 import deployWithdrawer from "../scripts/deploy/02.5_withdrawer.js";
 import deployPrimeManager from "../scripts/deploy/03_vaultManager.js";
 import deployDistributor from "../scripts/deploy/04_distributor.js";
+import deployTimelock from "../scripts/deploy/05_timelock.js";
 
 export const ONE_DAY_SECS = 24n * 60n * 60n;
 export const ONE_TOKEN = 10n ** 18n;
@@ -39,6 +40,18 @@ export async function initializeTest() {
   const withdrawer = await deployWithdrawer(connection, PARAMETERS_ID);
   const managerModules = await deployPrimeManager(connection, PARAMETERS_ID);
   const distributor = await deployDistributor(connection, PARAMETERS_ID);
+  const timelockModules = await deployTimelock(connection, PARAMETERS_ID);
+
+  // Transfer OWNER_ROLE to timelock for testing
+  const { primeRBAC } = primeRegistryModules;
+  const { timelock } = timelockModules;
+  const OWNER_ROLE = await primeRBAC.read.OWNER_ROLE();
+
+  // Grant OWNER_ROLE to timelock
+  await primeRBAC.write.grantRole([OWNER_ROLE, timelock.address], { account: deployer.account });
+
+  // Revoke OWNER_ROLE from deployer
+  await primeRBAC.write.revokeRole([OWNER_ROLE, deployer.account.address], { account: deployer.account });
 
   return {
     ...mocks,
@@ -50,6 +63,7 @@ export async function initializeTest() {
     ...withdrawer,
     ...managerModules,
     ...distributor,
+    ...timelockModules,
     deployer,
     alice,
     bob,
@@ -99,9 +113,7 @@ export function assertApproxEqual(actual: bigint, expected: bigint, message?: st
   const tolerance = (expected * tolerancePercent) / 100n;
   const min = expected - tolerance;
   const max = expected + tolerance;
-
   if (actual < min || actual > max) {
-    const error = message || `Expected ${actual} to be approximately ${expected} (±${tolerancePercent}%)`;
-    throw new Error(`${error}\n  Actual: ${actual}\n  Expected: ${expected}\n  Tolerance: ±${tolerance} (${tolerancePercent}%)`);
+    throw new Error(`${message || "Assertion failed"}: ${actual} not approximately equal to ${expected} (tolerance: ${tolerancePercent}%)`);
   }
 }
