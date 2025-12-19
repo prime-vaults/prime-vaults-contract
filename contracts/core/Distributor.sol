@@ -58,6 +58,10 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     /// @notice Maximum compound fee (20%)
     uint256 public constant MAX_COMPOUND_FEE = 2000; // 20%
 
+    /// @notice Precision for reward calculations (1e27 = 1e18 base + 1e9 extra precision)
+    /// @dev Using 1e27 prevents rounding down to 0 for low-decimal reward tokens (e.g. USDC)
+    uint256 private constant REWARD_PRECISION = 1e27;
+
     /// @notice Mapping of user address to whether they allow third-party compounding
     mapping(address => bool) public allowThirdPartyCompound;
 
@@ -362,7 +366,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
 
         return
             rewardData[_rewardsToken].rewardPerTokenStored +
-            ((lastTimeRewardApplicable(_rewardsToken) - rewardData[_rewardsToken].lastUpdateTime) * rewardData[_rewardsToken].rewardRate * 1e18) /
+            ((lastTimeRewardApplicable(_rewardsToken) - rewardData[_rewardsToken].lastUpdateTime) * rewardData[_rewardsToken].rewardRate * REWARD_PRECISION) /
                 vault.totalSupply();
     }
 
@@ -373,7 +377,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      */
     function earned(address account, address _rewardsToken) public view returns (uint256) {
         return
-            (vault.balanceOf(account) * (rewardPerToken(_rewardsToken) - userRewardPerTokenPaid[account][_rewardsToken])) / 1e18 +
+            (vault.balanceOf(account) * (rewardPerToken(_rewardsToken) - userRewardPerTokenPaid[account][_rewardsToken])) / REWARD_PRECISION +
             rewards[account][_rewardsToken];
     }
 
@@ -406,8 +410,8 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
         // 2. New rewards since last update
         uint256 supply = vault.totalSupply();
         if (supply > 0) {
-            uint256 currentRewardPerToken = rewardData[_rewardsToken].rewardPerTokenStored + (rewardsSinceLastUpdate * 1e18) / supply;
-            debt = (currentRewardPerToken * supply) / 1e18;
+            uint256 currentRewardPerToken = rewardData[_rewardsToken].rewardPerTokenStored + (rewardsSinceLastUpdate * REWARD_PRECISION) / supply;
+            debt = (currentRewardPerToken * supply) / REWARD_PRECISION;
         }
     }
 
