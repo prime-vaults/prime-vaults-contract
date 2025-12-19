@@ -172,11 +172,10 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
      * @notice Allows users to deposit into the BoringVault, if this contract is not paused.
      * @dev Publicly callable.
      */
-    function deposit(uint256 depositAmount, uint256 minimumMint, address to) external virtual requiresAuth nonReentrant returns (uint256 shares) {
-        if (to == address(0)) to = msg.sender;
+    function deposit(uint256 depositAmount, uint256 minimumMint) external virtual requiresAuth nonReentrant returns (uint256 shares) {
         _beforeDeposit();
-        shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, to);
-        _afterPublicDeposit(to, depositAmount, shares, tellerState.shareLockPeriod);
+        shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, msg.sender);
+        _afterPublicDeposit(msg.sender, depositAmount, shares, tellerState.shareLockPeriod);
     }
 
     /**

@@ -318,7 +318,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
             // Compound remaining amount
             if (amountToCompound > 0) {
                 asset.safeApprove(address(vault), amountToCompound);
-                uint256 shares = teller.deposit(amountToCompound, 0, _account);
+                uint256 shares = teller.bulkDeposit(amountToCompound, 0, _account);
                 emit CompoundReward(_account, address(asset), amountToCompound, shares, fee);
             }
         }

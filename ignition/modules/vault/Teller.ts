@@ -19,7 +19,7 @@ export default buildModule("TellerModule", (m) => {
   });
 
   // Set public capability for deposit
-  const tx1 = m.call(rolesAuthority, "setPublicCapability", [teller, toFunctionSelector("deposit(uint256,uint256,address)"), true], {
+  const tx1 = m.call(rolesAuthority, "setPublicCapability", [teller, toFunctionSelector("deposit(uint256,uint256)"), true], {
     id: "setPublicCapability_deposit",
     after: [teller],
   });
@@ -51,25 +51,30 @@ export default buildModule("TellerModule", (m) => {
     after: [tx5],
   });
 
-  const tx7 = m.call(rolesAuthority, "setUserRole", [teller, ROLES.MINTER, true], {
-    id: "setUserRole_MINTER_Teller",
+  const tx7 = m.call(rolesAuthority, "setRoleCapability", [ROLES.SOLVER, teller, toFunctionSelector("bulkDeposit(uint256,uint256,address)"), true], {
+    id: "setRoleCapability_bulkDeposit",
     after: [tx6],
   });
 
-  const tx8 = m.call(rolesAuthority, "setUserRole", [teller, ROLES.BURNER, true], {
-    id: "setUserRole_BURNER_Teller",
+  const tx8 = m.call(rolesAuthority, "setUserRole", [teller, ROLES.MINTER, true], {
+    id: "setUserRole_MINTER_Teller",
     after: [tx7],
   });
 
-  const tx9 = m.call(rolesAuthority, "setUserRole", [teller, ROLES.MANAGER, true], {
-    id: "setUserRole_MANAGER_Teller",
+  const tx9 = m.call(rolesAuthority, "setUserRole", [teller, ROLES.BURNER, true], {
+    id: "setUserRole_BURNER_Teller",
     after: [tx8],
+  });
+
+  const tx10 = m.call(rolesAuthority, "setUserRole", [teller, ROLES.MANAGER, true], {
+    id: "setUserRole_MANAGER_Teller",
+    after: [tx9],
   });
 
   // npx hardhat ignition wipe bepolia-usd TellerModule#setUserRole_STRATEGIST_Teller
   m.call(rolesAuthority, "setUserRole", [teller, ROLES.STRATEGIST, true], {
     id: "setUserRole_STRATEGIST_Teller",
-    after: [tx9],
+    after: [tx10],
   });
 
   return { teller, accountant, vault, primeRBAC };

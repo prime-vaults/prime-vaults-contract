@@ -1,5 +1,4 @@
 import { NetworkConnection } from "hardhat/types/network";
-import { zeroAddress } from "viem";
 
 import { readParams } from "../../ignition/parameters/utils.js";
 import { runHardhatCmd } from "../utils.js";
@@ -20,7 +19,7 @@ export default async function deposit(connection: NetworkConnection, parameterId
 
   const txApprove = await stakingToken.write.approve([parameters.$global.BoringVaultAddress, depositAmount]);
   await (await connection.viem.getPublicClient()).waitForTransactionReceipt({ hash: txApprove });
-  const txDeposit = await teller.write.deposit([depositAmount, 0n, zeroAddress]);
+  const txDeposit = await teller.write.deposit([depositAmount, 0n]);
   console.log(`Deposit transaction hash: ${txDeposit}`);
 }
 

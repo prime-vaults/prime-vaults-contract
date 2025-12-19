@@ -75,7 +75,7 @@ export async function depositTokens(context: Awaited<ReturnType<typeof initializ
   await mockERC20.write.approve([vault.address, depositAmount], { account });
 
   // Deposit tokens
-  await teller.write.deposit([depositAmount, 0n, account.address], { account });
+  await teller.write.deposit([depositAmount, 0n], { account });
 
   const shares = await vault.read.balanceOf([account.address]);
   const balanceAfter = await mockERC20.read.balanceOf([account.address]);
