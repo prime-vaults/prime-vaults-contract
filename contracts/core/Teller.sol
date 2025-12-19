@@ -268,17 +268,6 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
     }
 
     /**
-     * @notice Handle permit logic.
-     */
-    function _handlePermit(uint256 depositAmount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) internal {
-        try asset.permit(msg.sender, address(vault), depositAmount, deadline, v, r, s) {} catch {
-            if (asset.allowance(msg.sender, address(vault)) < depositAmount) {
-                revert Teller__PermitFailedAndAllowanceTooLow();
-            }
-        }
-    }
-
-    /**
      * @notice Hook that is called after a deposit operation.
      * @dev Can be overridden by child contracts to implement custom post-deposit logic.
      * @param assetAmount The amount of the asset that was deposited.
