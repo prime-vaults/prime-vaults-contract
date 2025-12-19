@@ -14,11 +14,13 @@ export default async function updateMerkleTree(connection: NetworkConnection, pa
   // Get Manager contract
   const manager = await connection.viem.getContractAt("ManagerWithMerkleVerification", parameters.$global.ManagerAddress);
 
-  // Get strategist address (PrimeStrategist)
-  const strategistAddress = parameters.$global.PrimeStrategistAddress;
+  // Get admin account (the actual caller of manageVaultWithMerkleVerification)
+  const [adminAccount] = await connection.viem.getWalletClients();
+  const strategistAddress = adminAccount.account.address;
 
   // Get current root on-chain
   const currentRoot = await manager.read.manageRoot([strategistAddress]);
+  console.log(`Strategist address (admin): ${strategistAddress}`);
   console.log(`Current Merkle root: ${currentRoot}`);
 
   // Regenerate Merkle tree from parameters
@@ -27,12 +29,6 @@ export default async function updateMerkleTree(connection: NetworkConnection, pa
 
   console.log(`New Merkle root: ${tree.root}`);
   console.log(`Total leaves: ${tree.leafs.length}`);
-
-  // Check if root has changed
-  if (currentRoot === tree.root) {
-    console.log("\n✅ Merkle root unchanged. No update needed.");
-    return;
-  }
 
   // Update parameters file with new tree
   parameters.ManagerModule = {

@@ -8,8 +8,8 @@ contract PrimeDecoderAndSanitizer {
         addressesFound = abi.encodePacked(asset);
     }
 
-    function withdraw(address asset, uint256, address to) external pure virtual returns (bytes memory addressesFound) {
-        addressesFound = abi.encodePacked(asset, to);
+    function withdraw(address asset, uint256) external pure virtual returns (bytes memory addressesFound) {
+        addressesFound = abi.encodePacked(asset);
     }
 
     //============================== FALLBACK ===============================

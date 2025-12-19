@@ -28,7 +28,7 @@
     "expeditedWithdrawFee": 200
   },
   "ManagerModule": {
-    "manageRoot": "0xe81dd02f9a8ceb4208c791b229968bafc69f250ce1f3257b2dbe991c116b7d8f",
+    "manageRoot": "0xb879d20fbe59f82f676d36e45870ac3b5067c0e6d079198036d4e1666010cbdb",
     "leafs": [
       {
         "Description": "Approve Accountant to spend base asset (staking token)",
@@ -77,11 +77,10 @@
         "TargetAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
         "CanSendValue": false,
         "AddressArguments": [
-          "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-          "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+          "0x5FbDB2315678afecb367f032d93F642f64180aa3"
         ],
-        "PackedArgumentAddresses": "5fbdb2315678afecb367f032d93f642f64180aa32279b7a0a67db372996a5fab50d91eaa73d2ebe6",
-        "LeafDigest": "0x4690b61df205811a68df80825239ae59592e12b0f94e4261fe637f0c609d0b77"
+        "PackedArgumentAddresses": "5fbdb2315678afecb367f032d93f642f64180aa3",
+        "LeafDigest": "0x37a371ca92df23c9c6b479da39bb286594b59cbd80d9a62af3235c7c89ce356d"
       },
       {
         "Description": "Claim platform fees from Accountant",
