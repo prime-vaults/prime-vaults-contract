@@ -18,9 +18,9 @@ AccountantProviders is the **financial brain** of the system:
 ### 1. Exchange Rate Management
 
 ```solidity
-function updateExchangeRate() public
-function getRate() public view returns (uint256)
-function getRateSafe() external view returns (uint256)
+function updateExchangeRate() public virtual requiresAuth
+function getRate() public view virtual returns (uint256)
+function getRateSafe() external view virtual returns (uint256)
 ```
 
 **Exchange rate formula**:
@@ -29,6 +29,8 @@ function getRateSafe() external view returns (uint256)
 newRate = (totalAssets - feesOwed) / totalShares
 
 totalAssets = totalShares * oldExchangeRate
+
+Note: Only updates lastUpdateTimestamp if fees > 0 to prevent fee loss from frequent updates
 ```
 
 **Example**:
@@ -148,3 +150,20 @@ Admin claim fees → Manager.manageVaultWithMerkleVerification()
 3. **Fee claiming requires approval**: Vault must approve accountant to spend base asset
 4. **Paused state**: All operations fail if contract is paused
 5. **Share supply gaming prevention**: Uses max(current, last) to prevent fee evasion
+
+## Audit Findings & Bug Fixes
+
+### Bug Fix: Platform Fees Timestamp Update Logic
+
+**Issue (Audit Bug #6)**: Platform fees may be rounded down to 0
+
+**Fix**: The contract now only updates `lastUpdateTimestamp` if fees are actually accrued:
+
+```solidity
+if (newFeesOwedInBase > 0) {
+    state.feesOwedInBase += uint128(newFeesOwedInBase);
+    state.lastUpdateTimestamp = currentTime;  // Only update if fees > 0
+}
+```
+
+**Impact**: Prevents fee loss when users deposit/withdraw frequently. Small time periods that would round to 0 fees are accumulated until the next period where fees > 0.

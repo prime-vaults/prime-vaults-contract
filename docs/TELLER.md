@@ -261,3 +261,39 @@ if (assetsOut < minimumAssets) revert Teller__MinimumAssetsNotMet();
 4. **Transfer lock only checks sender**: Receiver is not checked
 5. **Distributor optional**: Can operate without Distributor
 6. **Pause affects withdrawals only**: Deposits can be disabled separately via `allowDeposits`
+
+## Audit Findings & Security Considerations
+
+### Audit Bug #2: Share Lock Extension Risk
+
+**Issue**: Malicious users can potentially extend victims' share lock period by depositing tiny amounts to their address.
+
+**How it works**:
+```solidity
+function _afterPublicDeposit(address user, uint256 depositAmount, uint256 shares, uint256 currentShareLockPeriod) internal {
+    if (currentShareLockPeriod > 0) {
+        beforeTransferData[user].shareUnlockTime = block.timestamp + currentShareLockPeriod;
+    }
+}
+```
+
+**Risk**: Any public deposit to a user's address resets their unlock time to `now + shareLockPeriod`.
+
+**Mitigations**:
+1. **Use `bulkDeposit()` for trusted operations**: Bulk deposits bypass share lock
+2. **Set appropriate lock period**: Keep `shareLockPeriod` short (e.g., 1 day max)
+3. **User awareness**: Users should be aware that receiving deposits extends lock time
+4. **Consider access controls**: For high-security vaults, restrict public deposits
+
+### Audit Bug #5: Compound Extends Lock Time
+
+**Issue**: When users compound rewards via `Distributor.compoundReward()`, it calls `teller.bulkDeposit()` which bypasses the share lock. However, if using regular `deposit()`, it would extend the lock.
+
+**Current Fix**: The Distributor correctly uses `bulkDeposit()` to avoid extending lock time:
+
+```solidity
+// In Distributor.compoundReward()
+uint256 shares = teller.bulkDeposit(amountToCompound, 0, _account);
+```
+
+**Impact**: Compounding rewards does NOT extend share lock time because it uses bulk deposit.

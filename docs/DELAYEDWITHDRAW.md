@@ -49,7 +49,7 @@ maturity = now + 3 days
 ### 2. Complete Withdrawal
 
 ```solidity
-function completeWithdraw(address account) external nonReentrant
+function completeWithdraw(address account, uint256 minimumAssets) external nonReentrant
 ```
 
 **Flow**:
@@ -58,12 +58,13 @@ function completeWithdraw(address account) external nonReentrant
 2. Get user's `WithdrawRequest`
 3. Check `maturity <= block.timestamp` (delay has elapsed)
 4. Check third-party authorization if caller != user
-5. Calculate assets using current exchange rate:
+5. Calculate assets using **current exchange rate** (not locked rate):
    - Update exchange rate via `accountant.updateExchangeRate()`
    - `assetsOut = shares * currentRate / ONE_SHARE`
+   - Check `assetsOut >= minimumAssets` for slippage protection
 6. Delete withdraw request
 7. Update `outstandingShares` -= shares
-8. Call `vault.exit()` to burn shares
+8. Call `teller.bulkWithdraw()` to burn shares and get assets
 9. Transfer assets to user
 10. Transfer fee to `feeAddress`
 11. Emit `WithdrawCompleted`
@@ -71,20 +72,22 @@ function completeWithdraw(address account) external nonReentrant
 ### 3. Expedited Withdrawal (Accelerate)
 
 ```solidity
-function accelerateWithdraw(uint96 shares) external nonReentrant
+function accelerateWithdraw() external nonReentrant
 ```
 
 **Purpose**: User pays fee to reduce delay to 1 day
 
 **Flow**:
 
-1. Get existing request
-2. Check not yet matured
-3. Check shares match (cannot partially accelerate)
-4. Calculate expedited fee = `assets * expeditedWithdrawFee / 10000`
-5. Update maturity = `block.timestamp + 1 day`
-6. Update `sharesFee` += expedited fee shares
-7. Emit `ExpeditedWithdrawFeePaid`
+1. Check not paused
+2. Check expedited withdraw fee is configured
+3. Get existing request
+4. Check not yet matured
+5. Check withdrawDelay > 1 day (otherwise acceleration not needed)
+6. Calculate expedited fee = `shares * expeditedWithdrawFee / 10000`
+7. Update maturity = `block.timestamp + 1 day`
+8. Update `sharesFee` += expedited fee shares
+9. Emit `ExpeditedWithdrawFeePaid`
 
 **Example**:
 
@@ -280,3 +283,32 @@ function cancelUserWithdraw(address user) external onlyOperator
 3. **Maturity check strict**: Must wait exact time, no earlier
 4. **Fee paid in shares**: Fee is calculated in shares, not assets
 5. **Outstanding shares tracking**: Vault must ensure sufficient liquidity for pending withdrawals
+6. **Current exchange rate used**: Completion uses current rate, not rate at request time
+7. **Slippage protection**: `minimumAssets` parameter protects against unfavorable rate changes
+
+## Audit Findings & Bug Fixes
+
+### Bug Fix: Uses Current Exchange Rate (Audit Bug #1)
+
+**Previous Issue**: Original design attempted to lock exchange rate at request time, which would fail when share price decreased.
+
+**Current Implementation**: Uses **current exchange rate** at completion time:
+
+```solidity
+function _completeWithdraw(...) internal returns (uint256 assetsOut) {
+    accountant.updateExchangeRate();
+    uint256 currentRate = accountant.getRate();
+    assetsOut = shares.mulDivDown(currentRate, ONE_SHARE);
+
+    if (assetsOut < minimumAssets) {
+        revert DelayedWithdraw__MinimumAssetsNotMet();
+    }
+    // ... complete withdrawal
+}
+```
+
+**Impact**: Users get assets based on current vault value, with slippage protection via `minimumAssets` parameter.
+
+### Related: Missing Claim Rewards (Audit Bug #4)
+
+**Note**: During the withdrawal delay period, shares are held by the DelayedWithdraw contract and may accrue rewards. The contract includes `withdrawNonBoringToken()` function to allow admin to recover any tokens (including reward tokens) that accumulate in the contract.

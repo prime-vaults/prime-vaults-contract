@@ -207,4 +207,77 @@ Before going to production:
 
 ---
 
-**Audit Response**: This document addresses **Issue #8: Centralization Risk** from the SALUS security audit (Dec 2025). While the code itself is designed with appropriate role separation, operational security requires proper deployment practices as outlined above.
+## Audit Summary (SALUS Security Audit - December 2025)
+
+The Prime Vaults system underwent a comprehensive security audit by SALUS Security. Below is a summary of findings and their status:
+
+### High Severity Issues (3 total)
+
+1. **Bug #1: Delay withdrawal will be blocked** - ✅ **FIXED**
+   - Issue: Exchange rate lock at request time caused failures
+   - Fix: Now uses current exchange rate with slippage protection
+   - See: `docs/DELAYEDWITHDRAW.md`
+
+2. **Bug #2: Users' shares may be locked forever** - ⚠️ **ACKNOWLEDGED - DESIGN TRADE-OFF**
+   - Issue: Malicious deposits can extend share lock period
+   - Mitigation: Use short lock periods, bulk deposits bypass lock
+   - See: `docs/TELLER.md`
+
+3. **Bug #3: Users may lose their expected rewards** - ✅ **FIXED**
+   - Issue: Precision loss with low-decimal reward tokens
+   - Fix: Increased precision from 1e18 to 1e27 (REWARD_PRECISION)
+   - See: `docs/DISTRIBUTOR.md`
+
+### Medium Severity Issues (5 total)
+
+4. **Bug #4: Missing claim rewards in delayed withdraw** - ✅ **ADDRESSED**
+   - Issue: Rewards accrue to DelayedWithdraw during lock period
+   - Solution: `withdrawNonBoringToken()` function added
+   - See: `docs/DELAYEDWITHDRAW.md`
+
+5. **Bug #5: Compound rewards will extend the lock time** - ✅ **FIXED**
+   - Issue: Compounding could extend share lock
+   - Fix: Distributor uses `bulkDeposit()` which bypasses lock
+   - See: `docs/TELLER.md`
+
+6. **Bug #6: Platform fees may be rounded down to 0** - ✅ **FIXED**
+   - Issue: Frequent updates caused fee loss
+   - Fix: Only update timestamp if fees > 0
+   - See: `docs/ACCOUNTANT.md`
+
+7. **Bug #7: Later depositors will have advantage** - ❌ **FALSE POSITIVE**
+   - Claim: Late depositors get unfair rewards
+   - Reality: Rewards are correctly time-weighted
+   - Proof: Mathematical analysis + test coverage
+   - See: `docs/DISTRIBUTOR.md`, `test/02_Reward.ts`
+
+8. **Bug #8: Centralization risk** - ⚠️ **ADDRESSED IN DEPLOYMENT GUIDE**
+   - Issue: Privileged roles have significant power
+   - Solution: This document + PrimeTimelock implementation
+   - See: `docs/TIMELOCK.md`
+
+### Low Severity Issues (1 total)
+
+9. **Bug #9: Missing validation for buffer helper** - ✅ **FIXED**
+   - Issue: Could disable active buffer helper
+   - Fix: Validation added to prevent disabling active helpers
+   - See: `contracts/core/TellerWithBuffer.sol`
+
+### Informational Issues (1 total)
+
+10. **Bug #10: Redundant code** - ✅ **ACKNOWLEDGED**
+    - Issue: Unused permit handling code
+    - Status: Code provides forward compatibility, low priority
+
+### Audit Status Summary
+
+- **Total Issues**: 10
+- **Fixed**: 6
+- **False Positives**: 1
+- **Design Trade-offs (Acknowledged)**: 2
+- **Addressed via Documentation**: 1
+
+---
+
+**Last Updated**: December 2025
+**Audit Reference**: SALUS Security Audit Report - Prime Vaults v1

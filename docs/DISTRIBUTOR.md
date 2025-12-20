@@ -48,29 +48,33 @@ Distributor is the **reward management layer**:
 ### 1. Notify Reward (Admin)
 
 ```solidity
-function notifyRewardAmount(address _rewardsToken, uint256 reward, uint256 duration)
-    external requiresAuth
+function notifyRewardAmount(address _rewardsToken, uint256 reward)
+    external onlyOperator updateReward(address(0))
 ```
 
-**Purpose**: Admin "promises" to distribute `reward` tokens over `duration` seconds
+**Purpose**: Admin "promises" to distribute `reward` tokens over a configured duration
+
+**Important**: This function has the `updateReward(address(0))` modifier which updates the global reward state BEFORE setting new rewards. This ensures rewards start accruing AFTER this call, not before.
 
 **Flow**:
 
-1. Check reward token exists
-2. Calculate `rewardRate = reward / duration`
-3. Update `rewardPerTokenStored` and `lastUpdateTime`
-4. Set `periodFinish = block.timestamp + duration`
-5. Emit `RewardAdded`
+1. Update global reward state via `updateReward(address(0))` modifier
+2. Check if previous period finished
+3. Calculate `rewardRate = reward / rewardsDuration` (or add to leftover if period active)
+4. Set `lastUpdateTime = block.timestamp` (rewards start from NOW)
+5. Set `periodFinish = block.timestamp + rewardsDuration`
+6. Emit `RewardAdded`
 
 **Example**:
 
 ```javascript
-// Admin notify: 1000 USDC over 7 days
+// Setup: rewardsDuration = 7 days (set via addReward)
+// Admin notifies: 1000 USDC reward
 reward = 1000e6
-duration = 7 days = 604800 seconds
 rewardRate = 1000e6 / 604800 ≈ 1653 wei/second
 
-// Users will receive total 1000 USDC over 7 days
+// Rewards start from block.timestamp and end at block.timestamp + 7 days
+// Users earn proportionally based on share balance × time held
 ```
 
 ### 2. Claim Rewards (User)
@@ -115,10 +119,11 @@ function compoundReward(address _account) external updateReward(_account) requir
    - Check `allowThirdPartyCompound[_account] = true`
    - Calculate fee = `rewardAmount * compoundFee / 1e4`
    - Transfer fee to caller (incentive for keepers)
-4. Approve vault to spend rewards
-5. Call `teller.deposit(amountToCompound, 0, _account)`
-6. User nhận shares mới
-7. Emit `CompoundReward`
+4. If treasury is set, transfer from treasury to contract
+5. Approve vault to spend rewards
+6. Call `teller.bulkDeposit(amountToCompound, 0, _account)` (uses bulk to avoid share lock)
+7. User receives new shares
+8. Emit `CompoundReward`
 
 **Example**:
 
@@ -155,9 +160,11 @@ distributor.compoundReward(user);
 
 ```solidity
 rewardPerToken = rewardPerTokenStored +
-    ((lastTimeRewardApplicable - lastUpdateTime) * rewardRate * 1e18) / totalSupply
+    ((lastTimeRewardApplicable - lastUpdateTime) * rewardRate * REWARD_PRECISION) / totalSupply
 
-earned = (balance * (rewardPerToken - userRewardPerTokenPaid)) / 1e18 + previousRewards
+earned = (balance * (rewardPerToken - userRewardPerTokenPaid)) / REWARD_PRECISION + previousRewards
+
+// REWARD_PRECISION = 1e27 (enhanced precision to prevent rounding to 0 for low-decimal tokens)
 ```
 
 ### Example Calculation
@@ -414,9 +421,10 @@ mapping(address => bool) public allowThirdPartyCompound;       // User → allow
 
 ### Precision
 
-- **Reward per token**: 18 decimals (1e18)
-- **Formula**: `(balance * rewardPerToken) / 1e18`
+- **Reward per token**: 27 decimals (1e27) for enhanced precision
+- **Formula**: `(balance * rewardPerToken) / 1e27`
 - **Rounding**: Down (users may lose dust)
+- **Why 1e27**: Prevents rewards from rounding to 0 when using low-decimal reward tokens (e.g., USDC with 6 decimals) with high vault share supply
 
 ### Time Mechanics
 
@@ -463,5 +471,35 @@ distributor.claimRewards([USDC, WETH]);
 4. **Compound asset limitation**: Can only compound vault's base asset
 5. **Third-party incentive**: Compound fee creates incentive for automation
 6. **Reward finalization**: After `periodFinish`, cannot claim more (except existing earned)
-7. **Precision loss**: Rounding down may lose dust amounts
+7. **Enhanced precision (1e27)**: Prevents rounding to 0 for low-decimal reward tokens
 8. **Multi-reward complexity**: Each token has independent accounting
+9. **Treasury support**: Can pull rewards from treasury address instead of contract balance
+10. **Time-weighted rewards**: Rewards are correctly proportional to (share balance × time held), ensuring fairness
+
+## Audit Findings & Bug Fixes
+
+### Bug Fix: notifyRewardAmount Now Updates Rewards Correctly
+
+**Issue**: The `notifyRewardAmount` function now includes the `updateReward(address(0))` modifier, which ensures:
+- Global reward state is updated BEFORE new rewards are set
+- Rewards start accruing from the moment `notifyRewardAmount` is called
+- No retroactive reward distribution
+
+**Impact**: This fix ensures accurate reward accounting when multiple reward periods overlap.
+
+### Audit Bug #7: FALSE POSITIVE - Time-Weighted Rewards Work Correctly
+
+**Audit Claim**: "Later depositors will have advantage in the same reward period"
+
+**Reality**: This claim is **INCORRECT**. The Synthetix-style reward distribution mechanism is mathematically proven to be fair:
+
+- **Alice deposits early**: Holds 100 shares for 1 day → Earns ~1 token
+- **Bob deposits late**: Holds 100 shares for 10 seconds → Earns ~0.00006 token
+
+Rewards are correctly proportional to:
+1. **Share balance held**
+2. **Time duration shares were held**
+
+The `rewardPerToken` accumulator ensures that each user's rewards are calculated based on the integral of their share balance over time, making it impossible for late depositors to gain unfair advantage.
+
+**Test Evidence**: See `test/02_Reward.ts` - "Conclusion: Bug #7 is FALSE POSITIVE"
