@@ -20,16 +20,18 @@ export const DEPOSIT_AMOUNT = 100n * ONE_TOKEN;
 
 export async function initializeTest() {
   const connection = await network.connect();
-  const [deployer, alice, bob] = await connection.viem.getWalletClients();
+  const [deployer, alice, bob, charlie, dave] = await connection.viem.getWalletClients();
   const client = await connection.viem.getPublicClient();
 
   // Deploy mocks
   const mocks = await deployMocks(connection, PARAMETERS_ID);
 
-  // Mint tokens: deployer for rewards, alice/bob for deposits (100 tokens each)
+  // Mint tokens: deployer for rewards, alice/bob/charlie/dave for deposits (100 tokens each)
   await mocks.mockERC20.write.mint([deployer.account.address, 1000n * ONE_TOKEN]);
   await mocks.mockERC20.write.mint([alice.account.address, DEPOSIT_AMOUNT]);
   await mocks.mockERC20.write.mint([bob.account.address, DEPOSIT_AMOUNT]);
+  await mocks.mockERC20.write.mint([charlie.account.address, DEPOSIT_AMOUNT]);
+  await mocks.mockERC20.write.mint([dave.account.address, DEPOSIT_AMOUNT]);
 
   // Deploy full system (vault + accountant + teller + manager)
   const primeRegistryModules = await deployPrimeRegistry(connection, PARAMETERS_ID, false);
@@ -67,9 +69,12 @@ export async function initializeTest() {
     deployer,
     alice,
     bob,
+    charlie,
+    dave,
     connection,
     client,
     networkHelpers: connection.networkHelpers,
+    walletClients: [deployer, alice, bob, charlie, dave],
   };
 }
 
