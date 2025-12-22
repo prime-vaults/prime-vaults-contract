@@ -81,7 +81,7 @@ PrimeFactory (combines all + assigns roles)
 import PrimeVaultModule from "./ignition/modules/PrimeFactory.js";
 
 const modules = await ignition.deploy(PrimeVaultModule, {
-  parameters: "./ignition/parameters/localhost-usd.json",
+  parameters: "./ignition/parameters/default-usd.json",
 });
 ```
 
@@ -123,7 +123,7 @@ Modules read parameters from JSON files in `ignition/parameters/`:
 - `AccountantModule`: Accountant-specific config
 - `WithdrawerModule`: Withdrawer-specific config
 
-See `ignition/parameters/localhost-usd.json` for example structure.
+See `ignition/parameters/default-usd.json` for example structure.
 
 ## 🧪 Testing
 
@@ -134,10 +134,10 @@ import deployMocks from "../scripts/deploy/00_mock.js";
 import deployPrimeVault from "../scripts/deploy/01_primeVault.js";
 
 // Deploy mocks
-const mocks = await deployMocks(connection, "localhost-usd");
+const mocks = await deployMocks(connection, "default-usd");
 
 // Deploy vault
-const vault = await deployPrimeVault(connection, "localhost-usd", {
+const vault = await deployPrimeVault(connection, "default-usd", {
   stakingToken: mocks.mockERC20.address,
   primeStrategistAddress: mocks.mockStrategist.address,
 });

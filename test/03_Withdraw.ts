@@ -59,7 +59,7 @@ void describe("03_Withdraw", function () {
     void it("Step 2: Approve PrimeStrategist via Merkle verification", async function () {
       const { manager, mockStrategist } = context;
 
-      const approveLeafData = await readLeaf("localhost-usd", {
+      const approveLeafData = await readLeaf("default-usd", {
         FunctionSignature: "approve(address,uint256)",
         Description: "Approve PrimeStrategist to spend base asset (staking token)",
       });
@@ -257,11 +257,7 @@ void describe("03_Withdraw", function () {
       // Verify acceleration fee was added (5% of shares)
       const userShares = withdrawRequest.shares;
       const expectedAdditionalFee = (userShares * 500n) / 10000n;
-      assert.equal(
-        feeAfterAcceleration - feeBeforeAcceleration,
-        expectedAdditionalFee,
-        "Acceleration fee should be added",
-      );
+      assert.equal(feeAfterAcceleration - feeBeforeAcceleration, expectedAdditionalFee, "Acceleration fee should be added");
     });
 
     void it("Step 5: Wait 1 day for accelerated withdrawal delay", async function () {
@@ -292,18 +288,11 @@ void describe("03_Withdraw", function () {
       const actualUserTokens = userBalanceAfter - userBalanceBefore;
 
       // Allow small rounding difference
-      const diff =
-        actualUserTokens > expectedUserTokens
-          ? actualUserTokens - expectedUserTokens
-          : expectedUserTokens - actualUserTokens;
+      const diff = actualUserTokens > expectedUserTokens ? actualUserTokens - expectedUserTokens : expectedUserTokens - actualUserTokens;
       assert.ok(diff <= 1n, "User should receive approximately shares minus total fee");
 
       // Fee address should receive the total fee (normal + acceleration)
-      assert.equal(
-        feeAddressBalanceAfter - feeAddressBalanceBefore,
-        totalFee,
-        "Fee address should receive total fee shares",
-      );
+      assert.equal(feeAddressBalanceAfter - feeAddressBalanceBefore, totalFee, "Fee address should receive total fee shares");
     });
   });
 });

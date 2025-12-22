@@ -13,7 +13,7 @@ function sleep(ms: number): Promise<void> {
 
 /**
  * Get the full path to a parameters file
- * @param paramsId - Id of the params file (e.g., "localhost-usd")
+ * @param paramsId - Id of the params file (e.g., "default-usd")
  * @returns Absolute path to the params file
  */
 export function getParamsPath(paramsId: string): string {
@@ -23,12 +23,12 @@ export function getParamsPath(paramsId: string): string {
 
 /**
  * Read parameters from JSON file (async with retry logic)
- * @param paramsId - Id of the params file (e.g., "localhost-usd")
+ * @param paramsId - Id of the params file (e.g., "default-usd")
  * @returns Parsed parameters object
  *
  * @example
  * ```typescript
- * const params = await readParams("localhost-usd");
+ * const params = await readParams("default-usd");
  * console.log(params.ManagerModule.ManageRoot);
  * ```
  */
@@ -62,14 +62,14 @@ export async function readParams(paramsId: string): Promise<VaultParameters> {
 
 /**
  * Write parameters to JSON file (async with atomic write)
- * @param paramsId - Id of the params file (e.g., "localhost-usd")
+ * @param paramsId - Id of the params file (e.g., "default-usd")
  * @param params - Parameters object to write
  *
  * @example
  * ```typescript
- * const params = await readParams("localhost-usd");
+ * const params = await readParams("default-usd");
  * params.ManagerModule.ManageRoot = "0x123...";
- * await writeParams("localhost-usd", params);
+ * await writeParams("default-usd", params);
  * ```
  */
 export async function writeParams(paramsId: string, params: VaultParameters): Promise<void> {
@@ -97,7 +97,7 @@ export async function writeParams(paramsId: string, params: VaultParameters): Pr
  * @example
  * ```typescript
  * const files = await listParamFiles();
- * // ["localhost-usd", "bepolia", "mainnet"]
+ * // ["default-usd", "bepolia", "mainnet"]
  * ```
  */
 export async function listParamFiles(): Promise<string[]> {

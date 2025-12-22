@@ -1,7 +1,0 @@
-{
-  "ManagerModule#BoringVault": "0x3F2Bb51C6aCe306613D7B11c5024B0f9F21CDb9e",
-  "ManagerModule#RolesAuthority": "0x0c73a6535739C18e462B096a8C84fE44fA6cCe4e",
-  "ManagerModule#ManagerWithMerkleVerification": "0xfe5E17351A17633d88e3e52F583d5f0757eFB66A",
-  "WithdrawerModule#RolesAuthority": "0x0c73a6535739C18e462B096a8C84fE44fA6cCe4e",
-  "WithdrawerModule#DelayedWithdraw": "0xa3f6514ef1309959aA8D866110f0a93c3B99cfcc"
-}

@@ -14,7 +14,7 @@ import deployTimelock from "../scripts/deploy/05_timelock.js";
 
 export const ONE_DAY_SECS = 24n * 60n * 60n;
 export const ONE_TOKEN = 10n ** 18n;
-export const PARAMETERS_ID = "localhost-usd";
+export const PARAMETERS_ID = "default-usd";
 export const DEPOSIT_CAP = 200n * ONE_TOKEN;
 export const DEPOSIT_AMOUNT = 100n * ONE_TOKEN;
 
@@ -22,6 +22,9 @@ export async function initializeTest() {
   const connection = await network.connect();
   const [deployer, alice, bob, charlie, dave] = await connection.viem.getWalletClients();
   const client = await connection.viem.getPublicClient();
+
+  // Deploy Prime Registry
+  const primeRegistryModules = await deployPrimeRegistry(connection, false);
 
   // Deploy mocks
   const mocks = await deployMocks(connection, PARAMETERS_ID);
@@ -34,7 +37,7 @@ export async function initializeTest() {
   await mocks.mockERC20.write.mint([dave.account.address, DEPOSIT_AMOUNT]);
 
   // Deploy full system (vault + accountant + teller + manager)
-  const primeRegistryModules = await deployPrimeRegistry(connection, PARAMETERS_ID, false);
+
   const boringVault = await deployBoringVault(connection, PARAMETERS_ID);
   const accountant = await deployAccountant(connection, PARAMETERS_ID);
   const teller = await deployTeller(connection, PARAMETERS_ID);

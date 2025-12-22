@@ -12,6 +12,8 @@ export default async function deployBoringVault(connection: NetworkConnection, p
   if (displayUi) console.log("\n🚀 Deploying Prime Vault system...\n");
 
   // Update parameters with required addresses
+  const chainCommon = await readParams(connection.networkName);
+  await writeParams(parameterId, chainCommon);
   const parameters = await readParams(parameterId);
 
   // Deploy all vault modules
@@ -21,29 +23,9 @@ export default async function deployBoringVault(connection: NetworkConnection, p
     deploymentId: parameterId,
   });
 
-  const client = await connection.viem.getPublicClient();
-  const [deployer] = await connection.viem.getWalletClients();
-
   // Save deployed addresses
-  parameters.$global = {
-    chainId: await client.getChainId(),
-    network: connection.networkName,
-    stakingToken: parameters.$global.stakingToken,
-    adminAddress: deployer.account.address,
-    PrimeStrategistAddress: parameters.$global.PrimeStrategistAddress,
-    PrimeRBAC: parameters.$global.PrimeRBAC,
-    DecoderAndSanitizerAddress: parameters.$global.DecoderAndSanitizerAddress,
-    //
-    BoringVaultAddress: modules.vault.address,
-    RolesAuthorityAddress: modules.rolesAuthority.address,
-    //
-    AccountantAddress: "0x",
-    TellerAddress: "0x",
-    DistributorAddress: "0x",
-    WithdrawerAddress: "0x",
-    ManagerAddress: "0x",
-  };
-
+  parameters.BoringVaultAddress = modules.vault.address;
+  parameters.RolesAuthorityAddress = modules.rolesAuthority.address;
   await writeParams(parameterId, parameters);
 
   return modules;

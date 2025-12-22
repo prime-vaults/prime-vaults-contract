@@ -1,42 +1,62 @@
+import hre from "hardhat";
 import { NetworkConnection } from "hardhat/types/network";
 
 import PrimeRegistryModule from "../../ignition/modules/PrimeRegistry.js";
-import { readParams, writeParams } from "../../ignition/parameters/utils.js";
-import { runHardhatCmd } from "../utils.js";
+import { writeParams } from "../../ignition/parameters/utils.js";
 
 /**
  * Deploy Prime Registry Module
  * Deploys: PrimeRBAC, PrimeRegistry, FullDecoderAndSanitizer
  */
-export default async function deployPrimeRegistry(connection: NetworkConnection, parameterId: string, displayUi = false) {
-  const modules = await connection.ignition.deploy(PrimeRegistryModule, {
-    displayUi,
-    deploymentId: parameterId,
-  });
+export default async function deployPrimeRegistry(connection: NetworkConnection, displayUi = false) {
+  const client = await connection.viem.getPublicClient();
+  const networkName = connection.networkName;
 
   const [deployer] = await connection.viem.getWalletClients();
-  const parameters = await readParams(parameterId);
-  parameters.$global.adminAddress = deployer.account.address;
-  parameters.$global.PrimeRBAC = modules.primeRBAC.address;
-  parameters.$global.DecoderAndSanitizerAddress = modules.decoder.address;
-  await writeParams(parameterId, parameters);
+  const modules = await connection.ignition.deploy(PrimeRegistryModule, {
+    displayUi,
+    deploymentId: networkName,
+  });
 
-  if (displayUi) {
-    console.table({
+  await writeParams(connection.networkName, {
+    $global: {
+      chainId: await client.getChainId(),
+      network: connection.networkName,
+      adminAddress: deployer.account.address,
+      PrimeStrategistAddress: "0x",
       PrimeRBAC: modules.primeRBAC.address,
-      DecoderAndSanitizer: modules.decoder.address,
-    });
-  }
-
+      DecoderAndSanitizerAddress: modules.decoder.address,
+      //
+      stakingToken: "0x",
+      BoringVaultAddress: "0x",
+      RolesAuthorityAddress: "0x",
+      AccountantAddress: "0x",
+      TellerAddress: "0x",
+      DistributorAddress: "0x",
+      WithdrawerAddress: "0x",
+      ManagerAddress: "0x",
+      PrimeTimelockAddress: "0x",
+    },
+    AccountantModule: {
+      platformFee: 0,
+    },
+    WithdrawerModule: {
+      withdrawDelayInSeconds: 259200,
+      withdrawFee: 0,
+      expeditedWithdrawFee: 200,
+    },
+    ManagerModule: {} as any,
+    VaultModule: { name: "", symbol: "" },
+  });
   return modules;
 }
 
 // pnpm hardhat run scripts/deploy/01_primeRegistry.ts --network <network>
-runHardhatCmd("scripts/deploy/01_primeRegistry.ts")
-  .then(async (context) => {
-    if (!context) return;
-    await deployPrimeRegistry(context.connection, context.parameters, true);
-  })
-  .catch((error) => {
-    console.error(error);
-  });
+async function main() {
+  const connection = await hre.network.connect();
+  await deployPrimeRegistry(connection, true);
+}
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

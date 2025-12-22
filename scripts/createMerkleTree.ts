@@ -95,7 +95,7 @@ export function getProof(leafIndex: number, tree: `0x${string}`[][]): `0x${strin
  *
  * @example
  * ```typescript
- * const params = readParams("localhost-usd");
+ * const params = readParams("default-usd");
  *
  * // Find by function signature only
  * const result = findLeaf(params, "claimFees()");
@@ -135,14 +135,14 @@ export function findLeaf(params: VaultParameters, functionSignature: string, tar
  * Read leaf with proof from params file
  * Returns leaf configuration, index, proof, and tree for Merkle verification
  *
- * @param paramsId - Params file ID (e.g., "localhost-usd")
+ * @param paramsId - Params file ID (e.g., "default-usd")
  * @param filters - Filters to find the leaf
  * @returns Leaf data with proof and tree, or undefined if not found
  *
  * @example
  * ```typescript
  * // Find by function signature
- * const approveData = readLeaf("localhost-usd", { FunctionSignature: "approve(address,uint256)" });
+ * const approveData = readLeaf("default-usd", { FunctionSignature: "approve(address,uint256)" });
  * if (approveData) {
  *   console.log("Leaf:", approveData.leaf);
  *   console.log("Index:", approveData.index);
@@ -150,7 +150,7 @@ export function findLeaf(params: VaultParameters, functionSignature: string, tar
  * }
  *
  * // Find by description
- * const claimFeesData = readLeaf("localhost-usd", { Description: "Claim platform fees from Accountant" });
+ * const claimFeesData = readLeaf("default-usd", { Description: "Claim platform fees from Accountant" });
  * ```
  */
 export async function readLeaf(
@@ -195,7 +195,7 @@ export async function readLeaf(
  * Create Merkle tree from params file
  * Auto-generates approve and claimFees leaves based on $global addresses
  *
- * @param paramsId - Params file ID (e.g., "localhost-usd")
+ * @param paramsId - Params file ID (e.g., "default-usd")
  */
 export async function createMerkleTree(params: VaultParameters): Promise<{
   root: `0x${string}`;

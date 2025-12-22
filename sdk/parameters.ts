@@ -1,6 +1,6 @@
 import bepoliaBtc from "../ignition/parameters/bepolia-btc.json";
 import bepoliaUsd from "../ignition/parameters/bepolia-usd.json";
-import localhostUsd from "../ignition/parameters/localhost-usd.json";
+import localhostUsd from "../ignition/parameters/default-usd.json";
 import { generateMerkleTree, getProof } from "../scripts/createMerkleTree.js";
 
 export interface GlobalConfig {

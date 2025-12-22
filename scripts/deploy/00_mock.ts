@@ -1,9 +1,9 @@
 import { NetworkConnection } from "hardhat/types/network";
 
 import MockERC20Module from "../../ignition/modules/mocks/MockERC20.js";
-import MockTokenBModule from "../../ignition/modules/mocks/MockTokenB.js";
 import MockStrategistModule from "../../ignition/modules/mocks/MockStrategist.js";
-import { getParamsPath, readParams, writeParams } from "../../ignition/parameters/utils.js";
+import MockTokenBModule from "../../ignition/modules/mocks/MockTokenB.js";
+import { readParams, writeParams } from "../../ignition/parameters/utils.js";
 import { runHardhatCmd } from "../utils.js";
 
 /**
@@ -13,33 +13,30 @@ import { runHardhatCmd } from "../utils.js";
 export default async function deployMocks(connection: NetworkConnection, parameterId: string, displayUi = false) {
   // Deploy mock ERC20 token (18 decimals)
   const { mockERC20 } = await connection.ignition.deploy(MockERC20Module, {
-    parameters: getParamsPath(parameterId),
     displayUi,
     deploymentId: parameterId + "-tokenA",
   });
 
   // Deploy mock Token B (6 decimals for testing low-decimal rewards)
   const { mockERC20: mockTokenB } = await connection.ignition.deploy(MockTokenBModule, {
-    parameters: getParamsPath(parameterId),
     displayUi,
     deploymentId: parameterId + "-tokenB",
   });
 
   // Deploy mock strategist
   const { mockStrategist } = await connection.ignition.deploy(MockStrategistModule, {
-    parameters: getParamsPath(parameterId),
     displayUi,
     deploymentId: parameterId,
   });
 
-  const [deployer] = await connection.viem.getWalletClients();
-  const parameters = await readParams(parameterId);
+  const chainCommon = await readParams(connection.networkName);
+  await writeParams(parameterId, chainCommon);
 
-  parameters.$global.stakingToken = mockERC20.address;
-  parameters.$global.adminAddress = deployer.account.address;
-  parameters.$global.PrimeStrategistAddress = mockStrategist.address;
+  chainCommon.$global.stakingToken = mockERC20.address;
+  chainCommon.$global.PrimeStrategistAddress = mockStrategist.address;
 
-  await writeParams(parameterId, parameters);
+  console.log("Writing updated mock addresses to parameters...", chainCommon);
+  await writeParams(parameterId, chainCommon);
 
   if (displayUi) {
     console.table({

@@ -1,0 +1,32 @@
+{
+  "$global": {
+    "chainId": 31337,
+    "network": "default",
+    "adminAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+    "PrimeStrategistAddress": "0x",
+    "PrimeRBAC": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "DecoderAndSanitizerAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "stakingToken": "0x",
+    "BoringVaultAddress": "0x",
+    "RolesAuthorityAddress": "0x",
+    "AccountantAddress": "0x",
+    "TellerAddress": "0x",
+    "DistributorAddress": "0x",
+    "WithdrawerAddress": "0x",
+    "ManagerAddress": "0x",
+    "PrimeTimelockAddress": "0x"
+  },
+  "AccountantModule": {
+    "platformFee": 0
+  },
+  "WithdrawerModule": {
+    "withdrawDelayInSeconds": 259200,
+    "withdrawFee": 0,
+    "expeditedWithdrawFee": 200
+  },
+  "ManagerModule": {},
+  "VaultModule": {
+    "name": "",
+    "symbol": ""
+  }
+}

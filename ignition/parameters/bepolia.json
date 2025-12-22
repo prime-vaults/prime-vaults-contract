@@ -1,0 +1,32 @@
+{
+  "$global": {
+    "chainId": 80069,
+    "network": "bepolia",
+    "adminAddress": "0xcd2ab433521a1188eccc406f59cac6d1303c7c2c",
+    "PrimeStrategistAddress": "0x",
+    "PrimeRBAC": "0xbee1B382cfdfC78A893bf837F8AB39FCA0a2F79E",
+    "DecoderAndSanitizerAddress": "0x37018ba2974de55926fFa7ADA2d7529D3aef84eA",
+    "stakingToken": "0x",
+    "BoringVaultAddress": "0x",
+    "RolesAuthorityAddress": "0x",
+    "AccountantAddress": "0x",
+    "TellerAddress": "0x",
+    "DistributorAddress": "0x",
+    "WithdrawerAddress": "0x",
+    "ManagerAddress": "0x",
+    "PrimeTimelockAddress": "0x"
+  },
+  "AccountantModule": {
+    "platformFee": 0
+  },
+  "WithdrawerModule": {
+    "withdrawDelayInSeconds": 259200,
+    "withdrawFee": 0,
+    "expeditedWithdrawFee": 200
+  },
+  "ManagerModule": {},
+  "VaultModule": {
+    "name": "",
+    "symbol": ""
+  }
+}
