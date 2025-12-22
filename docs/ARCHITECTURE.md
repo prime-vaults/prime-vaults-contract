@@ -5,8 +5,9 @@
 2. [Core Philosophy](#core-philosophy)
 3. [Component Architecture](#component-architecture)
 4. [Data Flow Diagrams](#data-flow-diagrams)
-5. [Security Model](#security-model)
-6. [Integration Guide](#integration-guide)
+5. [Governance & Decentralization](#governance--decentralization)
+6. [Security Model](#security-model)
+7. [Integration Guide](#integration-guide)
 
 ---
 
@@ -29,7 +30,7 @@ Prime Vaults is a **modular DeFi vault infrastructure** that enables users to:
 | **Flash Loan Attacks** | Share locking + time-delayed withdrawals |
 | **Reward Distribution** | Automatic accrual via share balance tracking (no staking needed) |
 | **Fee Transparency** | Time-based platform fees encoded in exchange rate |
-| **Governance Risk** | Role-based access control + optional timelock delays |
+| **Governance Risk** | PrimeTimelock (48h delay) + Multi-sig governance |
 
 ---
 
@@ -71,6 +72,15 @@ Prime Vaults is a **modular DeFi vault infrastructure** that enables users to:
 │                                                              │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │         PrimeRBAC (Access Control Hub)              │   │
+│  │                      ▲                               │   │
+│  │                      │ Controlled by                │   │
+│  │              ┌───────┴────────┐                      │   │
+│  │              │ PrimeTimelock  │                      │   │
+│  │              │ (48h delay)    │                      │   │
+│  │              └───────▲────────┘                      │   │
+│  │                      │                               │   │
+│  │                Multi-sig Wallet                      │   │
+│  │              (Decentralized Control)                 │   │
 │  └─────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -633,6 +643,254 @@ Result:
 
 ---
 
+## Governance & Decentralization
+
+### PrimeTimelock - Protection Against Admin Abuse
+
+**Purpose:** Enforce mandatory delay on critical governance actions to prevent malicious admin behavior
+
+**Key Features:**
+- **48-hour minimum delay** on all privileged operations
+- **Transparent queue** - all pending actions visible on-chain
+- **Cancellable operations** - community can react before execution
+- **Multi-sig control** - no single point of failure
+
+**How It Works:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│         PrimeTimelock Governance Flow                        │
+└─────────────────────────────────────────────────────────────┘
+
+Step 1: Proposal (T0)
+─────────────────────
+Multi-sig Wallet
+  │
+  └──> PrimeTimelock.schedule(operation)
+        │
+        ├──> Operation details:
+        │    - target: PrimeRBAC
+        │    - data: grantRole(MALICIOUS_ACTOR, OWNER_ROLE)
+        │    - delay: 48 hours (172,800 seconds)
+        │
+        └──> State: QUEUED (visible to all)
+             └──> Event: CallScheduled(id, target, data, delay)
+
+⏳ 48-hour Public Review Period
+
+During this time:
+  - Community monitors pending operations
+  - Suspicious actions can be identified
+  - Emergency response can be coordinated
+  - Multi-sig can cancel if needed
+
+Step 2: Execution (T0 + 48h)
+────────────────────────────
+Multi-sig Wallet
+  │
+  └──> PrimeTimelock.execute(operation)
+        │
+        ├──> Validate: now >= queuedTime + 48h ✓
+        │
+        ├──> Execute: PrimeRBAC.grantRole(...)
+        │
+        └──> State: EXECUTED
+             └──> Event: CallExecuted(id, target, data)
+
+Alternative: Cancel
+───────────────────
+If suspicious/malicious:
+  │
+  └──> PrimeTimelock.cancel(operation)
+        │
+        └──> State: CANCELLED (operation prevented)
+```
+
+**Protected Operations:**
+```solidity
+// All OWNER_ROLE actions require 48h delay:
+
+1. Grant/Revoke Critical Roles
+   - grantRole(OWNER_ROLE, newOwner)
+   - revokeRole(PROTOCOL_ADMIN_ROLE, admin)
+
+2. Change Core Parameters
+   - setManageRoot(strategist, newRoot)  // Change allowed strategies
+   - setPayoutAddress(newAddress)        // Change fee recipient
+
+3. Upgrade Contracts
+   - upgradeProxy(implementation)        // If using proxies
+
+4. Emergency Actions
+   - pause() / unpause()                 // System-wide pause
+```
+
+**Security Benefits:**
+1. **No Instant Rug Pull** - Admin cannot drain funds immediately
+2. **Community Oversight** - 48 hours to detect malicious actions
+3. **Social Recovery** - Time to coordinate emergency response
+4. **Transparent Governance** - All actions visible before execution
+
+**Example Attack Prevention:**
+```
+❌ WITHOUT Timelock (Centralized Risk):
+   T0: Admin calls grantRole(hacker, OWNER_ROLE)
+   T0: Hacker immediately drains vault
+   Users have 0 time to react
+
+✅ WITH PrimeTimelock (Decentralized):
+   T0: Admin schedules grantRole(hacker, OWNER_ROLE)
+   T0-48h: Community sees suspicious operation
+   T0+24h: Community alerts, users withdraw funds
+   T0+36h: Emergency multi-sig vote to cancel
+   T0+40h: Operation cancelled, attack prevented
+```
+
+---
+
+### Multi-Sig Governance Structure
+
+**Purpose:** Distribute control among multiple trusted parties
+
+**Recommended Setup:**
+```
+┌─────────────────────────────────────────────────────────┐
+│              Multi-Sig Configuration                     │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  Signers: 5 trusted entities                           │
+│    - Core Team Member #1                               │
+│    - Core Team Member #2                               │
+│    - Community Representative                          │
+│    - Security Auditor                                  │
+│    - DeFi Partnership                                  │
+│                                                         │
+│  Threshold: 3-of-5 signatures required                 │
+│    - No single person has full control                 │
+│    - Requires majority consensus                       │
+│    - Prevents insider attacks                          │
+│                                                         │
+│  Controls: PrimeTimelock (OWNER_ROLE)                  │
+│    - All critical actions require multi-sig approval   │
+│    - 48-hour delay after multi-sig approval            │
+│    - Double-layer protection                           │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Governance Hierarchy:**
+```
+                    Multi-Sig Wallet (3-of-5)
+                            │
+                            ▼
+                    PrimeTimelock (48h delay)
+                            │
+                            ▼
+                    OWNER_ROLE in PrimeRBAC
+                            │
+                ┌───────────┼───────────┐
+                ▼           ▼           ▼
+         Grant Roles   Change Fees  Update Roots
+```
+
+**Real-World Governance Flow:**
+```
+1. Proposal: "Increase platform fee from 10% to 12%"
+   ├─> Discussion in governance forum
+   ├─> Multi-sig members review proposal
+   └─> 3 out of 5 approve
+
+2. Schedule (via PrimeTimelock)
+   ├─> Multi-sig calls: timelock.schedule(updateFee, 12%, 48h)
+   ├─> Operation queued on-chain
+   └─> Community notified via event
+
+3. Review Period (48 hours)
+   ├─> Users monitor queued operations
+   ├─> Community discusses on Discord/Twitter
+   ├─> If controversial: multi-sig can cancel
+   └─> If accepted: proceed to execution
+
+4. Execution (after 48h)
+   ├─> Multi-sig calls: timelock.execute(updateFee, 12%)
+   ├─> Fee updated in Accountant contract
+   └─> New fee takes effect
+```
+
+**Decentralization Benefits:**
+1. **No Single Point of Failure** - Requires 3 out of 5 approvals
+2. **Transparent Decision Making** - All actions visible on-chain
+3. **Time-Delayed Execution** - Community can react to changes
+4. **Emergency Response** - Can cancel malicious operations
+5. **Accountable Governance** - All signers publicly known
+
+**Security vs Centralization Trade-offs:**
+```
+┌──────────────────────────────────────────────────────────┐
+│                    Security Spectrum                      │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  ❌ Fully Centralized (HIGHEST RISK)                    │
+│     - Single EOA has OWNER_ROLE                         │
+│     - Can drain funds instantly                         │
+│     - No oversight or delays                            │
+│                                                          │
+│  ⚠️  Multi-Sig Only (MEDIUM RISK)                       │
+│     - 3-of-5 multi-sig has OWNER_ROLE                   │
+│     - Can execute instantly if compromised              │
+│     - No time for community reaction                    │
+│                                                          │
+│  ✅ Multi-Sig + Timelock (RECOMMENDED - LOW RISK)       │
+│     - 3-of-5 multi-sig controls PrimeTimelock           │
+│     - All actions delayed 48 hours                      │
+│     - Community can monitor and react                   │
+│     - Best balance of security and flexibility          │
+│                                                          │
+│  🏛️ DAO Governance (MOST DECENTRALIZED)                │
+│     - Token-weighted voting                             │
+│     - Community controls everything                     │
+│     - Slower decision making                            │
+│     - Future upgrade path                               │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Audit Mitigation (Bug #8 - Centralization Risk):**
+
+From SALUS Security Audit (December 2025):
+> **Issue:** Privileged roles (MANAGER_ROLE, OPERATOR_ROLE) have significant power.
+> If these roles' private keys are compromised, an attacker could steal rewards.
+
+**Prime Vaults Solution:**
+```
+✅ FIXED via Multi-Layer Protection:
+
+1. OWNER_ROLE → PrimeTimelock (48h delay)
+   - Cannot grant malicious roles instantly
+   - Community has 48h to detect and cancel
+
+2. PrimeTimelock → Multi-Sig Wallet (3-of-5)
+   - No single person can schedule operations
+   - Requires majority consensus
+
+3. PROTOCOL_ADMIN_ROLE → Dedicated Admin Wallet
+   - Limited to fee changes (capped at 20%)
+   - Cannot access user funds directly
+   - Can be revoked by OWNER_ROLE
+
+4. OPERATOR_ROLE → Automated Bot + Monitoring
+   - Limited to routine operations only
+   - Cannot change core parameters
+   - Activity monitored by community
+
+Result: Even if OPERATOR_ROLE is compromised, attacker cannot:
+  - Change OWNER_ROLE (requires multi-sig + 48h)
+  - Steal user funds (no direct access)
+  - Change fee recipient (requires timelock)
+  - Deploy malicious strategies (requires Merkle root update)
+```
+
+---
+
 ## Security Model
 
 ### Attack Vectors Mitigated
@@ -655,38 +913,113 @@ Result:
 ### Role-Based Security
 
 ```
-┌────────────────────────────────────────────────────────┐
-│                    PrimeRBAC Hierarchy                  │
-├────────────────────────────────────────────────────────┤
-│                                                        │
-│  OWNER_ROLE (Timelock)                                │
-│    │                                                   │
-│    ├──> Can grant/revoke all roles                    │
-│    ├──> Usually controlled by multi-sig + timelock    │
-│    └──> 48-hour delay on critical changes             │
-│                                                        │
-│  PROTOCOL_ADMIN_ROLE                                  │
-│    │                                                   │
-│    ├──> Modify fees (capped at 20%)                   │
-│    ├──> Pause/unpause contracts                       │
-│    ├──> Set Merkle roots                              │
-│    └──> Grant/revoke OPERATOR_ROLE                    │
-│                                                        │
-│  OPERATOR_ROLE                                        │
-│    │                                                   │
-│    ├──> Notify rewards                                │
-│    ├──> Update exchange rates                         │
-│    ├──> Complete user withdrawals                     │
-│    └──> Routine operational tasks                     │
-│                                                        │
-│  Vault-Specific Roles (via RolesAuthority)           │
-│    │                                                   │
-│    ├──> MINTER_ROLE → Teller (enter vault)           │
-│    ├──> BURNER_ROLE → DelayedWithdraw (exit vault)   │
-│    ├──> MANAGER_ROLE → Manager (execute strategies)   │
-│    └──> UPDATE_EXCHANGE_RATE_ROLE → Accountant       │
-│                                                        │
-└────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│                    PrimeRBAC Hierarchy (Decentralized)              │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│  🏛️ Multi-Sig Wallet (3-of-5 signatures)                          │
+│    │                                                               │
+│    └──> Controls PrimeTimelock                                    │
+│         │                                                          │
+│         ▼                                                          │
+│  ⏱️ PrimeTimelock (48-hour mandatory delay)                       │
+│    │                                                               │
+│    └──> Holds OWNER_ROLE in PrimeRBAC                            │
+│         │                                                          │
+│         ▼                                                          │
+│  👑 OWNER_ROLE (Ultimate Authority - Time-Locked)                │
+│    │                                                               │
+│    ├──> Grant/Revoke all roles                                   │
+│    ├──> Change critical parameters                               │
+│    ├──> Emergency pause/unpause                                  │
+│    └──> ⚠️ ALL ACTIONS DELAYED 48 HOURS                         │
+│                                                                    │
+│  👨‍💼 PROTOCOL_ADMIN_ROLE (Limited Admin)                         │
+│    │                                                               │
+│    ├──> Modify fees (CAPPED at 20% max)                          │
+│    ├──> Pause/unpause contracts                                  │
+│    ├──> Set Merkle roots (strategy whitelisting)                 │
+│    ├──> Grant/revoke OPERATOR_ROLE                               │
+│    └──> ⚠️ Cannot access user funds directly                    │
+│                                                                    │
+│  🤖 OPERATOR_ROLE (Routine Operations)                           │
+│    │                                                               │
+│    ├──> Notify rewards (promise future rewards)                  │
+│    ├──> Update exchange rates (recalculate share value)          │
+│    ├──> Complete user withdrawals (after maturity)               │
+│    ├──> Routine operational tasks                                │
+│    └──> ⚠️ No fund access, no parameter changes                 │
+│                                                                    │
+│  🔐 Vault-Specific Roles (Contract-to-Contract)                  │
+│    │                                                               │
+│    ├──> MINTER_ROLE → Teller (create shares)                    │
+│    ├──> BURNER_ROLE → DelayedWithdraw (burn shares)             │
+│    ├──> MANAGER_ROLE → Manager (execute strategies)              │
+│    ├──> UPDATE_EXCHANGE_RATE_ROLE → Accountant                   │
+│    └──> ⚠️ Assigned to contracts, not EOAs                      │
+│                                                                    │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+**Decentralization Guarantees:**
+
+1. **No Single Admin Control**
+   - OWNER_ROLE held by PrimeTimelock (not EOA)
+   - PrimeTimelock controlled by 3-of-5 multi-sig
+   - Requires majority consensus for all critical actions
+
+2. **Mandatory Time Delays**
+   - All OWNER_ROLE actions delayed 48 hours
+   - Community can monitor pending operations
+   - Malicious actions can be cancelled before execution
+   - Users have time to exit if needed
+
+3. **Transparent Governance**
+   - All operations queued on-chain (visible to all)
+   - Events emitted for every scheduled action
+   - Community can verify multi-sig signers
+   - Governance dashboard shows pending operations
+
+4. **Limited Admin Powers**
+   - PROTOCOL_ADMIN cannot change OWNER_ROLE
+   - Fee changes capped at 20% maximum
+   - Cannot directly access user funds
+   - All actions auditable on-chain
+
+5. **Separation of Concerns**
+   - OPERATOR_ROLE: routine operations only
+   - PROTOCOL_ADMIN_ROLE: limited parameter changes
+   - OWNER_ROLE: critical changes (time-locked)
+   - Multi-sig: ultimate control (requires consensus)
+
+**Attack Resistance:**
+
+```
+Scenario: Compromised OPERATOR_ROLE
+├─> ❌ Cannot change Merkle roots (requires PROTOCOL_ADMIN)
+├─> ❌ Cannot change fee recipient (requires OWNER_ROLE → 48h delay)
+├─> ❌ Cannot grant themselves OWNER_ROLE (requires current OWNER → timelock)
+├─> ❌ Cannot drain vault (no direct fund access)
+└─> ✅ Can only execute pre-approved routine operations
+
+Scenario: Compromised PROTOCOL_ADMIN_ROLE
+├─> ⚠️ Can pause contracts (but cannot drain funds)
+├─> ⚠️ Can change fees (but capped at 20% max)
+├─> ❌ Cannot change OWNER_ROLE (requires current OWNER → timelock)
+├─> ❌ Cannot change fee recipient instantly (requires OWNER_ROLE)
+└─> ✅ OWNER_ROLE can revoke PROTOCOL_ADMIN within 48h
+
+Scenario: Compromised 1-2 Multi-sig Signers
+├─> ❌ Cannot schedule operations (requires 3-of-5 signatures)
+├─> ❌ Cannot execute operations (requires 3-of-5 signatures)
+└─> ✅ System remains secure with majority honest
+
+Scenario: Compromised 3+ Multi-sig Signers (Majority)
+├─> ⚠️ Can schedule malicious operations
+├─> ❌ Cannot execute instantly (48-hour delay enforced)
+├─> ✅ Community has 48h to detect and coordinate response
+├─> ✅ Users can withdraw funds during delay period
+└─> ✅ Remaining honest signers can cancel operation
 ```
 
 ---
@@ -801,9 +1134,14 @@ await teller.setDistributor(distributor.address);
 await teller.setShareLockPeriod(86400); // 1 day
 await teller.setDepositCap(parseEther("1000000")); // 1M cap
 
-// 5. Transfer ownership to timelock
-await primeRBAC.grantRole(OWNER_ROLE, timelock.address);
+// 5. Transfer ownership to PrimeTimelock (controlled by multi-sig)
+await primeRBAC.grantRole(OWNER_ROLE, primeTimelock.address);
 await primeRBAC.revokeRole(OWNER_ROLE, deployer.address);
+
+// 6. Transfer timelock control to multi-sig
+await primeTimelock.grantRole(PROPOSER_ROLE, multiSigWallet.address);
+await primeTimelock.grantRole(EXECUTOR_ROLE, multiSigWallet.address);
+await primeTimelock.revokeRole(ADMIN_ROLE, deployer.address);
 ```
 
 #### Add Rewards
@@ -834,13 +1172,34 @@ Prime Vaults provides a **secure, modular, and composable** vault infrastructure
 3. **Time-Weighted Security** - Share locks + delayed withdrawals prevent attacks
 4. **Automatic Rewards** - No staking needed, uses share balance
 5. **Merkle-Verified Strategies** - Pre-approved operations only
-6. **Role-Based Security** - Granular permissions with optional timelock
+6. **Decentralized Governance** - Multi-sig + 48h timelock prevents admin abuse
+7. **No Single Point of Failure** - 3-of-5 multi-sig for all critical actions
 
-**Security First:**
-- Multiple layers of defense (share locks, delays, Merkle verification)
-- Transparent fee accounting
-- Pausable for emergencies
-- Auditable modular components
+**Security & Decentralization First:**
+- **Multi-Layer Defense:** Share locks, delays, Merkle verification
+- **Transparent Governance:** All operations visible on-chain before execution
+- **Time-Locked Admin:** 48-hour delay on all critical changes
+- **Community Protection:** Users can exit during governance delay period
+- **Capped Admin Powers:** Fee changes limited to 20% maximum
+- **Auditable Operations:** All actions traceable on-chain
+- **Progressive Decentralization:** Path to full DAO governance
+
+**Trust Minimization:**
+```
+Traditional Vault:           Prime Vaults:
+┌──────────────┐            ┌──────────────────────┐
+│ Single Admin │            │ 3-of-5 Multi-Sig    │
+│      ↓       │            │         ↓            │
+│ Instant      │            │ PrimeTimelock (48h)  │
+│ Execution    │    VS      │         ↓            │
+│      ↓       │            │ On-Chain Queue       │
+│ High Risk    │            │         ↓            │
+│              │            │ Community Review     │
+│              │            │         ↓            │
+│              │            │ Cancel or Execute    │
+└──────────────┘            └──────────────────────┘
+   ❌ Centralized               ✅ Decentralized
+```
 
 ---
 
