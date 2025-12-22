@@ -11,6 +11,7 @@ export interface GlobalConfig {
   PrimeRBAC: `0x${string}`;
   PrimeStrategistAddress: `0x${string}`;
   DecoderAndSanitizerAddress: `0x${string}`;
+  SmartAccountRegistryAddress: `0x${string}`;
   //
   BoringVaultAddress: `0x${string}`;
   AccountantAddress: `0x${string}`;
