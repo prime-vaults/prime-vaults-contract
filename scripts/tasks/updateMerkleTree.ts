@@ -9,7 +9,7 @@ import { runHardhatCmd } from "../utils.js";
  * Regenerates Merkle tree from current parameters and updates on-chain root
  */
 export default async function updateMerkleTree(connection: NetworkConnection, parameterId: string) {
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   // Get Manager contract
   const manager = await connection.viem.getContractAt("ManagerWithMerkleVerification", parameters.$global.ManagerAddress);

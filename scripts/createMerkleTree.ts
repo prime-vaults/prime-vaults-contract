@@ -153,11 +153,11 @@ export function findLeaf(params: VaultParameters, functionSignature: string, tar
  * const claimFeesData = readLeaf("localhost-usd", { Description: "Claim platform fees from Accountant" });
  * ```
  */
-export function readLeaf(
+export async function readLeaf(
   paramsId: string,
   filters: { FunctionSignature?: string; Description?: string },
-): { leaf: LeafConfig; index: number; proof: `0x${string}`[]; tree: `0x${string}`[][] } | undefined {
-  const params = readParams(paramsId);
+): Promise<{ leaf: LeafConfig; index: number; proof: `0x${string}`[]; tree: `0x${string}`[][] } | undefined> {
+  const params = await readParams(paramsId);
   // Read from $global (new location) or fallback to ManagerModule (backward compatibility)
   const leaves = params.ManagerModule?.leafs;
 

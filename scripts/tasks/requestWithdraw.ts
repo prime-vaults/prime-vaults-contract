@@ -9,7 +9,7 @@ import { runHardhatCmd } from "../utils.js";
  */
 export default async function requestWithdraw(connection: NetworkConnection, parameterId: string) {
   // Update parameters with required addresses
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   const vault = await connection.viem.getContractAt("BoringVault", parameters.$global.BoringVaultAddress);
   const withdrawer = await connection.viem.getContractAt("DelayedWithdraw", parameters.$global.WithdrawerAddress);

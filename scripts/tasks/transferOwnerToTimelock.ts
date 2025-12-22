@@ -12,7 +12,7 @@ import { runHardhatCmd } from "../utils.js";
  * All role changes will require 48h timelock delay.
  */
 export default async function transferOwnerToTimelock(connection: NetworkConnection, parameterId: string) {
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   console.log("\n🔐 Transferring OWNER_ROLE to PrimeTimelock...\n");
 

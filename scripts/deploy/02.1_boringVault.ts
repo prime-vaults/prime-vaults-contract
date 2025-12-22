@@ -12,7 +12,7 @@ export default async function deployBoringVault(connection: NetworkConnection, p
   if (displayUi) console.log("\n🚀 Deploying Prime Vault system...\n");
 
   // Update parameters with required addresses
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   // Deploy all vault modules
   const modules = await connection.ignition.deploy(VaultModule, {

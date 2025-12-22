@@ -9,7 +9,7 @@ import { runHardhatCmd } from "../utils.js";
  */
 export default async function completeWithdraw(connection: NetworkConnection, parameterId: string) {
   // Update parameters with required addresses
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   const withdrawer = await connection.viem.getContractAt("DelayedWithdraw", parameters.$global.WithdrawerAddress);
   const mockERC20 = await connection.viem.getContractAt("MockERC20", parameters.$global.stakingToken);

@@ -10,7 +10,7 @@ import { readParams, writeParams } from "../../ignition/parameters/utils.js";
  * Requires 48h delay for all role grants/revokes.
  */
 export default async function deployTimelock(connection: NetworkConnection, parameterId: string) {
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   // Deploy via Ignition with inline parameters
 

@@ -9,7 +9,7 @@ import { runHardhatCmd } from "../utils.js";
  */
 export default async function deposit(connection: NetworkConnection, parameterId: string) {
   // Update parameters with required addresses
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   const stakingToken = await connection.viem.getContractAt("MockERC20", parameters.$global.stakingToken);
   const teller = await connection.viem.getContractAt("Teller", parameters.$global.TellerAddress);

@@ -59,7 +59,7 @@ void describe("03_Withdraw", function () {
     void it("Step 2: Approve PrimeStrategist via Merkle verification", async function () {
       const { manager, mockStrategist } = context;
 
-      const approveLeafData = readLeaf("localhost-usd", {
+      const approveLeafData = await readLeaf("localhost-usd", {
         FunctionSignature: "approve(address,uint256)",
         Description: "Approve PrimeStrategist to spend base asset (staking token)",
       });
@@ -95,7 +95,7 @@ void describe("03_Withdraw", function () {
     void it("Step 3: Manager deposits 100 tokens to PrimeStrategist", async function () {
       const { mockERC20, manager } = context;
 
-      const depositLeafData = readLeaf(PARAMETERS_ID, {
+      const depositLeafData = await readLeaf(PARAMETERS_ID, {
         FunctionSignature: "deposit(address,uint256)",
         Description: "Deposit base asset to PrimeStrategist",
       });

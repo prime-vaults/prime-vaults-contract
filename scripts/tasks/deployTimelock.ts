@@ -14,7 +14,7 @@ import { runHardhatCmd } from "../utils.js";
  * See docs/TIMELOCK_DEPLOYMENT.md for full guide
  */
 export default async function deployTimelock(connection: NetworkConnection, parameterId: string) {
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   console.log("\n🔒 Deploying PrimeTimelock...\n");
 

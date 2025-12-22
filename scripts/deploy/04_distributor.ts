@@ -10,7 +10,7 @@ import { runHardhatCmd } from "../utils.js";
  */
 export default async function deployDistributor(connection: NetworkConnection, parameterId: string, displayUi = false) {
   // Update parameters with required addresses
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   // Deploy Manager
   const { distributor } = await connection.ignition.deploy(DistributorModule, {

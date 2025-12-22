@@ -10,7 +10,7 @@ import { runHardhatCmd } from "../utils.js";
  * This demonstrates how to execute vault management through Merkle proofs
  */
 export default async function depositToStrategy(connection: NetworkConnection, parameterId: string) {
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   // Get contracts
   const manager = await connection.viem.getContractAt("ManagerWithMerkleVerification", parameters.$global.ManagerAddress);
@@ -32,7 +32,7 @@ export default async function depositToStrategy(connection: NetworkConnection, p
 
   // Step 1: Get Merkle proof for approve(address,uint256) - Approve PrimeStrategist
   console.log("\n📋 Step 1: Getting Merkle proof for approve...");
-  const approveLeaf = readLeaf(parameterId, {
+  const approveLeaf = await readLeaf(parameterId, {
     // FunctionSignature: "approve(address,uint256)",
     Description: "Approve PrimeStrategist to spend base asset (staking token)",
   });

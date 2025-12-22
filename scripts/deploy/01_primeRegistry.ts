@@ -15,7 +15,7 @@ export default async function deployPrimeRegistry(connection: NetworkConnection,
   });
 
   const [deployer] = await connection.viem.getWalletClients();
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
   parameters.$global.adminAddress = deployer.account.address;
   parameters.$global.PrimeRBAC = modules.primeRBAC.address;
   parameters.$global.DecoderAndSanitizerAddress = modules.decoder.address;

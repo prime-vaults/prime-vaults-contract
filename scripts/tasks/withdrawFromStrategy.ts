@@ -10,7 +10,7 @@ import { runHardhatCmd } from "../utils.js";
  * This demonstrates how to pull funds from strategy through Merkle proofs
  */
 export default async function withdrawFromStrategy(connection: NetworkConnection, parameterId: string) {
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   // Get contracts
   const manager = await connection.viem.getContractAt("ManagerWithMerkleVerification", parameters.$global.ManagerAddress);
@@ -32,7 +32,7 @@ export default async function withdrawFromStrategy(connection: NetworkConnection
 
   // Get Merkle proof for withdraw(address,uint256)
   console.log("\n📋 Getting Merkle proof for withdraw...");
-  const withdrawLeaf = readLeaf(parameterId, {
+  const withdrawLeaf = await readLeaf(parameterId, {
     FunctionSignature: "withdraw(address,uint256)",
     Description: "Withdraw from PrimeStrategist back to vault",
   });

@@ -46,7 +46,7 @@ void describe("04_ClaimFees", function () {
     void it("Step 3: Approve Accountant to spend base asset", async function () {
       const { manager, accountant } = context;
 
-      const approveData = readLeaf("localhost-usd", { FunctionSignature: "approve(address,uint256)" });
+      const approveData = await readLeaf("localhost-usd", { FunctionSignature: "approve(address,uint256)" });
       assert.ok(approveData, "Approve leaf not found");
 
       const approveCalldata = encodeFunctionData({
@@ -89,7 +89,7 @@ void describe("04_ClaimFees", function () {
       const payoutAddress = accountantStateBefore.payoutAddress;
       const payoutBalanceBefore = await mockERC20.read.balanceOf([payoutAddress]);
 
-      const claimFeesData = readLeaf("localhost-usd", { FunctionSignature: "claimFees()" });
+      const claimFeesData = await readLeaf("localhost-usd", { FunctionSignature: "claimFees()" });
       assert.ok(claimFeesData, "ClaimFees leaf not found");
 
       const claimFeesCalldata = encodeFunctionData({

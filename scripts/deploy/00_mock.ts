@@ -33,7 +33,7 @@ export default async function deployMocks(connection: NetworkConnection, paramet
   });
 
   const [deployer] = await connection.viem.getWalletClients();
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   parameters.$global.stakingToken = mockERC20.address;
   parameters.$global.adminAddress = deployer.account.address;
