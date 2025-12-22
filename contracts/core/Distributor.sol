@@ -275,6 +275,23 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     }
 
     /**
+     * @notice Operator claims accumulated rewards on behalf of user
+     * @dev Rewards are sent to the user's wallet, not the operator
+     * @dev Only callable by OPERATOR_ROLE
+     * @param _account The account to claim rewards for
+     * @param _rewardTokens Array of reward token addresses to claim
+     * @return rewardsOut Array of amounts claimed for each reward token
+     */
+    function claimRewardsFor(address _account, address[] memory _rewardTokens) external onlyOperator returns (uint256[] memory rewardsOut) {
+        if (isPaused) revert Distributor__Paused();
+
+        rewardsOut = new uint256[](_rewardTokens.length);
+        for (uint256 i = 0; i < _rewardTokens.length; i++) {
+            rewardsOut[i] = _claimReward(_account, _rewardTokens[i], _account);
+        }
+    }
+
+    /**
      * @notice Allow or disallow third-party compounding
      * @param _allowed Whether to allow third parties to compound rewards for the user
      * @dev Publicly callable by anyone for their own account
