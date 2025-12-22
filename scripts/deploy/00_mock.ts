@@ -14,13 +14,13 @@ export default async function deployMocks(connection: NetworkConnection, paramet
   // Deploy mock ERC20 token (18 decimals)
   const { mockERC20 } = await connection.ignition.deploy(MockERC20Module, {
     displayUi,
-    deploymentId: parameterId + "-tokenA",
+    deploymentId: parameterId,
   });
 
   // Deploy mock Token B (6 decimals for testing low-decimal rewards)
   const { mockERC20: mockTokenB } = await connection.ignition.deploy(MockTokenBModule, {
     displayUi,
-    deploymentId: parameterId + "-tokenB",
+    deploymentId: parameterId,
   });
 
   // Deploy mock strategist
