@@ -68,6 +68,9 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     /// @notice Treasury address - holds reward tokens to pay users
     address public treasury;
 
+    /// @notice Mapping of caller address to claimable compound fees
+    mapping(address => uint256) public claimableCompoundFees;
+
     // ========================================= EVENTS =========================================
 
     event RewardAdded(uint256 reward);
@@ -78,6 +81,8 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     event CompoundFeeUpdated(uint256 newFee);
     event ThirdPartyCompoundAllowed(address indexed user, bool allowed);
     event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
+    event CompoundFeeAccrued(address indexed caller, uint256 fee);
+    event CompoundFeeClaimed(address indexed caller, uint256 amount);
 
     // ========================================= ERRORS =========================================
 
@@ -280,6 +285,25 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     }
 
     /**
+     * @notice Claim accumulated compound fees
+     * @dev Transfers all accrued fees from third-party compounding to the caller
+     * @return amount The amount of fees claimed
+     */
+    function claimCompoundFees() external nonReentrant requiresAuth returns (uint256 amount) {
+        if (isPaused) revert Distributor__Paused();
+
+        amount = claimableCompoundFees[msg.sender];
+        if (amount > 0) {
+            claimableCompoundFees[msg.sender] = 0;
+
+            ERC20 asset = BoringVault(payable(address(vault))).asset();
+            asset.safeTransfer(msg.sender, amount);
+
+            emit CompoundFeeClaimed(msg.sender, amount);
+        }
+    }
+
+    /**
      * @notice Compounds a specific reward token by claiming and re-depositing it.
      * @dev Can be called by the user themselves (no fee) or by third parties (with fee if enabled).
      * @dev Only works with tokens that can be deposited into the vault (typically the base asset).
@@ -313,9 +337,10 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
                 fee = (rewardAmount * compoundFee) / 1e4;
                 amountToCompound = rewardAmount - fee;
 
-                // Transfer fee to caller
+                // Accrue fee to caller's claimable balance instead of transferring immediately
                 if (fee > 0) {
-                    asset.safeTransfer(msg.sender, fee);
+                    claimableCompoundFees[msg.sender] += fee;
+                    emit CompoundFeeAccrued(msg.sender, fee);
                 }
             }
 

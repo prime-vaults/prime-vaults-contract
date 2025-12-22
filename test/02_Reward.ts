@@ -329,29 +329,40 @@ void describe("02_Reward", function () {
     });
 
     void it("Step 12: Wait 1 day, deployer compounds for Bob (with 10% fee)", async function () {
-      const { mockERC20, distributor, vault, bob, networkHelpers } = context;
+      const { mockERC20, distributor, vault, bob, deployer, networkHelpers } = context;
 
       // Fast forward 1 day
       await networkHelpers.time.increase(Number(ONE_DAY_SECS));
 
       const earnedBefore = await distributor.read.earned([bob.account.address, mockERC20.address]);
       const sharesBefore = await vault.read.balanceOf([bob.account.address]);
-      const deployerBalanceBefore = await mockERC20.read.balanceOf(["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"]);
+      const deployerBalanceBefore = await mockERC20.read.balanceOf([deployer.account.address]);
+      const claimableFeeBefore = await distributor.read.claimableCompoundFees([deployer.account.address]);
 
       // Deployer compounds for Bob (third-party compound)
       await distributor.write.compoundReward([bob.account.address]);
 
       const sharesAfter = await vault.read.balanceOf([bob.account.address]);
       const earnedAfter = await distributor.read.earned([bob.account.address, mockERC20.address]);
-      const deployerBalanceAfter = await mockERC20.read.balanceOf(["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"]);
+      const claimableFeeAfter = await distributor.read.claimableCompoundFees([deployer.account.address]);
 
       // Calculate expected fee (10% of earned)
       const expectedFee = (earnedBefore * 1000n) / 10000n;
       const expectedCompound = earnedBefore - expectedFee;
 
-      // Verify deployer received fee
+      // Verify deployer's claimable fee increased (not balance - fees are claimed separately)
+      const feeAccrued = claimableFeeAfter - claimableFeeBefore;
+      assertApproxEqual(feeAccrued, expectedFee, "Deployer should have claimable fee of 10%");
+
+      // Now deployer claims the fee
+      await distributor.write.claimCompoundFees();
+      const deployerBalanceAfter = await mockERC20.read.balanceOf([deployer.account.address]);
+      const claimableFeeAfterClaim = await distributor.read.claimableCompoundFees([deployer.account.address]);
+
+      // Verify fee was claimed
       const deployerFee = deployerBalanceAfter - deployerBalanceBefore;
-      assertApproxEqual(deployerFee, expectedFee, "Deployer should receive 10% fee");
+      assertApproxEqual(deployerFee, expectedFee, "Deployer should receive 10% fee after claiming");
+      assert.equal(claimableFeeAfterClaim, 0n, "Claimable fee should be 0 after claiming");
 
       // Verify Bob received shares (90% of earned)
       const sharesGained = sharesAfter - sharesBefore;
