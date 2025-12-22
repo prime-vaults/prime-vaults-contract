@@ -1,7 +1,6 @@
-import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 
-import { DEPOSIT_AMOUNT, DEPOSIT_CAP, ONE_TOKEN, depositTokens, initializeTest } from "./utils.js";
+import { initializeTest } from "./utils.js";
 
 void describe("01_Deposit", function () {
   /**
@@ -24,6 +23,9 @@ void describe("01_Deposit", function () {
       context = await initializeTest();
     });
 
-    void it("Should OK", async function () {});
+    void it("Should OK", async function () {
+      // check context is initialized
+      if (!context) throw new Error("Context not initialized");
+    });
   });
 });

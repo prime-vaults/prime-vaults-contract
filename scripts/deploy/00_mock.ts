@@ -35,7 +35,6 @@ export default async function deployMocks(connection: NetworkConnection, paramet
   chainCommon.$global.stakingToken = mockERC20.address;
   chainCommon.$global.PrimeStrategistAddress = mockStrategist.address;
 
-  console.log("Writing updated mock addresses to parameters...", chainCommon);
   await writeParams(parameterId, chainCommon);
 
   if (displayUi) {

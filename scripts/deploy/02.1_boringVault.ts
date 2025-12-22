@@ -11,9 +11,6 @@ import { runHardhatCmd } from "../utils.js";
 export default async function deployBoringVault(connection: NetworkConnection, parameterId: string, displayUi = false) {
   if (displayUi) console.log("\n🚀 Deploying Prime Vault system...\n");
 
-  // Update parameters with required addresses
-  const chainCommon = await readParams(connection.networkName);
-  await writeParams(parameterId, chainCommon);
   const parameters = await readParams(parameterId);
 
   // Deploy all vault modules
@@ -24,8 +21,8 @@ export default async function deployBoringVault(connection: NetworkConnection, p
   });
 
   // Save deployed addresses
-  parameters.BoringVaultAddress = modules.vault.address;
-  parameters.RolesAuthorityAddress = modules.rolesAuthority.address;
+  parameters.$global.BoringVaultAddress = modules.vault.address;
+  parameters.$global.RolesAuthorityAddress = modules.rolesAuthority.address;
   await writeParams(parameterId, parameters);
 
   return modules;
