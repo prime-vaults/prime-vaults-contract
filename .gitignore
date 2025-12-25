@@ -25,6 +25,6 @@
 !.env.example
 
 # Ignition build artifacts
-/ignition/deployments/*
+ignition/deployments/
 
 

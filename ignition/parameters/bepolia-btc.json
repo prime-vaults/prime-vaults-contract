@@ -6,7 +6,7 @@
     "PrimeStrategistAddress": "0x574EF500E7Ed1212264F04509F9876A116823a9E",
     "PrimeRBAC": "0xbee1B382cfdfC78A893bf837F8AB39FCA0a2F79E",
     "DecoderAndSanitizerAddress": "0x37018ba2974de55926fFa7ADA2d7529D3aef84eA",
-    "SmartAccountRegistryAddress": "0x",
+    "SmartAccountRegistryAddress": "0x25566d00acfb3EFc65aA6028aFFB3Eea9909f48f",
     "stakingToken": "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469",
     "BoringVaultAddress": "0x5C304674C8f9566BC646b903c03eE504C77d7E0f",
     "RolesAuthorityAddress": "0x5b38a12180708C86451ecAE2dD12C8591f30f900",
@@ -35,9 +35,7 @@
         "DecoderAndSanitizerAddress": "0x37018ba2974de55926fFa7ADA2d7529D3aef84eA",
         "TargetAddress": "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0xE7CeEe1832fF9163404915B6F9e655368A11A9BF"
-        ],
+        "AddressArguments": ["0xE7CeEe1832fF9163404915B6F9e655368A11A9BF"],
         "PackedArgumentAddresses": "e7ceee1832ff9163404915b6f9e655368a11a9bf",
         "LeafDigest": "0x1a9f8f5f1e64d3c3fb25c2cd69be4d9ced306452029bf1dad482eae1f5e02eee"
       },
@@ -48,9 +46,7 @@
         "DecoderAndSanitizerAddress": "0x37018ba2974de55926fFa7ADA2d7529D3aef84eA",
         "TargetAddress": "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x574EF500E7Ed1212264F04509F9876A116823a9E"
-        ],
+        "AddressArguments": ["0x574EF500E7Ed1212264F04509F9876A116823a9E"],
         "PackedArgumentAddresses": "574ef500e7ed1212264f04509f9876a116823a9e",
         "LeafDigest": "0xf4fe67b0947cf02f823e7d0673cc426c1a506aae847fb20ca0009fff0197786f"
       },
@@ -61,9 +57,7 @@
         "DecoderAndSanitizerAddress": "0x37018ba2974de55926fFa7ADA2d7529D3aef84eA",
         "TargetAddress": "0x574EF500E7Ed1212264F04509F9876A116823a9E",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469"
-        ],
+        "AddressArguments": ["0xde9decc3a84cf9cd197ca51ec998a475cc4e8469"],
         "PackedArgumentAddresses": "de9decc3a84cf9cd197ca51ec998a475cc4e8469",
         "LeafDigest": "0x70618b3fa0ffc91d1b55d8eec14457f6932cef3a5def573e31fa3ce968d2a08f"
       },
@@ -74,9 +68,7 @@
         "DecoderAndSanitizerAddress": "0x37018ba2974de55926fFa7ADA2d7529D3aef84eA",
         "TargetAddress": "0x574EF500E7Ed1212264F04509F9876A116823a9E",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0xde9decc3a84cf9cd197ca51ec998a475cc4e8469"
-        ],
+        "AddressArguments": ["0xde9decc3a84cf9cd197ca51ec998a475cc4e8469"],
         "PackedArgumentAddresses": "de9decc3a84cf9cd197ca51ec998a475cc4e8469",
         "LeafDigest": "0xc1c38551d68f2f5119fa495453257ad59c01b7abff1b1bfc839331af0ffa9269"
       },
