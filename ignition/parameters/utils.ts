@@ -4,8 +4,16 @@ import path from "path";
 import { VaultParameters } from "../../sdk/parameters.js";
 
 /**
+ * Helper function to sleep asynchronously
+ * @param ms - Milliseconds to sleep
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * Get the full path to a parameters file
- * @param paramsId - Id of the params file (e.g., "localhost-usd")
+ * @param paramsId - Id of the params file (e.g., "default-usd")
  * @returns Absolute path to the params file
  */
 export function getParamsPath(paramsId: string): string {
@@ -14,20 +22,23 @@ export function getParamsPath(paramsId: string): string {
 }
 
 /**
- * Read parameters from JSON file
- * @param paramsId - Id of the params file (e.g., "localhost-usd")
+ * Read parameters from JSON file (async with retry logic)
+ * @param paramsId - Id of the params file (e.g., "default-usd")
  * @returns Parsed parameters object
  *
  * @example
  * ```typescript
- * const params = readParams("localhost-usd");
+ * const params = await readParams("default-usd");
  * console.log(params.ManagerModule.ManageRoot);
  * ```
  */
-export function readParams(paramsId: string): VaultParameters {
+export async function readParams(paramsId: string): Promise<VaultParameters> {
   const filePath = getParamsPath(paramsId);
 
-  if (!fs.existsSync(filePath)) {
+  // Check if file exists using async stat
+  try {
+    await fs.promises.stat(filePath);
+  } catch {
     throw new Error(`Parameters file not found: ${filePath}`);
   }
 
@@ -35,69 +46,69 @@ export function readParams(paramsId: string): VaultParameters {
   const maxRetries = 10;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const content = fs.readFileSync(filePath, "utf-8");
+      const content = await fs.promises.readFile(filePath, "utf-8");
       return JSON.parse(content);
     } catch (error) {
       if (attempt === maxRetries - 1) {
         throw new Error(`Failed to parse parameters file after ${maxRetries} attempts: ${filePath}\n${error}`);
       }
-      // Wait before retry with exponential backoff (synchronous sleep)
+      // Wait before retry with exponential backoff (async sleep)
       const delay = 30 * (attempt + 1);
-      const start = Date.now();
-      while (Date.now() - start < delay) {
-        // Busy wait (not ideal but works for short delays in Node.js)
-      }
+      await sleep(delay);
     }
   }
   throw new Error(`Failed to read parameters file: ${filePath}`);
 }
 
 /**
- * Write parameters to JSON file
- * @param paramsId - Id of the params file (e.g., "localhost-usd")
+ * Write parameters to JSON file (async with atomic write)
+ * @param paramsId - Id of the params file (e.g., "default-usd")
  * @param params - Parameters object to write
  *
  * @example
  * ```typescript
- * const params = readParams("localhost-usd");
+ * const params = await readParams("default-usd");
  * params.ManagerModule.ManageRoot = "0x123...";
- * await writeParams("localhost-usd", params);
+ * await writeParams("default-usd", params);
  * ```
  */
 export async function writeParams(paramsId: string, params: VaultParameters): Promise<void> {
   const filePath = getParamsPath(paramsId);
 
-  // Ensure directory exists
+  // Ensure directory exists (async)
   const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  try {
+    await fs.promises.stat(dir);
+  } catch {
+    await fs.promises.mkdir(dir, { recursive: true });
   }
 
   // Write file with pretty format
   const content = JSON.stringify(params, null, 2) + "\n";
 
+  // Write directly (atomic on most filesystems for small files)
   await fs.promises.writeFile(filePath, content, "utf-8");
 }
 
 /**
- * List all available parameter files
+ * List all available parameter files (async)
  * @returns Array of parameter file names (without .json extension)
  *
  * @example
  * ```typescript
- * const files = listParamFiles();
- * // ["localhost-usd", "bepolia", "mainnet"]
+ * const files = await listParamFiles();
+ * // ["default-usd", "bepolia", "mainnet"]
  * ```
  */
-export function listParamFiles(): string[] {
+export async function listParamFiles(): Promise<string[]> {
   const dir = path.resolve(process.cwd(), "ignition/parameters");
 
-  if (!fs.existsSync(dir)) {
+  try {
+    await fs.promises.stat(dir);
+  } catch {
     return [];
   }
 
-  return fs
-    .readdirSync(dir)
-    .filter((file) => file.endsWith(".json") && !file.endsWith(".backup"))
-    .map((file) => file.replace(/\.json$/, ""));
+  const files = await fs.promises.readdir(dir);
+  return files.filter((file) => file.endsWith(".json") && !file.endsWith(".backup")).map((file) => file.replace(/\.json$/, ""));
 }

@@ -33,7 +33,6 @@ interface ITeller {
         uint256 shareLockPeriodAtTimeOfDeposit
     );
     event BulkDeposit(address indexed asset, uint256 depositAmount);
-    event BulkWithdraw(address indexed asset, uint256 shareAmount);
     event Withdraw(address indexed asset, uint256 shareAmount);
     event DenyFrom(address indexed user);
     event DenyTo(address indexed user);

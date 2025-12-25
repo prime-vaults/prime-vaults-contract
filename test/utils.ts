@@ -10,28 +10,34 @@ import deployTellerHelper from "../scripts/deploy/02.4_tellerHelper.js";
 import deployWithdrawer from "../scripts/deploy/02.5_withdrawer.js";
 import deployPrimeManager from "../scripts/deploy/03_vaultManager.js";
 import deployDistributor from "../scripts/deploy/04_distributor.js";
+import deployTimelock from "../scripts/deploy/05_timelock.js";
 
 export const ONE_DAY_SECS = 24n * 60n * 60n;
 export const ONE_TOKEN = 10n ** 18n;
-export const PARAMETERS_ID = "localhost-usd";
+export const PARAMETERS_ID = "default-usd";
 export const DEPOSIT_CAP = 200n * ONE_TOKEN;
 export const DEPOSIT_AMOUNT = 100n * ONE_TOKEN;
 
 export async function initializeTest() {
   const connection = await network.connect();
-  const [deployer, alice, bob] = await connection.viem.getWalletClients();
+  const [deployer, alice, bob, charlie, dave] = await connection.viem.getWalletClients();
   const client = await connection.viem.getPublicClient();
+
+  // Deploy Prime Registry
+  const primeRegistryModules = await deployPrimeRegistry(connection, false);
 
   // Deploy mocks
   const mocks = await deployMocks(connection, PARAMETERS_ID);
 
-  // Mint tokens: deployer for rewards, alice/bob for deposits (100 tokens each)
+  // Mint tokens: deployer for rewards, alice/bob/charlie/dave for deposits (100 tokens each)
   await mocks.mockERC20.write.mint([deployer.account.address, 1000n * ONE_TOKEN]);
   await mocks.mockERC20.write.mint([alice.account.address, DEPOSIT_AMOUNT]);
   await mocks.mockERC20.write.mint([bob.account.address, DEPOSIT_AMOUNT]);
+  await mocks.mockERC20.write.mint([charlie.account.address, DEPOSIT_AMOUNT]);
+  await mocks.mockERC20.write.mint([dave.account.address, DEPOSIT_AMOUNT]);
 
   // Deploy full system (vault + accountant + teller + manager)
-  const primeRegistryModules = await deployPrimeRegistry(connection, PARAMETERS_ID, false);
+
   const boringVault = await deployBoringVault(connection, PARAMETERS_ID);
   const accountant = await deployAccountant(connection, PARAMETERS_ID);
   const teller = await deployTeller(connection, PARAMETERS_ID);
@@ -39,6 +45,18 @@ export async function initializeTest() {
   const withdrawer = await deployWithdrawer(connection, PARAMETERS_ID);
   const managerModules = await deployPrimeManager(connection, PARAMETERS_ID);
   const distributor = await deployDistributor(connection, PARAMETERS_ID);
+  const timelockModules = await deployTimelock(connection, PARAMETERS_ID);
+
+  // Transfer OWNER_ROLE to timelock for testing
+  const { primeRBAC } = primeRegistryModules;
+  const { timelock } = timelockModules;
+  const OWNER_ROLE = await primeRBAC.read.OWNER_ROLE();
+
+  // Grant OWNER_ROLE to timelock
+  await primeRBAC.write.grantRole([OWNER_ROLE, timelock.address], { account: deployer.account });
+
+  // Revoke OWNER_ROLE from deployer
+  await primeRBAC.write.revokeRole([OWNER_ROLE, deployer.account.address], { account: deployer.account });
 
   return {
     ...mocks,
@@ -50,12 +68,16 @@ export async function initializeTest() {
     ...withdrawer,
     ...managerModules,
     ...distributor,
+    ...timelockModules,
     deployer,
     alice,
     bob,
+    charlie,
+    dave,
     connection,
     client,
     networkHelpers: connection.networkHelpers,
+    walletClients: [deployer, alice, bob, charlie, dave],
   };
 }
 
@@ -75,7 +97,7 @@ export async function depositTokens(context: Awaited<ReturnType<typeof initializ
   await mockERC20.write.approve([vault.address, depositAmount], { account });
 
   // Deposit tokens
-  await teller.write.deposit([depositAmount, 0n, account.address], { account });
+  await teller.write.deposit([depositAmount, 0n], { account });
 
   const shares = await vault.read.balanceOf([account.address]);
   const balanceAfter = await mockERC20.read.balanceOf([account.address]);
@@ -99,9 +121,7 @@ export function assertApproxEqual(actual: bigint, expected: bigint, message?: st
   const tolerance = (expected * tolerancePercent) / 100n;
   const min = expected - tolerance;
   const max = expected + tolerance;
-
   if (actual < min || actual > max) {
-    const error = message || `Expected ${actual} to be approximately ${expected} (±${tolerancePercent}%)`;
-    throw new Error(`${error}\n  Actual: ${actual}\n  Expected: ${expected}\n  Tolerance: ±${tolerance} (${tolerancePercent}%)`);
+    throw new Error(`${message || "Assertion failed"}: ${actual} not approximately equal to ${expected} (tolerance: ${tolerancePercent}%)`);
   }
 }

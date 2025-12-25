@@ -11,7 +11,7 @@ import { runHardhatCmd } from "../utils.js";
  */
 export default async function deployPrimeManager(connection: NetworkConnection, parameterId: string, displayUi = false) {
   // Update parameters with required addresses
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   const tree = await createMerkleTree(parameters);
   parameters.ManagerModule = {

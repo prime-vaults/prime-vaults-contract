@@ -132,7 +132,7 @@ void describe("01_Deposit", function () {
 
       await assert.rejects(
         async () => {
-          await teller.write.deposit([depositAmount, depositAmount, bob.account.address], {
+          await teller.write.deposit([depositAmount, depositAmount], {
             account: bob.account,
           });
         },
@@ -173,7 +173,7 @@ void describe("01_Deposit", function () {
 
       await assert.rejects(
         async () => {
-          await teller.write.deposit([depositAmount, depositAmount, alice.account.address], {
+          await teller.write.deposit([depositAmount, depositAmount], {
             account: alice.account,
           });
         },

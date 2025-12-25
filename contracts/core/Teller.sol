@@ -149,6 +149,7 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
      * @notice When burning (to = address(0)), only checks `from`.
      */
     function beforeUpdate(address from, address to, uint256 /* amount */, address /* operator */) public virtual {
+        _getAccountant().updateExchangeRate();
         // Update rewards BEFORE balance changes if distributor is set
         if (address(distributor) != address(0)) {
             if (from != address(0)) {
@@ -171,11 +172,10 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
      * @notice Allows users to deposit into the BoringVault, if this contract is not paused.
      * @dev Publicly callable.
      */
-    function deposit(uint256 depositAmount, uint256 minimumMint, address to) external virtual requiresAuth nonReentrant returns (uint256 shares) {
-        if (to == address(0)) to = msg.sender;
+    function deposit(uint256 depositAmount, uint256 minimumMint) external virtual requiresAuth nonReentrant returns (uint256 shares) {
         _beforeDeposit();
-        shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, to);
-        _afterPublicDeposit(to, depositAmount, shares, tellerState.shareLockPeriod);
+        shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, msg.sender);
+        _afterPublicDeposit(msg.sender, depositAmount, shares, tellerState.shareLockPeriod);
     }
 
     /**
@@ -187,16 +187,6 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
         _beforeDeposit();
         shares = _erc20Deposit(depositAmount, minimumMint, msg.sender, to);
         emit BulkDeposit(address(asset), depositAmount);
-    }
-
-    /**
-     * @notice Allows off ramp role to withdraw from this contract.
-     * @dev Callable by SOLVER_ROLE.
-     */
-    function bulkWithdraw(uint256 shareAmount, uint256 minimumAssets, address to) external virtual requiresAuth nonReentrant returns (uint256 assetsOut) {
-        _getAccountant().updateExchangeRate();
-        assetsOut = _withdraw(shareAmount, minimumAssets, to);
-        emit BulkWithdraw(address(asset), shareAmount);
     }
 
     /**
@@ -275,17 +265,6 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
             block.timestamp,
             currentShareLockPeriod
         );
-    }
-
-    /**
-     * @notice Handle permit logic.
-     */
-    function _handlePermit(uint256 depositAmount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) internal {
-        try asset.permit(msg.sender, address(vault), depositAmount, deadline, v, r, s) {} catch {
-            if (asset.allowance(msg.sender, address(vault)) < depositAmount) {
-                revert Teller__PermitFailedAndAllowanceTooLow();
-            }
-        }
     }
 
     /**

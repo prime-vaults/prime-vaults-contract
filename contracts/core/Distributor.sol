@@ -58,11 +58,18 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     /// @notice Maximum compound fee (20%)
     uint256 public constant MAX_COMPOUND_FEE = 2000; // 20%
 
+    /// @notice Precision for reward calculations (1e27 = 1e18 base + 1e9 extra precision)
+    /// @dev Using 1e27 prevents rounding down to 0 for low-decimal reward tokens (e.g. USDC)
+    uint256 private constant REWARD_PRECISION = 1e27;
+
     /// @notice Mapping of user address to whether they allow third-party compounding
     mapping(address => bool) public allowThirdPartyCompound;
 
     /// @notice Treasury address - holds reward tokens to pay users
     address public treasury;
+
+    /// @notice Mapping of caller address to claimable compound fees
+    mapping(address => uint256) public claimableCompoundFees;
 
     // ========================================= EVENTS =========================================
 
@@ -74,6 +81,8 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     event CompoundFeeUpdated(uint256 newFee);
     event ThirdPartyCompoundAllowed(address indexed user, bool allowed);
     event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
+    event CompoundFeeAccrued(address indexed caller, uint256 fee);
+    event CompoundFeeClaimed(address indexed caller, uint256 amount);
 
     // ========================================= ERRORS =========================================
 
@@ -266,6 +275,23 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     }
 
     /**
+     * @notice Operator claims accumulated rewards on behalf of user
+     * @dev Rewards are sent to the user's wallet, not the operator
+     * @dev Only callable by OPERATOR_ROLE
+     * @param _account The account to claim rewards for
+     * @param _rewardTokens Array of reward token addresses to claim
+     * @return rewardsOut Array of amounts claimed for each reward token
+     */
+    function claimRewardsFor(address _account, address[] memory _rewardTokens) external onlyOperator returns (uint256[] memory rewardsOut) {
+        if (isPaused) revert Distributor__Paused();
+
+        rewardsOut = new uint256[](_rewardTokens.length);
+        for (uint256 i = 0; i < _rewardTokens.length; i++) {
+            rewardsOut[i] = _claimReward(_account, _rewardTokens[i], _account);
+        }
+    }
+
+    /**
      * @notice Allow or disallow third-party compounding
      * @param _allowed Whether to allow third parties to compound rewards for the user
      * @dev Publicly callable by anyone for their own account
@@ -273,6 +299,25 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
     function setAllowThirdPartyCompound(bool _allowed) external requiresAuth {
         allowThirdPartyCompound[msg.sender] = _allowed;
         emit ThirdPartyCompoundAllowed(msg.sender, _allowed);
+    }
+
+    /**
+     * @notice Claim accumulated compound fees
+     * @dev Transfers all accrued fees from third-party compounding to the caller
+     * @return amount The amount of fees claimed
+     */
+    function claimCompoundFees() external nonReentrant requiresAuth returns (uint256 amount) {
+        if (isPaused) revert Distributor__Paused();
+
+        amount = claimableCompoundFees[msg.sender];
+        if (amount > 0) {
+            claimableCompoundFees[msg.sender] = 0;
+
+            ERC20 asset = BoringVault(payable(address(vault))).asset();
+            asset.safeTransfer(msg.sender, amount);
+
+            emit CompoundFeeClaimed(msg.sender, amount);
+        }
     }
 
     /**
@@ -309,16 +354,17 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
                 fee = (rewardAmount * compoundFee) / 1e4;
                 amountToCompound = rewardAmount - fee;
 
-                // Transfer fee to caller
+                // Accrue fee to caller's claimable balance instead of transferring immediately
                 if (fee > 0) {
-                    asset.safeTransfer(msg.sender, fee);
+                    claimableCompoundFees[msg.sender] += fee;
+                    emit CompoundFeeAccrued(msg.sender, fee);
                 }
             }
 
             // Compound remaining amount
             if (amountToCompound > 0) {
                 asset.safeApprove(address(vault), amountToCompound);
-                uint256 shares = teller.deposit(amountToCompound, 0, _account);
+                uint256 shares = teller.bulkDeposit(amountToCompound, 0, _account);
                 emit CompoundReward(_account, address(asset), amountToCompound, shares, fee);
             }
         }
@@ -362,7 +408,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
 
         return
             rewardData[_rewardsToken].rewardPerTokenStored +
-            ((lastTimeRewardApplicable(_rewardsToken) - rewardData[_rewardsToken].lastUpdateTime) * rewardData[_rewardsToken].rewardRate * 1e18) /
+            ((lastTimeRewardApplicable(_rewardsToken) - rewardData[_rewardsToken].lastUpdateTime) * rewardData[_rewardsToken].rewardRate * REWARD_PRECISION) /
                 vault.totalSupply();
     }
 
@@ -373,7 +419,7 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      */
     function earned(address account, address _rewardsToken) public view returns (uint256) {
         return
-            (vault.balanceOf(account) * (rewardPerToken(_rewardsToken) - userRewardPerTokenPaid[account][_rewardsToken])) / 1e18 +
+            (vault.balanceOf(account) * (rewardPerToken(_rewardsToken) - userRewardPerTokenPaid[account][_rewardsToken])) / REWARD_PRECISION +
             rewards[account][_rewardsToken];
     }
 
@@ -406,8 +452,8 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
         // 2. New rewards since last update
         uint256 supply = vault.totalSupply();
         if (supply > 0) {
-            uint256 currentRewardPerToken = rewardData[_rewardsToken].rewardPerTokenStored + (rewardsSinceLastUpdate * 1e18) / supply;
-            debt = (currentRewardPerToken * supply) / 1e18;
+            uint256 currentRewardPerToken = rewardData[_rewardsToken].rewardPerTokenStored + (rewardsSinceLastUpdate * REWARD_PRECISION) / supply;
+            debt = (currentRewardPerToken * supply) / REWARD_PRECISION;
         }
     }
 

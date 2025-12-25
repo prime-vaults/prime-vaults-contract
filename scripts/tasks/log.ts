@@ -10,7 +10,7 @@ import { runHardhatCmd } from "../utils.js";
  */
 export default async function log(connection: NetworkConnection, parameterId: string) {
   // Update parameters with required addresses
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   const primeRBAC = await connection.viem.getContractAt("PrimeRBAC", parameters.$global.PrimeRBAC);
 

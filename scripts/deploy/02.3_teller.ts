@@ -12,7 +12,7 @@ export default async function deployTeller(connection: NetworkConnection, parame
   if (displayUi) console.log("\n🚀 Deploying Prime Vault system...\n");
 
   // Update parameters with required addresses
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   const { teller } = await connection.ignition.deploy(TellerModule, {
     parameters,

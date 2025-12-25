@@ -113,7 +113,12 @@ contract AccountantProviders is PrimeAuth, IAccountant {
 
         // Calculate platform fees
         uint256 newFeesOwedInBase = _calculatePlatformFee(state.totalSharesLastUpdate, state.lastUpdateTimestamp, state.platformFee, oldExchangeRate, currentShares, currentTime);
-        state.feesOwedInBase += uint128(newFeesOwedInBase);
+
+        // Only update timestamp if fees were actually accrued to prevent fee loss from frequent updates
+        if (newFeesOwedInBase > 0) {
+            state.feesOwedInBase += uint128(newFeesOwedInBase);
+            state.lastUpdateTimestamp = currentTime;
+        }
 
         // Update exchange rate to reflect fees owed
         // newRate = (totalAssets - feesOwed) / totalShares
@@ -122,7 +127,6 @@ contract AccountantProviders is PrimeAuth, IAccountant {
             uint256 assetsAfterFees = totalAssets > state.feesOwedInBase ? totalAssets - state.feesOwedInBase : 0;
             state.exchangeRate = uint96(assetsAfterFees.mulDivDown(ONE_SHARE, currentShares));
         }
-        state.lastUpdateTimestamp = currentTime;
         state.totalSharesLastUpdate = uint128(currentShares);
 
         emit ExchangeRateUpdated(oldExchangeRate, state.exchangeRate, currentTime);

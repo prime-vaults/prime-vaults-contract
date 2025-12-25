@@ -23,8 +23,8 @@ export default buildModule("AccountantModule", (m) => {
   );
 
   // Set role capabilities and assignments sequentially
-  const tx1 = m.call(rolesAuthority, "setRoleCapability", [ROLES.STRATEGIST, accountant, toFunctionSelector("updateExchangeRate()"), true], {
-    id: "cap_update",
+  const tx1 = m.call(rolesAuthority, "setPublicCapability", [accountant, toFunctionSelector("updateExchangeRate()"), true], {
+    id: "setPublicCapability_updateExchangeRate",
     after: [accountant],
   });
 

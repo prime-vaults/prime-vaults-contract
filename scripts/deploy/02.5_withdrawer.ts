@@ -12,7 +12,7 @@ export default async function deployWithdrawer(connection: NetworkConnection, pa
   if (displayUi) console.log("\n🚀 Deploying Prime Vault system...\n");
 
   // Update parameters with required addresses
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   const { withdrawer } = await connection.ignition.deploy(WithdrawerModule, {
     parameters,

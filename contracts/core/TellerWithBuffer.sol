@@ -25,6 +25,7 @@ contract TellerWithBuffer is Teller {
 
     //============================== ERRORS ===============================
     error TellerWithBuffer__BufferHelperNotAllowed(IBufferHelper bufferHelper);
+    error TellerWithBuffer__BufferHelperInUse(IBufferHelper bufferHelper);
 
     //============================== EVENTS ===============================
     event DepositBufferHelperSet(IBufferHelper indexed newDepositBufferHelper);
@@ -118,8 +119,14 @@ contract TellerWithBuffer is Teller {
      * @notice Disallows a buffer helper from being used
      * @param _bufferHelper The buffer helper contract address to disallow
      * @dev Only callable by admin to disallow buffer helpers
+     * @dev Reverts if the buffer helper is currently in use (either as deposit or withdraw buffer)
      */
     function disallowBufferHelper(IBufferHelper _bufferHelper) external onlyProtocolAdmin {
+        // Check if buffer helper is currently in use
+        if (bufferHelpers.depositBufferHelper == _bufferHelper || bufferHelpers.withdrawBufferHelper == _bufferHelper) {
+            revert TellerWithBuffer__BufferHelperInUse(_bufferHelper);
+        }
+
         allowedBufferHelpers[_bufferHelper] = false;
         emit BufferHelperDisallowed(_bufferHelper);
     }
