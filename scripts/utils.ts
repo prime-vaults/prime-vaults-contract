@@ -39,11 +39,9 @@ export async function runHardhatCmd(script: string) {
     process.exit(1);
   }
 
-  const parametersData = readParams(parameters.value);
+  const parametersData = await readParams(parameters.value);
   if (parametersData.$global.network !== networkName) {
-    console.log(
-      `❌ Parameters network ( ${chalk.blue(parametersData.$global.network)}) does not match selected network (${chalk.blue(networkName)})`,
-    );
+    console.log(`❌ Parameters network ( ${chalk.blue(parametersData.$global.network)}) does not match selected network (${chalk.blue(networkName)})`);
     process.exit(0);
   }
 

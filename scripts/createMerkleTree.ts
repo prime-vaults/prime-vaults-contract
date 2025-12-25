@@ -95,7 +95,7 @@ export function getProof(leafIndex: number, tree: `0x${string}`[][]): `0x${strin
  *
  * @example
  * ```typescript
- * const params = readParams("localhost-usd");
+ * const params = readParams("default-usd");
  *
  * // Find by function signature only
  * const result = findLeaf(params, "claimFees()");
@@ -109,11 +109,7 @@ export function getProof(leafIndex: number, tree: `0x${string}`[][]): `0x${strin
  * const result2 = findLeaf(params, "claimFees()", accountantAddr);
  * ```
  */
-export function findLeaf(
-  params: VaultParameters,
-  functionSignature: string,
-  target?: string,
-): { leaf: LeafConfig; index: number } | undefined {
+export function findLeaf(params: VaultParameters, functionSignature: string, target?: string): { leaf: LeafConfig; index: number } | undefined {
   // Read from $global (new location) or fallback to ManagerModule (backward compatibility)
   const leaves = params.ManagerModule?.leafs;
   if (!leaves) return undefined;
@@ -139,14 +135,14 @@ export function findLeaf(
  * Read leaf with proof from params file
  * Returns leaf configuration, index, proof, and tree for Merkle verification
  *
- * @param paramsId - Params file ID (e.g., "localhost-usd")
+ * @param paramsId - Params file ID (e.g., "default-usd")
  * @param filters - Filters to find the leaf
  * @returns Leaf data with proof and tree, or undefined if not found
  *
  * @example
  * ```typescript
  * // Find by function signature
- * const approveData = readLeaf("localhost-usd", { FunctionSignature: "approve(address,uint256)" });
+ * const approveData = readLeaf("default-usd", { FunctionSignature: "approve(address,uint256)" });
  * if (approveData) {
  *   console.log("Leaf:", approveData.leaf);
  *   console.log("Index:", approveData.index);
@@ -154,14 +150,14 @@ export function findLeaf(
  * }
  *
  * // Find by description
- * const claimFeesData = readLeaf("localhost-usd", { Description: "Claim platform fees from Accountant" });
+ * const claimFeesData = readLeaf("default-usd", { Description: "Claim platform fees from Accountant" });
  * ```
  */
-export function readLeaf(
+export async function readLeaf(
   paramsId: string,
   filters: { FunctionSignature?: string; Description?: string },
-): { leaf: LeafConfig; index: number; proof: `0x${string}`[]; tree: `0x${string}`[][] } | undefined {
-  const params = readParams(paramsId);
+): Promise<{ leaf: LeafConfig; index: number; proof: `0x${string}`[]; tree: `0x${string}`[][] } | undefined> {
+  const params = await readParams(paramsId);
   // Read from $global (new location) or fallback to ManagerModule (backward compatibility)
   const leaves = params.ManagerModule?.leafs;
 
@@ -199,7 +195,7 @@ export function readLeaf(
  * Create Merkle tree from params file
  * Auto-generates approve and claimFees leaves based on $global addresses
  *
- * @param paramsId - Params file ID (e.g., "localhost-usd")
+ * @param paramsId - Params file ID (e.g., "default-usd")
  */
 export async function createMerkleTree(params: VaultParameters): Promise<{
   root: `0x${string}`;
@@ -249,15 +245,15 @@ export async function createMerkleTree(params: VaultParameters): Promise<{
     LeafDigest: "0x",
   });
 
-  // Leaf 3: withdraw(address,uint256,address) - Withdraw from PrimeStrategist to vault
+  // Leaf 3: withdraw(address,uint256) - Withdraw from PrimeStrategist to vault
   leafs.push({
     Description: "Withdraw from PrimeStrategist back to vault",
-    FunctionSignature: "withdraw(address,uint256,address)",
-    FunctionSelector: toFunctionSelector("withdraw(address,uint256,address)"),
+    FunctionSignature: "withdraw(address,uint256)",
+    FunctionSelector: toFunctionSelector("withdraw(address,uint256)"),
     DecoderAndSanitizerAddress,
     TargetAddress: PrimeStrategistAddress,
     CanSendValue: false,
-    AddressArguments: [stakingToken, params.$global.BoringVaultAddress],
+    AddressArguments: [stakingToken],
     PackedArgumentAddresses: "0x",
     LeafDigest: "0x",
   });

@@ -49,7 +49,7 @@ export default buildModule("WithdrawerModule", (m) => {
     after: [tx3],
   });
 
-  const tx5 = m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("completeWithdraw(address)"), true], {
+  const tx5 = m.call(rolesAuthority, "setPublicCapability", [withdrawer, toFunctionSelector("completeWithdraw(address,uint256)"), true], {
     id: "cap_complete",
     after: [tx4],
   });

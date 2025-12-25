@@ -11,7 +11,7 @@ import { runHardhatCmd } from "../utils.js";
  */
 export default async function createReward(connection: NetworkConnection, parameterId: string) {
   // Update parameters with required addresses
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   const distributor = await connection.viem.getContractAt("Distributor", parameters.$global.DistributorAddress);
 

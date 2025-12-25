@@ -1,6 +1,6 @@
 import bepoliaBtc from "../ignition/parameters/bepolia-btc.json";
 import bepoliaUsd from "../ignition/parameters/bepolia-usd.json";
-import localhostUsd from "../ignition/parameters/localhost-usd.json";
+import localhostUsd from "../ignition/parameters/default-usd.json";
 import { generateMerkleTree, getProof } from "../scripts/createMerkleTree.js";
 
 export interface GlobalConfig {
@@ -11,6 +11,7 @@ export interface GlobalConfig {
   PrimeRBAC: `0x${string}`;
   PrimeStrategistAddress: `0x${string}`;
   DecoderAndSanitizerAddress: `0x${string}`;
+  SmartAccountRegistryAddress: `0x${string}`;
   //
   BoringVaultAddress: `0x${string}`;
   AccountantAddress: `0x${string}`;
@@ -19,6 +20,7 @@ export interface GlobalConfig {
   RolesAuthorityAddress: `0x${string}`;
   DistributorAddress: `0x${string}`;
   ManagerAddress: `0x${string}`;
+  PrimeTimelockAddress: `0x${string}`;
 }
 
 export interface LeafConfig {

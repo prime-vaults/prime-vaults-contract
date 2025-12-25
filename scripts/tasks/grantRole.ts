@@ -12,7 +12,7 @@ import { runHardhatCmd } from "../utils.js";
 export default async function grantRole(connection: NetworkConnection, parameterId: string) {
   // Update parameters with required addresses
   const caller = await connection.viem.getWalletClients();
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   const primeRBAC = await connection.viem.getContractAt("PrimeRBAC", parameters.$global.PrimeRBAC);
 

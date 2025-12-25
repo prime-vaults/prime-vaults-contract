@@ -16,7 +16,7 @@ export default async function deployTellerHelper(
   if (displayUi) console.log("\n🚀 Deploying Prime Vault system...\n");
 
   // Update parameters with required addresses
-  const parameters = readParams(parameterId);
+  const parameters = await readParams(parameterId);
 
   const { primeBufferHelper } = await connection.ignition.deploy(TellerHelperModule, {
     parameters,
