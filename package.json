@@ -5,15 +5,19 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "0.1.14",
+  "version": "0.1.15",
   "type": "module",
   "main": "./dist/sdk/index.js",
+  "module": "./dist/sdk/index.js",
   "types": "./dist/sdk/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/sdk/index.d.ts",
-      "import": "./dist/sdk/index.js"
-    }
+      "import": "./dist/sdk/index.js",
+      "require": "./dist/sdk/index.js",
+      "default": "./dist/sdk/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "author": {
     "name": "Michael",
