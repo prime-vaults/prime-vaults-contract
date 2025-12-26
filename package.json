@@ -5,7 +5,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "0.1.15",
+  "version": "0.1.16",
   "type": "module",
   "main": "./dist/sdk/index.js",
   "module": "./dist/sdk/index.js",

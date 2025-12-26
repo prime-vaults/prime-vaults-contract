@@ -1,16 +1,16 @@
-import AccountantJson from "../artifacts/contracts/core/AccountantProviders.sol/AccountantProviders.json";
+import AccountantJson from "../artifacts/contracts/core/AccountantProviders.sol/AccountantProviders.json" with { type: "json" };
 import type { AccountantProviders$Type } from "../artifacts/contracts/core/AccountantProviders.sol/artifacts.d.ts";
-import BoringVaultJson from "../artifacts/contracts/core/BoringVault.sol/BoringVault.json";
+import BoringVaultJson from "../artifacts/contracts/core/BoringVault.sol/BoringVault.json" with { type: "json" };
 import type { BoringVault$Type } from "../artifacts/contracts/core/BoringVault.sol/artifacts.d.ts";
-import WithdrawerJson from "../artifacts/contracts/core/DelayedWithdraw.sol/DelayedWithdraw.json";
+import WithdrawerJson from "../artifacts/contracts/core/DelayedWithdraw.sol/DelayedWithdraw.json" with { type: "json" };
 import type { DelayedWithdraw$Type } from "../artifacts/contracts/core/DelayedWithdraw.sol/artifacts.d.ts";
-import DistributorJson from "../artifacts/contracts/core/Distributor.sol/Distributor.json";
+import DistributorJson from "../artifacts/contracts/core/Distributor.sol/Distributor.json" with { type: "json" };
 import type { Distributor$Type } from "../artifacts/contracts/core/Distributor.sol/artifacts.d.ts";
-import ManagerJson from "../artifacts/contracts/core/ManagerWithMerkleVerification.sol/ManagerWithMerkleVerification.json";
+import ManagerJson from "../artifacts/contracts/core/ManagerWithMerkleVerification.sol/ManagerWithMerkleVerification.json" with { type: "json" };
 import type { ManagerWithMerkleVerification$Type } from "../artifacts/contracts/core/ManagerWithMerkleVerification.sol/artifacts.d.ts";
-import TellerJson from "../artifacts/contracts/core/Teller.sol/Teller.json";
+import TellerJson from "../artifacts/contracts/core/Teller.sol/Teller.json" with { type: "json" };
 import type { Teller$Type } from "../artifacts/contracts/core/Teller.sol/artifacts.d.ts";
-import SmartAccountRegistryJson from "../artifacts/contracts/helper/SmartAccountRegistry.sol/SmartAccountRegistry.json";
+import SmartAccountRegistryJson from "../artifacts/contracts/helper/SmartAccountRegistry.sol/SmartAccountRegistry.json" with { type: "json" };
 import type { SmartAccountRegistry$Type } from "../artifacts/contracts/helper/SmartAccountRegistry.sol/artifacts.d.ts";
 
 export type AccountantType = AccountantProviders$Type;
