@@ -11,6 +11,9 @@ export default async function deposit(connection: NetworkConnection, parameterId
   // Update parameters with required addresses
   const parameters = await readParams(parameterId);
 
+  const accountRegistry = await connection.viem.getContractAt("SmartAccountRegistry", parameters.$global.SmartAccountRegistryAddress);
+  await accountRegistry.write.registerOwner([parameters.$global.adminAddress]);
+
   const stakingToken = await connection.viem.getContractAt("MockERC20", parameters.$global.stakingToken);
   const teller = await connection.viem.getContractAt("Teller", parameters.$global.TellerAddress);
 

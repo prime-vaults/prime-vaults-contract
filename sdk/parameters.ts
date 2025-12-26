@@ -69,3 +69,44 @@ export function getLeaf(params: VaultParameters, description: string) {
     tree,
   };
 }
+
+// ========================================= VAULT REGISTRY =========================================
+
+/**
+ * Registry of all available vaults across different chains
+ */
+const VAULT_REGISTRY: VaultParameters[] = [BepoliaVaultUsd, BepoliaVaultBtc, LocalhostVaultUsd];
+
+/**
+ * Get all vaults for a specific chain ID
+ * @param chainId The chain ID to filter by
+ * @returns Array of vault parameters for the specified chain
+ */
+export function getVaultsByChainId(chainId: number): VaultParameters[] {
+  return VAULT_REGISTRY.filter((vault) => vault.$global.chainId === chainId);
+}
+
+/**
+ * Get a specific vault by its address
+ * @param vaultAddress The BoringVault contract address
+ * @returns Vault parameters if found, undefined otherwise
+ */
+export function getVault(vaultAddress: `0x${string}`): VaultParameters | undefined {
+  return VAULT_REGISTRY.find((vault) => vault.$global.BoringVaultAddress.toLowerCase() === vaultAddress.toLowerCase());
+}
+
+/**
+ * Get vaults that use a specific asset as staking token
+ * @param assetAddress The asset/staking token address
+ * @param chainId Optional chain ID to filter results
+ * @returns Array of vault parameters using the specified asset
+ */
+export function getVaultsByAsset(assetAddress: `0x${string}`, chainId?: number): VaultParameters[] {
+  let vaults = VAULT_REGISTRY.filter((vault) => vault.$global.stakingToken.toLowerCase() === assetAddress.toLowerCase());
+
+  if (chainId !== undefined) {
+    vaults = vaults.filter((vault) => vault.$global.chainId === chainId);
+  }
+
+  return vaults;
+}
