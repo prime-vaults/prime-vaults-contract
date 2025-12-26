@@ -5,7 +5,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "0.1.16",
+  "version": "0.1.17",
   "type": "module",
   "main": "./dist/sdk/index.js",
   "module": "./dist/sdk/index.js",
@@ -14,11 +14,11 @@
     ".": {
       "types": "./dist/sdk/index.d.ts",
       "import": "./dist/sdk/index.js",
-      "require": "./dist/sdk/index.js",
       "default": "./dist/sdk/index.js"
     },
     "./package.json": "./package.json"
   },
+  "sideEffects": false,
   "author": {
     "name": "Michael",
     "url": "https://github.com/michaelbera"
@@ -79,6 +79,10 @@
     "viem"
   ],
   "dependencies": {
-    "solmate": "^6.8.0"
+    "solmate": "^6.8.0",
+    "viem": "^2.30.0"
+  },
+  "peerDependencies": {
+    "viem": "^2.x"
   }
 }
