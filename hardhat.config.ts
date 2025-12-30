@@ -7,7 +7,8 @@ import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import "dotenv/config";
 import type { HardhatUserConfig } from "hardhat/config";
 import { HttpNetworkAccountsUserConfig } from "hardhat/types/config";
-import { berachainBepolia } from "viem/chains";
+import { mnemonicToAccount, privateKeyToAccount } from "viem/accounts";
+import { berachain, berachainBepolia } from "viem/chains";
 
 // Set your preferred authentication method
 //
@@ -26,6 +27,15 @@ const accounts: HttpNetworkAccountsUserConfig | undefined = MNEMONIC ? { mnemoni
 
 if (accounts == null) {
   console.warn("⚠️  Warning: No MNEMONIC or PRIVATE_KEY environment variable set. Deployments may fail if the network requires authentication.");
+}
+
+// Log admin address for verification
+if (MNEMONIC) {
+  const account = mnemonicToAccount(MNEMONIC);
+  console.log("Admin address:", account.address);
+} else if (PRIVATE_KEY) {
+  const account = privateKeyToAccount(PRIVATE_KEY as `0x${string}`);
+  console.log("Admin address:", account.address);
 }
 
 const config: HardhatUserConfig = {
@@ -84,6 +94,18 @@ const config: HardhatUserConfig = {
       ignition: {
         explorerUrl: "https://testnet.berascan.com",
       },
+      chainId: berachainBepolia.id,
+    },
+    berachain: {
+      type: "http",
+      chainType: "op",
+      accounts,
+      url: process.env.RPC_URL || berachain.rpcUrls.default.http[0],
+      timeout: 60000,
+      ignition: {
+        explorerUrl: "https://berascan.com",
+      },
+      chainId: berachain.id,
     },
   },
 };

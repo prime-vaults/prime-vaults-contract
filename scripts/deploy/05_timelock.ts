@@ -2,6 +2,7 @@ import { NetworkConnection } from "hardhat/types/network";
 
 import PrimeTimelockModule from "../../ignition/modules/governance/PrimeTimelock.js";
 import { readParams, writeParams } from "../../ignition/parameters/utils.js";
+import { runHardhatCmd } from "../utils.js";
 
 /**
  * Deploy PrimeTimelock for role management
@@ -17,8 +18,19 @@ export default async function deployTimelock(connection: NetworkConnection, para
   const { timelock } = await connection.ignition.deploy(PrimeTimelockModule, { parameters, deploymentId: parameterId });
 
   // Save to global parameters
-  parameters.$global.PrimeTimelockAddress = timelock.address;
+  parameters.$global.PrimeTimeLockAddress = timelock.address;
   await writeParams(parameterId, parameters);
 
   return { timelock };
 }
+
+// pnpm hardhat run scripts/deploy/05_timelock.ts --network <network>
+runHardhatCmd("scripts/deploy/05_timelock.ts")
+  .then(async (context) => {
+    if (!context) return;
+    console.log("\n🚀 Deploying Prime Timelock module...\n");
+    await deployTimelock(context.connection, context.parameters);
+  })
+  .catch((error) => {
+    console.error(error);
+  });

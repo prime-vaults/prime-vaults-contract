@@ -1,5 +1,7 @@
 import bepoliaBtc from "../ignition/parameters/bepolia-btc.json" with { type: "json" };
 import bepoliaUsd from "../ignition/parameters/bepolia-usd.json" with { type: "json" };
+import berachainBtc from "../ignition/parameters/berachain-btc.json" with { type: "json" };
+import berachainUsd from "../ignition/parameters/berachain-usd.json" with { type: "json" };
 import localhostUsd from "../ignition/parameters/default-usd.json" with { type: "json" };
 import { generateMerkleTree, getProof } from "../scripts/createMerkleTree.js";
 
@@ -20,7 +22,7 @@ export interface GlobalConfig {
   RolesAuthorityAddress: `0x${string}`;
   DistributorAddress: `0x${string}`;
   ManagerAddress: `0x${string}`;
-  PrimeTimelockAddress: `0x${string}`;
+  PrimeTimeLockAddress: `0x${string}`;
 }
 
 export interface LeafConfig {
@@ -48,10 +50,6 @@ export interface VaultParameters {
   [key: string]: any;
 }
 
-export const BepoliaVaultUsd = bepoliaUsd as unknown as VaultParameters;
-export const BepoliaVaultBtc = bepoliaBtc as unknown as VaultParameters;
-export const LocalhostVaultUsd = localhostUsd as unknown as VaultParameters;
-
 export function getLeaf(params: VaultParameters, description: string) {
   const leaves = params.ManagerModule?.leafs;
 
@@ -71,11 +69,16 @@ export function getLeaf(params: VaultParameters, description: string) {
 }
 
 // ========================================= VAULT REGISTRY =========================================
+export const BepoliaVaultUsd = bepoliaUsd as unknown as VaultParameters;
+export const BepoliaVaultBtc = bepoliaBtc as unknown as VaultParameters;
+export const LocalhostVaultUsd = localhostUsd as unknown as VaultParameters;
+export const BerachainVaultUsd = berachainUsd as unknown as VaultParameters;
+export const BerachainVaultBtc = berachainBtc as unknown as VaultParameters;
 
 /**
  * Registry of all available vaults across different chains
  */
-const VAULT_REGISTRY: VaultParameters[] = [BepoliaVaultUsd, BepoliaVaultBtc, LocalhostVaultUsd];
+const VAULT_REGISTRY: VaultParameters[] = [BepoliaVaultUsd, BepoliaVaultBtc, LocalhostVaultUsd, BerachainVaultUsd, BerachainVaultBtc];
 
 /**
  * Get all vaults for a specific chain ID
