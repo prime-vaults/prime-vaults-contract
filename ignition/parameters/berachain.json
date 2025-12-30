@@ -15,7 +15,9 @@
     "TellerAddress": "0x",
     "DistributorAddress": "0x",
     "WithdrawerAddress": "0x",
-    "ManagerAddress": "0x"
+    "ManagerAddress": "0x",
+    "PrimeRegistryAddress": "0xdff3684Bb5ed5f5148c5412375aDd1763335b290",
+    "PrimeStrategyAddress": "0xcfDB218585d77BeD370781D9C5eF40CeFa634427"
   },
   "AccountantModule": {
     "platformFee": 0
