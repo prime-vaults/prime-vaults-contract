@@ -21,6 +21,8 @@ export interface GlobalConfig {
   DistributorAddress: `0x${string}`;
   ManagerAddress: `0x${string}`;
   PrimeTimelockAddress: `0x${string}`;
+  PrimeStrategyAddress: `0x${string}`;
+  PrimeRegistryAddress: `0x${string}`;
 }
 
 export interface LeafConfig {
