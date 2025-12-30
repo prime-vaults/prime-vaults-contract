@@ -12,6 +12,8 @@ import TellerJson from "../artifacts/contracts/core/Teller.sol/Teller.json" with
 import type { Teller$Type } from "../artifacts/contracts/core/Teller.sol/artifacts.d.ts";
 import SmartAccountRegistryJson from "../artifacts/contracts/helper/SmartAccountRegistry.sol/SmartAccountRegistry.json" with { type: "json" };
 import type { SmartAccountRegistry$Type } from "../artifacts/contracts/helper/SmartAccountRegistry.sol/artifacts.d.ts";
+import PrimeStrategyJson from "../artifacts/contracts/strategy/PrimeStrategy.sol/PrimeStrategy.json";
+import PrimStrategyRegistryJson from "../artifacts/contracts/strategy/StrategyRegistry.sol/StrategyRegistry.json";
 
 export type AccountantType = AccountantProviders$Type;
 export type BoringVaultType = BoringVault$Type;
@@ -28,3 +30,5 @@ export const WithdrawerAbi = WithdrawerJson as DelayedWithdraw$Type;
 export const DistributorAbi = DistributorJson as Distributor$Type;
 export const ManagerAbi = ManagerJson as ManagerType;
 export const SmartAccountRegistryAbi = SmartAccountRegistryJson as SmartAccountRegistryType;
+export const PrimeStrategyAbi = PrimeStrategyJson;
+export const PrimeRegistryAbi = PrimStrategyRegistryJson;
