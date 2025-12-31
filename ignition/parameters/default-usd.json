@@ -15,7 +15,7 @@
     "DistributorAddress": "0xb7278A61aa25c888815aFC32Ad3cC52fF24fE575",
     "WithdrawerAddress": "0x998abeb3E57409262aE5b751f60747921B33613E",
     "ManagerAddress": "0x36C02dA8a0983159322a80FFE9F24b1acfF8B570",
-    "PrimeTimelockAddress": "0xc351628EB244ec633d5f21fBD6621e1a683B1181"
+    "PrimeTimeLockAddress": "0xc351628EB244ec633d5f21fBD6621e1a683B1181"
   },
   "AccountantModule": {
     "platformFee": 0
@@ -35,9 +35,7 @@
         "DecoderAndSanitizerAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
         "TargetAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
-        ],
+        "AddressArguments": ["0x68B1D87F95878fE05B998F19b66F4baba5De1aed"],
         "PackedArgumentAddresses": "68b1d87f95878fe05b998f19b66f4baba5de1aed",
         "LeafDigest": "0x6486b2e303db9c78653a549adbf945e941a16f8896445ec2e33c26ad6620ccc5"
       },
@@ -48,9 +46,7 @@
         "DecoderAndSanitizerAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
         "TargetAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
-        ],
+        "AddressArguments": ["0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"],
         "PackedArgumentAddresses": "5fc8d32690cc91d4c39d9d3abcbd16989f875707",
         "LeafDigest": "0x5573b4932321bc1abed26e0830aedc0151733d65b190f600665d50d25eb6e648"
       },
@@ -61,9 +57,7 @@
         "DecoderAndSanitizerAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
         "TargetAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
-        ],
+        "AddressArguments": ["0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"],
         "PackedArgumentAddresses": "cf7ed3acca5a467e9e704c703e8d87f634fb0fc9",
         "LeafDigest": "0x8ce509f26c25619ab1b0627e2fd0f4cc3d7c224c8edcefa44b8c85f2f983bef8"
       },
@@ -74,9 +68,7 @@
         "DecoderAndSanitizerAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
         "TargetAddress": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
         "CanSendValue": false,
-        "AddressArguments": [
-          "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
-        ],
+        "AddressArguments": ["0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"],
         "PackedArgumentAddresses": "cf7ed3acca5a467e9e704c703e8d87f634fb0fc9",
         "LeafDigest": "0xde6bc5ff404d1f74209924bb515c4ae21cfd8b15843578f0b8e07bbb6f477e7c"
       },

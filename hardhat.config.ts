@@ -33,6 +33,7 @@ if (accounts == null) {
 if (MNEMONIC) {
   const account = mnemonicToAccount(MNEMONIC);
   console.log("Admin address:", account.address);
+  console.log("priv", Buffer.from(account.getHdKey().privateKey!).toString("hex"));
 } else if (PRIVATE_KEY) {
   const account = privateKeyToAccount(PRIVATE_KEY as `0x${string}`);
   console.log("Admin address:", account.address);

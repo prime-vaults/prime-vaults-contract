@@ -23,7 +23,7 @@ contract Teller is PrimeAuth, IBeforeUpdateHook, ReentrancyGuard, ITeller {
      * @param allowDeposits whether deposits are allowed for the asset
      * @param allowWithdraws whether withdrawals are allowed for the asset
      * @param shareLockPeriod after deposits, shares are locked to the msg.sender's address for this period
-     * @param depositCap the global deposit cap of the vault
+     * @param depositCap the global deposit cap of the vault (in shares)
      */
     struct TellerState {
         bool allowDeposits;

@@ -14,8 +14,7 @@
     "TellerAddress": "0x1e859D988a2b506D2b4CA017b5EeCCB487E1B899",
     "DistributorAddress": "0x2Dd919b34e090F7fBabc8EDd283ef53241A042dD",
     "WithdrawerAddress": "0x0FD74ffC76CFc7C576146c12B468E610BD396c4A",
-    "ManagerAddress": "0x295aaC265561aC7940C896b7606dA8Dd2505cd72",
-    "PrimeTimelockAddress": "0x"
+    "ManagerAddress": "0x295aaC265561aC7940C896b7606dA8Dd2505cd72"
   },
   "AccountantModule": {
     "platformFee": 0
