@@ -6,7 +6,17 @@
 
 **Crosschain Bridge Execution Layer for Prime Vaults**
 
-Prime Bridge Executor enables seamless crosschain deposits into Prime Vaults from any supported blockchain. By integrating LI.FI for EVM chains and Stargate for Core chain, users can bridge assets directly into their ERC-4337 Smart Accounts on the PrimeVaults chain with optional gas sponsorship.
+Prime Bridge Executor enables seamless crosschain deposits into Prime Vaults from any supported blockchain. By integrating LI.FI for EVM chains and Stargate for Core chain, users can bridge assets directly into their ERC-4337 Smart Accounts on the native chain (Berachain) with optional gas sponsorship.
+
+## Deployed Contracts
+
+| Chain | Contract | Address |
+|-------|----------|---------|
+| **Berachain** | PrimeExecutor | `0xf9e8D18003590E06334E8C70cE6dD0B480462ec5` |
+| **Ethereum** | PrimeExecutor | `0xb2f865041e3F7De4576FB5B30ac8e9fbDA82e29d` |
+| **BNB Chain** | PrimeExecutor | `0xb2f865041e3F7De4576FB5B30ac8e9fbDA82e29d` |
+| **Arbitrum** | PrimeExecutor | `0xb2f865041e3F7De4576FB5B30ac8e9fbDA82e29d` |
+| **CoreDAO** | PrimeExecutor | `0xb2f865041e3F7De4576FB5B30ac8e9fbDA82e29d` |
 
 ---
 

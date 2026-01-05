@@ -207,7 +207,18 @@ Before going to production:
 
 ---
 
-## Audit Summary (SALUS Security Audit - December 2025)
+## Audit Summary
+
+The Prime Vaults system underwent comprehensive security audits by multiple independent firms.
+
+### Auditors
+
+| Auditor | Date | Report |
+|---------|------|--------|
+| **Salus Security** | December 2025 | [View Report](https://github.com/Salusec/Salus-audit/blob/main/2025/Prime-vault_audit_report_2025-12-22.pdf) |
+| **Shieldify** | December 2025 | [View Report](https://github.com/shieldify-security/audits-portfolio/blob/main/reports/Prime-Vaults-Security-Review.pdf) |
+
+### SALUS Security Audit (December 2025)
 
 The Prime Vaults system underwent a comprehensive security audit by SALUS Security. Below is a summary of findings and their status:
 
@@ -277,7 +288,13 @@ The Prime Vaults system underwent a comprehensive security audit by SALUS Securi
 - **Design Trade-offs (Acknowledged)**: 2
 - **Addressed via Documentation**: 1
 
+### Shieldify Audit (December 2025)
+
+All critical and high-severity findings from the Shieldify audit have been addressed. Please refer to the [full report](https://github.com/shieldify-security/audits-portfolio/blob/main/reports/Prime-Vaults-Security-Review.pdf) for details.
+
 ---
 
-**Last Updated**: December 2025
-**Audit Reference**: SALUS Security Audit Report - Prime Vaults v1
+**Last Updated**: January 2026
+**Audit References**:
+- SALUS Security Audit Report - Prime Vaults v1 (December 2025)
+- Shieldify Security Review - Prime Vaults (December 2025)
