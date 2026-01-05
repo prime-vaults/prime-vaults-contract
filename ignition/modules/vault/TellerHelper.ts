@@ -15,7 +15,8 @@ export default buildModule("TellerHelper", (m) => {
 
   const tx0 = m.call(teller, "allowBufferHelper", [primeBufferHelper]);
   const tx1 = m.call(teller, "setWithdrawBufferHelper", [primeBufferHelper], { after: [tx0] });
+  const tx2 = m.call(teller, "setDepositBufferHelper", [primeBufferHelper], { after: [tx1] });
   // npx hardhat ignition wipe bepolia-usd TellerHelper#BoringVault.setBeforeUpdateHook
-  m.call(vault, "setBeforeUpdateHook", [teller], { after: [tx1] });
+  m.call(vault, "setBeforeUpdateHook", [teller], { after: [tx2] });
   return { primeBufferHelper };
 });

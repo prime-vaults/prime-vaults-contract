@@ -1,5 +1,4 @@
 import { NetworkConnection } from "hardhat/types/network";
-import { keccak256 } from "viem";
 
 import { readParams } from "../../ignition/parameters/utils.js";
 import { runHardhatCmd } from "../utils.js";
@@ -12,12 +11,11 @@ export default async function log(connection: NetworkConnection, parameterId: st
   // Update parameters with required addresses
   const parameters = await readParams(parameterId);
 
-  const primeRBAC = await connection.viem.getContractAt("PrimeRBAC", parameters.$global.PrimeRBAC);
+  const tellers = await connection.viem.getContractAt("TellerWithBuffer", parameters.$global.TellerAddress);
 
-  const admins = await primeRBAC.read.getRoleMembers([keccak256("PROTOCOL_ADMIN_ROLE" as any)]);
-  const operator = await primeRBAC.read.getRoleMembers([keccak256("OPERATOR_ROLE" as any)]);
-  console.log("Protocol Admins:", admins);
-  console.log("Operators:", operator);
+  const tellerDepositBufferHelper = await tellers.read.bufferHelpers();
+
+  console.log("tellerDepositBufferHelper:", tellerDepositBufferHelper);
 }
 
 // pnpm hardhat run scripts/tasks/log.ts --network <network>
