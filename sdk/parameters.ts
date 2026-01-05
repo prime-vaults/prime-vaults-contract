@@ -1,6 +1,8 @@
-import bepoliaBtc from "../ignition/parameters/bepolia-btc.json";
-import bepoliaUsd from "../ignition/parameters/bepolia-usd.json";
-import localhostUsd from "../ignition/parameters/default-usd.json";
+import bepoliaBtc from "../ignition/parameters/bepolia-btc.json" with { type: "json" };
+import bepoliaUsd from "../ignition/parameters/bepolia-usd.json" with { type: "json" };
+import berachainBtc from "../ignition/parameters/berachain-btc.json" with { type: "json" };
+import berachainUsd from "../ignition/parameters/berachain-usd.json" with { type: "json" };
+import localhostUsd from "../ignition/parameters/default-usd.json" with { type: "json" };
 import { generateMerkleTree, getProof } from "../scripts/createMerkleTree.js";
 
 export interface GlobalConfig {
@@ -20,6 +22,7 @@ export interface GlobalConfig {
   RolesAuthorityAddress: `0x${string}`;
   DistributorAddress: `0x${string}`;
   ManagerAddress: `0x${string}`;
+  PrimeTimeLockAddress: `0x${string}`;
   PrimeTimelockAddress: `0x${string}`;
   PrimeStrategyAddress: `0x${string}`;
   PrimeRegistryAddress: `0x${string}`;
@@ -50,10 +53,6 @@ export interface VaultParameters {
   [key: string]: any;
 }
 
-export const BepoliaVaultUsd = bepoliaUsd as unknown as VaultParameters;
-export const BepoliaVaultBtc = bepoliaBtc as unknown as VaultParameters;
-export const LocalhostVaultUsd = localhostUsd as unknown as VaultParameters;
-
 export function getLeaf(params: VaultParameters, description: string) {
   const leaves = params.ManagerModule?.leafs;
 
@@ -70,4 +69,50 @@ export function getLeaf(params: VaultParameters, description: string) {
     proof,
     tree,
   };
+}
+
+// ========================================= VAULT REGISTRY =========================================
+export const BepoliaVaultUsd = bepoliaUsd as unknown as VaultParameters;
+export const BepoliaVaultBtc = bepoliaBtc as unknown as VaultParameters;
+export const LocalhostVaultUsd = localhostUsd as unknown as VaultParameters;
+export const BerachainVaultUsd = berachainUsd as unknown as VaultParameters;
+export const BerachainVaultBtc = berachainBtc as unknown as VaultParameters;
+
+/**
+ * Registry of all available vaults across different chains
+ */
+const VAULT_REGISTRY: VaultParameters[] = [BepoliaVaultUsd, BepoliaVaultBtc, LocalhostVaultUsd, BerachainVaultUsd, BerachainVaultBtc];
+
+/**
+ * Get all vaults for a specific chain ID
+ * @param chainId The chain ID to filter by
+ * @returns Array of vault parameters for the specified chain
+ */
+export function getVaultsByChainId(chainId: number): VaultParameters[] {
+  return VAULT_REGISTRY.filter((vault) => vault.$global.chainId === chainId);
+}
+
+/**
+ * Get a specific vault by its address
+ * @param vaultAddress The BoringVault contract address
+ * @returns Vault parameters if found, undefined otherwise
+ */
+export function getVault(vaultAddress: `0x${string}`): VaultParameters | undefined {
+  return VAULT_REGISTRY.find((vault) => vault.$global.BoringVaultAddress.toLowerCase() === vaultAddress.toLowerCase());
+}
+
+/**
+ * Get vaults that use a specific asset as staking token
+ * @param assetAddress The asset/staking token address
+ * @param chainId Optional chain ID to filter results
+ * @returns Array of vault parameters using the specified asset
+ */
+export function getVaultsByAsset(assetAddress: `0x${string}`, chainId?: number): VaultParameters[] {
+  let vaults = VAULT_REGISTRY.filter((vault) => vault.$global.stakingToken.toLowerCase() === assetAddress.toLowerCase());
+
+  if (chainId !== undefined) {
+    vaults = vaults.filter((vault) => vault.$global.chainId === chainId);
+  }
+
+  return vaults;
 }

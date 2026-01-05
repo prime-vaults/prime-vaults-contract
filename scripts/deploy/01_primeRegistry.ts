@@ -45,7 +45,7 @@ export default async function deployPrimeRegistry(connection: NetworkConnection,
       DistributorAddress: "0x",
       WithdrawerAddress: "0x",
       ManagerAddress: "0x",
-      PrimeTimelockAddress: "0x",
+      PrimeTimeLockAddress: "0x",
     },
     AccountantModule: {
       platformFee: 0,

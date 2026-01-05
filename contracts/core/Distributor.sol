@@ -326,7 +326,24 @@ contract Distributor is PrimeAuth, ReentrancyGuard, IBeforeUpdateHook {
      * @dev Only works with tokens that can be deposited into the vault (typically the base asset).
      * @param _account The account to compound rewards for
      */
-    function compoundReward(address _account) external updateReward(_account) requiresAuth {
+    function compoundReward(address _account) external requiresAuth {
+        _compoundRewardInternal(_account);
+    }
+
+    /**
+     * @notice Batch compound rewards for multiple accounts in a single transaction.
+     * @dev Applies the same rules as `compoundReward` for each account.
+     *      - If caller != account, the account must have enabled third-party compounding.
+     *      - Fees (if any) accrue to the caller per-account.
+     * @param _accounts The list of accounts to compound for
+     */
+    function compoundRewardBatch(address[] calldata _accounts) external requiresAuth {
+        for (uint256 i = 0; i < _accounts.length; i++) {
+            _compoundRewardInternal(_accounts[i]);
+        }
+    }
+
+    function _compoundRewardInternal(address _account) internal updateReward(_account) {
         if (isPaused) revert Distributor__Paused();
 
         ERC20 asset = BoringVault(payable(address(vault))).asset();

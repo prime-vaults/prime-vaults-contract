@@ -41,12 +41,12 @@ Prime Vaults is built on the **BoringVault architecture** and provides:
 
 | Component | Purpose | Documentation |
 |-----------|---------|---------------|
-| **BoringVault** | Asset custody & ERC20 shares | [Details](./BORINGVAULT_README.md) |
-| **Accountant** | Exchange rates & platform fees | [Details](./ACCOUNTANT_README.md) |
-| **Teller** | Deposit/withdrawal gateway | [Details](./TELLER_README.md) |
-| **Manager** | Strategy execution | [Details](./MANAGER_README.md) |
-| **DelayedWithdraw** | Time-locked withdrawals | [Details](./DELAYEDWITHDRAW_README.md) |
-| **Distributor** | Multi-token rewards | [Details](./DISTRIBUTOR_README.md) |
+| **BoringVault** | Asset custody & ERC20 shares | [Details](./docs/BORINGVAULT.md) |
+| **Accountant** | Exchange rates & platform fees | [Details](./docs/ACCOUNTANT.md) |
+| **Teller** | Deposit/withdrawal gateway | [Details](./docs/TELLER.md) |
+| **Manager** | Strategy execution | [Details](./docs/MANAGER.md) |
+| **DelayedWithdraw** | Time-locked withdrawals | [Details](./docs/DELAYEDWITHDRAW.md) |
+| **Distributor** | Multi-token rewards | [Details](./docs/DISTRIBUTOR.md) |
 
 ---
 
@@ -102,13 +102,76 @@ Deposits are share-locked for 1 day to prevent flash loan attacks. Withdrawals r
 
 ---
 
-## Deployment
+## Deployments
 
-### Berachain Testnet (bepolia)
+### Berachain Mainnet (Chain ID: 80094)
 
-Deployment artifacts available in:
-- `ignition/deployments/bepolia-usd/`
-- `ignition/deployments/bepolia-btc/`
+#### pUSD Vault (HONEY)
+
+| Contract | Address |
+|----------|---------|
+| BoringVault | `0x8596cD23aa747Fd867235D422F3C4896A5A6Bb24` |
+| Accountant | `0xa2d2085504c3e7C83e8E37b33Df50709c00f2bBB` |
+| Teller | `0xC59b0CE194Bf8b202f21C03F6F9F394eEf10d1CF` |
+| Distributor | `0x5429F08D515f65681418145A367046712D4adDa2` |
+| DelayedWithdraw | `0xFE609D66BC15b409b8F657cA0F78c95031C7D26c` |
+| Manager | `0x1E526f3255458Dd0a38D1F018eda7518A4A6a8E2` |
+| Staking Token (HONEY) | `0x549943e04f40284185054145c6E4e9568C1D3241` |
+
+#### pBTC Vault (WBTC)
+
+| Contract | Address |
+|----------|---------|
+| BoringVault | `0x5a4C11645E58E732092494db0dBb57B0646CDa1d` |
+| Accountant | `0xd7300E0C572AEd4251dED65C70c74d2c7732197A` |
+| Teller | `0x87E842c626a4c14C60B2acE6293400a4000Df4be` |
+| Distributor | `0xbf84E1cBc598952536F62Da3F6F39dF786C95bef` |
+| DelayedWithdraw | `0x540E06c68366aA3f79D700b7d82c69cEabDB9990` |
+| Manager | `0xb47197d81604f3058BdDd993372a14a36183a11f` |
+| Staking Token (WBTC) | `0x0555E30da8f98308EdB960aa94C0Db47230d2B9c` |
+
+#### Shared Infrastructure (Mainnet)
+
+| Contract | Address |
+|----------|---------|
+| PrimeRBAC | `0xe4d53b98e09FdAb10aFaB99393AD0ffbe37dD446` |
+| PrimeTimelock | `0x8C256f131D86b7301106F943221f749157B1FeF3` |
+| DecoderAndSanitizer | `0x7178182Fd96148B4E72b2b1e93292b0A493A7fB4` |
+| PrimeStrategist | `0xcfDB218585d77BeD370781D9C5eF40CeFa634427` |
+
+### Bepolia Testnet (Chain ID: 80069)
+
+#### pUSD Vault (Test)
+
+| Contract | Address |
+|----------|---------|
+| BoringVault | `0x21fc7d2c8469289D1FDfC28C29141DC911FFb4aD` |
+| Accountant | `0x1cC0b0FeCeBa56D4Cf08008d7ae2B66A589Ae64b` |
+| Teller | `0xF60b79b38ec5bDF1E91429D17BfF4C64DA137043` |
+| Distributor | `0x7ffc7c1F139C8F81d5829C70d0996bB25FeE6D98` |
+| DelayedWithdraw | `0x6905f3Edb89b8e1CD8e9C0f1EE769973f1c70C2E` |
+| Manager | `0xc31d6690b6f03A03bD99167F4193D7b1e35dFA6A` |
+| Staking Token | `0x312203a9df1b39824a826e4ceb266541d6e0feaa` |
+
+#### pBTC Vault (Test)
+
+| Contract | Address |
+|----------|---------|
+| BoringVault | `0x5C304674C8f9566BC646b903c03eE504C77d7E0f` |
+| Accountant | `0xE7CeEe1832fF9163404915B6F9e655368A11A9BF` |
+| Teller | `0x1e859D988a2b506D2b4CA017b5EeCCB487E1B899` |
+| Distributor | `0x2Dd919b34e090F7fBabc8EDd283ef53241A042dD` |
+| DelayedWithdraw | `0x0FD74ffC76CFc7C576146c12B468E610BD396c4A` |
+| Manager | `0x295aaC265561aC7940C896b7606dA8Dd2505cd72` |
+| Staking Token | `0xde9decc3a84cf9cd197ca51ec998a475cc4e8469` |
+
+#### Shared Infrastructure (Testnet)
+
+| Contract | Address |
+|----------|---------|
+| PrimeRBAC | `0xbee1B382cfdfC78A893bf837F8AB39FCA0a2F79E` |
+| DecoderAndSanitizer | `0x37018ba2974de55926fFa7ADA2d7529D3aef84eA` |
+| PrimeStrategist | `0x574EF500E7Ed1212264F04509F9876A116823a9E` |
 
 ---
 
@@ -279,16 +342,17 @@ All contracts are under the 24 KB Ethereum contract size limit:
 
 ### Audits
 
-_Audits pending_
+Audited by **SALUS Security** (December 2025). See [docs/AUDIT.md](./docs/AUDIT.md) for full report and [docs/SECURITY.md](./docs/SECURITY.md) for security best practices.
 
 ---
 
 ## Resources
 
-- **Component Documentation** - See [Core Components](#core-components) table above
-- **Strategy Guide** - [MANAGER_MERKLE.md](./MANAGER_MERKLE.md)
+- **Architecture Overview** - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+- **Security Guide** - [docs/SECURITY.md](./docs/SECURITY.md)
+- **Timelock Setup** - [docs/TIMELOCK.md](./docs/TIMELOCK.md)
+- **Cross-chain Bridge** - [docs/CROSSCHAIN.md](./docs/CROSSCHAIN.md)
 - **Veda Documentation** - https://docs.veda.tech/
-- **BoringVault Architecture** - https://docs.veda.tech/architecture-and-flow-of-funds
 - **Original BoringVault** - https://github.com/Veda-Labs/boring-vault
 
 ---

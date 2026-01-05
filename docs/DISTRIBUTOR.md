@@ -54,7 +54,8 @@ function notifyRewardAmount(address _rewardsToken, uint256 reward)
 
 **Purpose**: Admin "promises" to distribute `reward` tokens over a configured duration
 
-**Important**: This function has the `updateReward(address(0))` modifier which updates the global reward state BEFORE setting new rewards. This ensures rewards start accruing AFTER this call, not before.
+**Important**: This function has the `updateReward(address(0))` modifier which updates the global reward state BEFORE setting new rewards. This ensures rewards
+start accruing AFTER this call, not before.
 
 **Flow**:
 
@@ -106,7 +107,7 @@ earned = (100e18 * 50e18) / 1e18 = 5000e18 tokens
 ### 3. Compound Reward (Auto-reinvest)
 
 ```solidity
-function compoundReward(address _account) external updateReward(_account) requiresAuth
+function compoundReward(address _account) external requiresAuth
 ```
 
 **Purpose**: Claim rewards and automatically deposit back into vault to increase shares
@@ -116,9 +117,11 @@ function compoundReward(address _account) external updateReward(_account) requir
 1. Check `isPaused`
 2. Calculate earned rewards for vault's base asset
 3. If third-party caller:
-   - Check `allowThirdPartyCompound[_account] = true`
-   - Calculate fee = `rewardAmount * compoundFee / 1e4`
-   - Transfer fee to caller (incentive for keepers)
+
+- Check `allowThirdPartyCompound[_account] = true`
+- Calculate fee = `rewardAmount * compoundFee / 1e4`
+- Accrue fee to caller via `claimCompoundFees()`
+
 4. If treasury is set, transfer from treasury to contract
 5. Approve vault to spend rewards
 6. Call `teller.bulkDeposit(amountToCompound, 0, _account)` (uses bulk to avoid share lock)
@@ -135,6 +138,23 @@ fee = 100 * 500 / 10000 = 5 USDC → bot receives
 amountToCompound = 100 - 5 = 95 USDC
 shares = teller.deposit(95, 0, user)
 // User receives additional shares from 95 USDC
+```
+
+### 3b. Batch Compound (Multi-account)
+
+```solidity
+function compoundRewardBatch(address[] calldata _accounts) external requiresAuth
+```
+
+**Purpose**: Compound rewards for multiple accounts in a single transaction. Each account follows the same rules as `compoundReward` (including third-party
+allowance and fee accrual to the caller via `claimCompoundFees()`).
+
+**Example**:
+
+```javascript
+// Keeper compounds for multiple users if they opted in
+await distributor.compoundRewardBatch([userA, userB, userC]);
+// Any third-party fees from these accounts accrue to the keeper and can be claimed via claimCompoundFees()
 ```
 
 ### 4. Allow Third-Party Compound
@@ -481,6 +501,7 @@ distributor.claimRewards([USDC, WETH]);
 ### Bug Fix: notifyRewardAmount Now Updates Rewards Correctly
 
 **Issue**: The `notifyRewardAmount` function now includes the `updateReward(address(0))` modifier, which ensures:
+
 - Global reward state is updated BEFORE new rewards are set
 - Rewards start accruing from the moment `notifyRewardAmount` is called
 - No retroactive reward distribution
@@ -497,9 +518,11 @@ distributor.claimRewards([USDC, WETH]);
 - **Bob deposits late**: Holds 100 shares for 10 seconds → Earns ~0.00006 token
 
 Rewards are correctly proportional to:
+
 1. **Share balance held**
 2. **Time duration shares were held**
 
-The `rewardPerToken` accumulator ensures that each user's rewards are calculated based on the integral of their share balance over time, making it impossible for late depositors to gain unfair advantage.
+The `rewardPerToken` accumulator ensures that each user's rewards are calculated based on the integral of their share balance over time, making it impossible
+for late depositors to gain unfair advantage.
 
 **Test Evidence**: See `test/02_Reward.ts` - "Conclusion: Bug #7 is FALSE POSITIVE"
