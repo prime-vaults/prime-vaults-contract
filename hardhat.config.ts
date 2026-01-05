@@ -8,7 +8,17 @@ import "dotenv/config";
 import type { HardhatUserConfig } from "hardhat/config";
 import { HttpNetworkAccountsUserConfig } from "hardhat/types/config";
 import { mnemonicToAccount, privateKeyToAccount } from "viem/accounts";
-import { berachain, berachainBepolia } from "viem/chains";
+import {
+  arbitrum,
+  arbitrumSepolia,
+  berachain,
+  berachainBepolia,
+  bsc,
+  bscTestnet,
+  coreDao,
+  mainnet,
+  sepolia,
+} from "viem/chains";
 
 // Set your preferred authentication method
 //
@@ -107,6 +117,87 @@ const config: HardhatUserConfig = {
         explorerUrl: "https://berascan.com",
       },
       chainId: berachain.id,
+    },
+    // BNB Chain
+    bsc: {
+      type: "http",
+      chainType: "l1",
+      accounts,
+      url: process.env.RPC_URL || bsc.rpcUrls.default.http[0],
+      timeout: 60000,
+      ignition: {
+        explorerUrl: "https://bscscan.com",
+      },
+      chainId: bsc.id,
+    },
+    bscTestnet: {
+      type: "http",
+      chainType: "l1",
+      accounts,
+      url: process.env.RPC_URL || bscTestnet.rpcUrls.default.http[0],
+      timeout: 60000,
+      ignition: {
+        explorerUrl: "https://testnet.bscscan.com",
+      },
+      chainId: bscTestnet.id,
+    },
+    // Ethereum
+    mainnet: {
+      type: "http",
+      chainType: "l1",
+      accounts,
+      url: process.env.RPC_URL || mainnet.rpcUrls.default.http[0],
+      timeout: 60000,
+      ignition: {
+        explorerUrl: "https://etherscan.io",
+      },
+      chainId: mainnet.id,
+    },
+    sepolia: {
+      type: "http",
+      chainType: "l1",
+      accounts,
+      url: process.env.RPC_URL || sepolia.rpcUrls.default.http[0],
+      timeout: 60000,
+      ignition: {
+        explorerUrl: "https://sepolia.etherscan.io",
+      },
+      chainId: sepolia.id,
+    },
+    // CoreDAO
+    coreDao: {
+      type: "http",
+      chainType: "l1",
+      accounts,
+      url: process.env.RPC_URL || coreDao.rpcUrls.default.http[0],
+      timeout: 60000,
+      ignition: {
+        explorerUrl: "https://scan.coredao.org",
+      },
+      chainId: coreDao.id,
+    },
+    // Arbitrum
+    arbitrum: {
+      type: "http",
+      chainType: "op",
+      accounts,
+      url: process.env.RPC_URL || arbitrum.rpcUrls.default.http[0],
+      timeout: 60000,
+      ignition: {
+        explorerUrl: "https://arbiscan.io",
+      },
+      chainId: arbitrum.id,
+    },
+    arbitrumSepolia: {
+      type: "http",
+      chainType: "op",
+      accounts,
+      url: process.env.RPC_URL || arbitrumSepolia.rpcUrls.default.http[0],
+      timeout: 60000,
+      ignition: {
+        explorerUrl: "https://sepolia.arbiscan.io",
+      },
+      chainId: arbitrumSepolia.id,
     },
   },
 };
