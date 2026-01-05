@@ -389,8 +389,7 @@ MIT License - see [LICENSE](./LICENSE) for details.
   <br>
   <em>Building the future of cross-chain DeFi</em>
   <br><br>
-  <a href="https://primevaults.io">Website</a> •
-  <a href="https://docs.primevaults.io">Docs</a> •
-  <a href="https://twitter.com/primevaults">Twitter</a> •
-  <a href="https://discord.gg/primevaults">Discord</a>
+  <a href="https://primevaults.finance">Website</a> •
+  <a href="https://docs.primevaults.finance">Docs</a> •
+  <a href="https://x.com/PrimeVaultsHQ">X</a> •
 </p>
