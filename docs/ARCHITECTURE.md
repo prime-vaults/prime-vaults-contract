@@ -16,6 +16,7 @@
 ### What is Prime Vaults?
 
 Prime Vaults is a **modular multi-chain DeFi vault infrastructure** that enables users to:
+- Deposit assets from **any supported chain** (Ethereum, BSC, Arbitrum, CoreDAO, Berachain)
 - Bridge assets via **PrimeExecutor** to native chain (Berachain) through Smart Account
 - Receive ERC20 vault shares and earn passive yield through automated DeFi strategies
 - Receive multiple types of reward tokens via integrated distribution system

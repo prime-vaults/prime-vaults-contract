@@ -97,8 +97,16 @@ export function getVaultsByChainId(chainId: number): VaultParameters[] {
  * @param vaultAddress The BoringVault contract address
  * @returns Vault parameters if found, undefined otherwise
  */
-export function getVault(vaultAddress: `0x${string}`): VaultParameters | undefined {
-  return VAULT_REGISTRY.find((vault) => vault.$global.BoringVaultAddress.toLowerCase() === vaultAddress.toLowerCase());
+export function getVault(vaultAddress: `0x${string}`): VaultParameters {
+  const vault = VAULT_REGISTRY.find((vault) => vault.$global.BoringVaultAddress.toLowerCase() === vaultAddress.toLowerCase());
+  if (!vault) throw new Error(`Vault with address ${vaultAddress} not found.`);
+  return vault;
+}
+
+export function getVaultChainId(vaultAddress: `0x${string}`): number {
+  const vault = getVault(vaultAddress);
+  if (!vault) throw new Error(`Vault with address ${vaultAddress} not found.`);
+  return vault?.$global.chainId;
 }
 
 /**

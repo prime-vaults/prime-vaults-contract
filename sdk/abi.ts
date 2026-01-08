@@ -1,3 +1,6 @@
+import { erc20Abi } from "viem";
+
+// core contracts
 import AccountantJson from "../artifacts/contracts/core/AccountantProviders.sol/AccountantProviders.json" with { type: "json" };
 import type { AccountantProviders$Type } from "../artifacts/contracts/core/AccountantProviders.sol/artifacts.d.ts";
 import BoringVaultJson from "../artifacts/contracts/core/BoringVault.sol/BoringVault.json" with { type: "json" };
@@ -10,10 +13,17 @@ import ManagerJson from "../artifacts/contracts/core/ManagerWithMerkleVerificati
 import type { ManagerWithMerkleVerification$Type } from "../artifacts/contracts/core/ManagerWithMerkleVerification.sol/artifacts.d.ts";
 import TellerJson from "../artifacts/contracts/core/Teller.sol/Teller.json" with { type: "json" };
 import type { Teller$Type } from "../artifacts/contracts/core/Teller.sol/artifacts.d.ts";
+// executor contracts
+import ExecutorJson from "../artifacts/contracts/executor/BaseBridgeExecutor.sol/BaseBridgeExecutor.json" with { type: "json" };
+import type { BaseBridgeExecutor$Type } from "../artifacts/contracts/executor/BaseBridgeExecutor.sol/artifacts.d.ts";
+// helper contracts
 import SmartAccountRegistryJson from "../artifacts/contracts/helper/SmartAccountRegistry.sol/SmartAccountRegistry.json" with { type: "json" };
 import type { SmartAccountRegistry$Type } from "../artifacts/contracts/helper/SmartAccountRegistry.sol/artifacts.d.ts";
+// strategy contracts
 import PrimeStrategyJson from "../artifacts/contracts/strategy/PrimeStrategy.sol/PrimeStrategy.json" with { type: "json" };
+import type { PrimeStrategy$Type } from "../artifacts/contracts/strategy/PrimeStrategy.sol/artifacts.d.ts";
 import PrimStrategyRegistryJson from "../artifacts/contracts/strategy/StrategyRegistry.sol/StrategyRegistry.json" with { type: "json" };
+import type { StrategyRegistry$Type } from "../artifacts/contracts/strategy/StrategyRegistry.sol/artifacts.d.ts";
 
 export type AccountantType = AccountantProviders$Type;
 export type BoringVaultType = BoringVault$Type;
@@ -30,5 +40,8 @@ export const WithdrawerAbi = WithdrawerJson as DelayedWithdraw$Type;
 export const DistributorAbi = DistributorJson as Distributor$Type;
 export const ManagerAbi = ManagerJson as ManagerType;
 export const SmartAccountRegistryAbi = SmartAccountRegistryJson as SmartAccountRegistryType;
-export const PrimeStrategyAbi = PrimeStrategyJson;
-export const PrimeRegistryAbi = PrimStrategyRegistryJson;
+export const PrimeStrategyAbi = PrimeStrategyJson as PrimeStrategy$Type;
+export const PrimeRegistryAbi = PrimStrategyRegistryJson as StrategyRegistry$Type;
+export const ExecutorAbi = ExecutorJson as BaseBridgeExecutor$Type;
+
+export const Erc20Abi = erc20Abi;

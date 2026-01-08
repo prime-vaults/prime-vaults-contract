@@ -5,7 +5,7 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "main": "./dist/sdk/index.js",
   "module": "./dist/sdk/index.js",
@@ -39,6 +39,7 @@
     "node": ">=18.16.0"
   },
   "devDependencies": {
+    "@layerzerolabs/lz-evm-oapp-v2": "^3.0.152",
     "@nomicfoundation/hardhat-ignition": "^3.0.3",
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
     "@openzeppelin/contracts": "^5.4.0",
@@ -60,6 +61,7 @@
     "prompts": "^2.4.2",
     "solhint": "^6.0.1",
     "solhint-plugin-prettier": "^0.1.0",
+    "solmate": "^6.8.0",
     "tsx": "^4.20.6",
     "typescript": "~5.8.0",
     "viem": "^2.30.0"
@@ -79,7 +81,6 @@
     "viem"
   ],
   "dependencies": {
-    "solmate": "^6.8.0",
     "viem": "^2.30.0"
   },
   "peerDependencies": {
