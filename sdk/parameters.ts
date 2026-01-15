@@ -80,7 +80,7 @@ export const BerachainVaultWBera = berachainWBera as unknown as VaultParameters;
 /**
  * Registry of all available vaults across different chains
  */
-const VAULT_REGISTRY: VaultParameters[] = [BepoliaVaultUsd, BepoliaVaultBtc, BerachainVaultUsd, BerachainVaultBtc];
+const VAULT_REGISTRY: VaultParameters[] = [BepoliaVaultUsd, BepoliaVaultBtc, BerachainVaultUsd, BerachainVaultBtc, BerachainVaultEth, BerachainVaultWBera];
 
 /**
  * Get all vaults for a specific chain ID
