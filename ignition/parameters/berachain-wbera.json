@@ -8,14 +8,14 @@
     "DecoderAndSanitizerAddress": "0xdE5608924Cd4fd63387c556B19F73F39A503Ef3d",
     "SmartAccountRegistryAddress": "0x010efC7f2c1763A5fD898fb54236fAeCe62bAb90",
     "PrimeTimeLockAddress": "0x8C256f131D86b7301106F943221f749157B1FeF3",
-    "stakingToken": "0x0555e30da8f98308edb960aa94c0db47230d2b9c",
-    "BoringVaultAddress": "0x30D25Da0A6A1158EB866574Db5C7f9F5A7201FBe",
-    "RolesAuthorityAddress": "0xEA1DefE86DBd3C7b89f0a303B506420AF6Da532C",
-    "AccountantAddress": "0x1e31176E2D6FfbDBe4F313493C257876aEb295Db",
-    "TellerAddress": "0xd77CB88c61cAb540DbA3aCc7416A5b5EE34fc5cC",
-    "DistributorAddress": "0x1442af2F9F66C240cA753a945d11B24a5F3c33d2",
-    "WithdrawerAddress": "0x8Ad14b4B1f9C0c5ce1A0DD3272cdEE8Ac223eaE8",
-    "ManagerAddress": "0xB96b476577B76af61af987f0ecbAE04A64aCf6a2"
+    "stakingToken": "0x6969696969696969696969696969696969696969",
+    "BoringVaultAddress": "0x3AF6CBd76FDb0C6315B7748Ba11243830565e783",
+    "RolesAuthorityAddress": "0x12a06c169EBf5108306d4C0ceeb05B655b7CdF26",
+    "AccountantAddress": "0x1d7e0B3070d80899bCd61A9c484780F54B1543D6",
+    "TellerAddress": "0x8198239B55c79a5E4E5460241C89EB11B53Eb2Ed",
+    "DistributorAddress": "0xF1B346EC239A022cAE48384BF8C50D446966A11c",
+    "WithdrawerAddress": "0xdb1f0F4bc8DA11fb71FB18D432d4A3d1F2a53D56",
+    "ManagerAddress": "0xf2aDcb4EAa365312Bbc591De471EC4386ca114D3"
   },
   "AccountantModule": {
     "platformFee": 0
@@ -26,33 +26,33 @@
     "expeditedWithdrawFee": 200
   },
   "ManagerModule": {
-    "manageRoot": "0x9236669c8bd271835c98e4a5bee464d296c26c1004247a51f8fd663239563756",
+    "manageRoot": "0xdcd54b74afeede88c0474dd3de13472644a6b9bd5f589276995650775907bfc8",
     "leafs": [
       {
         "Description": "Approve Accountant to spend base asset (staking token)",
         "FunctionSignature": "approve(address,uint256)",
         "FunctionSelector": "0x095ea7b3",
         "DecoderAndSanitizerAddress": "0xdE5608924Cd4fd63387c556B19F73F39A503Ef3d",
-        "TargetAddress": "0x0555e30da8f98308edb960aa94c0db47230d2b9c",
+        "TargetAddress": "0x6969696969696969696969696969696969696969",
         "CanSendValue": false,
         "AddressArguments": [
-          "0x1e31176E2D6FfbDBe4F313493C257876aEb295Db"
+          "0x1d7e0B3070d80899bCd61A9c484780F54B1543D6"
         ],
-        "PackedArgumentAddresses": "1e31176e2d6ffbdbe4f313493c257876aeb295db",
-        "LeafDigest": "0x1faffa65aaae2bc7c27bb0aa165a395d0867ffcb63d9dcff2cbd25613328d935"
+        "PackedArgumentAddresses": "1d7e0b3070d80899bcd61a9c484780f54b1543d6",
+        "LeafDigest": "0x267e988c0789e57c2d9c83dba5728b02f4be8180943269092365ba4fe271fa4b"
       },
       {
         "Description": "Approve PrimeStrategist to spend base asset (staking token)",
         "FunctionSignature": "approve(address,uint256)",
         "FunctionSelector": "0x095ea7b3",
         "DecoderAndSanitizerAddress": "0xdE5608924Cd4fd63387c556B19F73F39A503Ef3d",
-        "TargetAddress": "0x0555e30da8f98308edb960aa94c0db47230d2b9c",
+        "TargetAddress": "0x6969696969696969696969696969696969696969",
         "CanSendValue": false,
         "AddressArguments": [
           "0x8BA75fd32c9275de224Dd3E035D21FF17EE048A7"
         ],
         "PackedArgumentAddresses": "8ba75fd32c9275de224dd3e035d21ff17ee048a7",
-        "LeafDigest": "0x7d82382735115022cb1ca041774f3656b826c15641474b462a8fa088ae40ffc7"
+        "LeafDigest": "0x0af840d915752d44593327481ef1c6002074f72d8096c546d91489245e33c8e0"
       },
       {
         "Description": "Deposit base asset to PrimeStrategist",
@@ -62,10 +62,10 @@
         "TargetAddress": "0x8BA75fd32c9275de224Dd3E035D21FF17EE048A7",
         "CanSendValue": false,
         "AddressArguments": [
-          "0x0555e30da8f98308edb960aa94c0db47230d2b9c"
+          "0x6969696969696969696969696969696969696969"
         ],
-        "PackedArgumentAddresses": "0555e30da8f98308edb960aa94c0db47230d2b9c",
-        "LeafDigest": "0x6ef26cc618605e737482a57b744bc459dd8d9bbc009b6c982d33a619c35dcb83"
+        "PackedArgumentAddresses": "6969696969696969696969696969696969696969",
+        "LeafDigest": "0x28321d651508c23f5b40e2203e9a08bb98b5d7b6bd499f76ac3ff62f6a34d885"
       },
       {
         "Description": "Withdraw from PrimeStrategist back to vault",
@@ -75,26 +75,26 @@
         "TargetAddress": "0x8BA75fd32c9275de224Dd3E035D21FF17EE048A7",
         "CanSendValue": false,
         "AddressArguments": [
-          "0x0555e30da8f98308edb960aa94c0db47230d2b9c"
+          "0x6969696969696969696969696969696969696969"
         ],
-        "PackedArgumentAddresses": "0555e30da8f98308edb960aa94c0db47230d2b9c",
-        "LeafDigest": "0x9ecfd18e340a7f3eef496e446b69628e2bf7dd4b19800b75deb9e298e9b77c2e"
+        "PackedArgumentAddresses": "6969696969696969696969696969696969696969",
+        "LeafDigest": "0x82f11d95d0bdd7bc41fc099c8cdb176f443a12d2ff88e88cf226f89fc545141f"
       },
       {
         "Description": "Claim platform fees from Accountant",
         "FunctionSignature": "claimFees()",
         "FunctionSelector": "0xd294f093",
         "DecoderAndSanitizerAddress": "0xdE5608924Cd4fd63387c556B19F73F39A503Ef3d",
-        "TargetAddress": "0x1e31176E2D6FfbDBe4F313493C257876aEb295Db",
+        "TargetAddress": "0x1d7e0B3070d80899bCd61A9c484780F54B1543D6",
         "CanSendValue": false,
         "AddressArguments": [],
         "PackedArgumentAddresses": "",
-        "LeafDigest": "0x897bf7c728806dc3770bca9421f7b8f97fcf6ea44058edd52c70cb901d076b92"
+        "LeafDigest": "0xe99bf57cb32f631443f761c1915601cc19ac2be6d1b5e28e1fc4bac12dd166b7"
       }
     ]
   },
   "VaultModule": {
-    "name": "Prime WBTC",
-    "symbol": "pWBTC"
+    "name": "Prime WBera",
+    "symbol": "pWBera"
   }
 }

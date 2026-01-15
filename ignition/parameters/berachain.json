@@ -2,12 +2,11 @@
   "$global": {
     "chainId": 80094,
     "network": "berachain",
-    "adminAddress": "0x9d532e94928085eb5f9e247e4433b2ee815113f9",
-    "PrimeStrategistAddress": "0xcfDB218585d77BeD370781D9C5eF40CeFa634427",
-    "PrimeRBAC": "0xe4d53b98e09FdAb10aFaB99393AD0ffbe37dD446",
-    "DecoderAndSanitizerAddress": "0x7178182Fd96148B4E72b2b1e93292b0A493A7fB4",
-    "SmartAccountRegistryAddress": "0xe6Ca6eBBC8A5c8B5A0E57E489Ec74f7b600C0B96",
-    "PrimeTimeLockAddress": "0x8C256f131D86b7301106F943221f749157B1FeF3",
+    "adminAddress": "0x5e7481f8ea929a324cb8b127fa001e3358f80da6",
+    "PrimeStrategistAddress": "0x",
+    "PrimeRBAC": "0x19311BbB6F8E8b7FD5305F5B07bA1200854a4E53",
+    "DecoderAndSanitizerAddress": "0xdE5608924Cd4fd63387c556B19F73F39A503Ef3d",
+    "SmartAccountRegistryAddress": "0x010efC7f2c1763A5fD898fb54236fAeCe62bAb90",
     "stakingToken": "0x",
     "BoringVaultAddress": "0x",
     "RolesAuthorityAddress": "0x",
@@ -16,8 +15,7 @@
     "DistributorAddress": "0x",
     "WithdrawerAddress": "0x",
     "ManagerAddress": "0x",
-    "PrimeRegistryAddress": "0xdff3684Bb5ed5f5148c5412375aDd1763335b290",
-    "PrimeStrategyAddress": "0xcfDB218585d77BeD370781D9C5eF40CeFa634427"
+    "PrimeTimeLockAddress": "0x"
   },
   "AccountantModule": {
     "platformFee": 0

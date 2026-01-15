@@ -1,8 +1,9 @@
 import bepoliaBtc from "../ignition/parameters/bepolia-btc.json" with { type: "json" };
 import bepoliaUsd from "../ignition/parameters/bepolia-usd.json" with { type: "json" };
 import berachainBtc from "../ignition/parameters/berachain-btc.json" with { type: "json" };
+import berachainEth from "../ignition/parameters/berachain-eth.json" with { type: "json" };
 import berachainUsd from "../ignition/parameters/berachain-usd.json" with { type: "json" };
-import localhostUsd from "../ignition/parameters/default-usd.json" with { type: "json" };
+import berachainWBera from "../ignition/parameters/berachain-wbera.json" with { type: "json" };
 import { generateMerkleTree, getProof } from "../scripts/createMerkleTree.js";
 
 export interface GlobalConfig {
@@ -23,9 +24,6 @@ export interface GlobalConfig {
   DistributorAddress: `0x${string}`;
   ManagerAddress: `0x${string}`;
   PrimeTimeLockAddress: `0x${string}`;
-  PrimeTimelockAddress: `0x${string}`;
-  PrimeStrategyAddress: `0x${string}`;
-  PrimeRegistryAddress: `0x${string}`;
 }
 
 export interface LeafConfig {
@@ -74,14 +72,15 @@ export function getLeaf(params: VaultParameters, description: string) {
 // ========================================= VAULT REGISTRY =========================================
 export const BepoliaVaultUsd = bepoliaUsd as unknown as VaultParameters;
 export const BepoliaVaultBtc = bepoliaBtc as unknown as VaultParameters;
-export const LocalhostVaultUsd = localhostUsd as unknown as VaultParameters;
 export const BerachainVaultUsd = berachainUsd as unknown as VaultParameters;
 export const BerachainVaultBtc = berachainBtc as unknown as VaultParameters;
+export const BerachainVaultEth = berachainEth as unknown as VaultParameters;
+export const BerachainVaultWBera = berachainWBera as unknown as VaultParameters;
 
 /**
  * Registry of all available vaults across different chains
  */
-const VAULT_REGISTRY: VaultParameters[] = [BepoliaVaultUsd, BepoliaVaultBtc, LocalhostVaultUsd, BerachainVaultUsd, BerachainVaultBtc];
+const VAULT_REGISTRY: VaultParameters[] = [BepoliaVaultUsd, BepoliaVaultBtc, BerachainVaultUsd, BerachainVaultBtc];
 
 /**
  * Get all vaults for a specific chain ID
